@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 ### Security
 
 - Vitest 5 clears the two critical `tinypool` advisories (GHSA-5gmw-xhrv-c9v3, GHSA-85c8-ppgw-ccpr), because Vitest no longer depends on `tinypool`, and the `vitest` / `@vitest/mocker` path traversal advisory (GHSA-82fw-gwwq-j7x9).
+- An npm `overrides` entry moves Tailwind CSS 3's `postcss-selector-parser` from 6.1.4 to 7.1.6, which fixes GHSA-rj75-hqrm-r3gf. The generated CSS is byte-identical. Remove the override when the project moves to Tailwind CSS 4.
+- Still open: GHSA-vfj7-8cjw-p6xm in `braces`, which Tailwind CSS 3 reaches through `chokidar`, `fast-glob` and `micromatch`. No patched `braces` release exists. It only runs at build time on the project's own glob patterns. Only Tailwind CSS 4 removes it, and Tailwind CSS 4 needs Safari 16.4 and Firefox 128, above the browsers Keroo supports today.
 
 ### Removed
 
