@@ -3,6 +3,7 @@ import { db } from '../../db';
 import { seedCleanSlate, seedDemoData } from '../../db/seed';
 import { useTranslation } from '../../i18n';
 import { defaultCurrencyFor } from '../../core/currency';
+import { requestPersistentStorage } from '../../core/backup';
 import type { SupportedCurrency } from '../../types';
 import { Sparkles, ArrowRight, ArrowLeft, Check, Coins, Globe, Heart } from 'lucide-react';
 
@@ -32,6 +33,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
         await seedDemoData(db, language, selectedCurrency, petNickname);
       } else {
         await seedCleanSlate(db, language, selectedCurrency, petNickname);
+      }
+      // Ask once (not on every boot) to exempt Keroo's IndexedDB from automatic eviction.
+      // Firefox may prompt; Chromium decides silently. Guarded and never rejects.
+      try {
+        if (typeof navigator !== 'undefined') void requestPersistentStorage();
+      } catch {
+        // Persistent storage is a best-effort hint; onboarding continues regardless.
       }
       onComplete();
     } catch (err) {

@@ -1,9 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db';
 import { useTranslation } from '../i18n';
 import type { SupportedCurrency, SupportedTheme } from '../types';
 import { seedCleanSlate, seedDemoData } from '../db/seed';
+import {
+  backupRowCounts,
+  exportBackup,
+  formatStorageMegabytes,
+  isBackupError,
+  parseBackup,
+  restoreBackup,
+  serializeBackup,
+  suggestBackupFilename,
+  type KerooBackup,
+} from '../core/backup';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
@@ -22,7 +33,37 @@ import {
   ShieldCheck,
   CheckCircle,
   AlertTriangle,
+  DatabaseBackup,
+  Download,
+  Upload,
+  HardDrive,
 } from 'lucide-react';
+
+/** How long the "restored" confirmation stays visible before the app reloads. */
+const RESTORE_RELOAD_DELAY_MS = 1200;
+
+/** Reads a picked file as text (Blob.text() with a FileReader fallback for older engines). */
+function readFileAsText(file: Blob): Promise<string> {
+  if (typeof file.text === 'function') return file.text();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ''));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(file);
+  });
+}
+
+/** Danger-styled inline error with role="alert" (shared by the page and the confirm modals). */
+const ErrorNote: React.FC<{ message: string; testId?: string }> = ({ message, testId }) => (
+  <div
+    role="alert"
+    data-testid={testId}
+    className="p-3 rounded-xl bg-danger-subtle/30 border border-danger/20 text-xs text-danger flex items-center gap-2"
+  >
+    <AlertTriangle className="w-4 h-4 shrink-0" />
+    <span>{message}</span>
+  </div>
+);
 
 export interface SettingsViewProps {
   theme?: SupportedTheme;
@@ -33,6 +74,8 @@ export interface SettingsViewProps {
   initialAction?: 'demo' | 'reset' | null;
   /** Called once the initialAction has been consumed so the parent can clear it. */
   onInitialActionHandled?: () => void;
+  /** Runs after a successful backup restore. Defaults to reloading the page. */
+  onRestoreComplete?: () => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -42,6 +85,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onCurrencyChange,
   initialAction = null,
   onInitialActionHandled,
+  onRestoreComplete = () => window.location.reload(),
 }) => {
   const { t, language, setLanguage } = useTranslation();
 
@@ -55,6 +99,42 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [isDemoConfirmOpen, setIsDemoConfirmOpen] = useState(false);
   const [isOperating, setIsOperating] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
+  // Error shown inside the open demo/reset confirmation modal (it stays open so the user can retry).
+  const [modalError, setModalError] = useState<string | null>(null);
+
+  // Backup & restore
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingBackup, setPendingBackup] = useState<KerooBackup | null>(null);
+  const [backupError, setBackupError] = useState<string | null>(null);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
+  const [isBackupBusy, setIsBackupBusy] = useState(false);
+  const [storageEstimate, setStorageEstimate] = useState<{ usage: number; quota: number } | null>(
+    null
+  );
+
+  // Storage usage line: every API is optional (Safari < 17, jsdom, private windows).
+  useEffect(() => {
+    let cancelled = false;
+    try {
+      const storage = typeof navigator !== 'undefined' ? navigator.storage : undefined;
+      if (storage && typeof storage.estimate === 'function') {
+        storage
+          .estimate()
+          .then((est) => {
+            if (cancelled) return;
+            if (typeof est.usage === 'number' && typeof est.quota === 'number' && est.quota > 0) {
+              setStorageEstimate({ usage: est.usage, quota: est.quota });
+            }
+          })
+          .catch(() => {});
+      }
+    } catch {
+      // Storage estimate unavailable: the line stays hidden.
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Command palette deep-link: open the matching confirmation modal.
   useEffect(() => {
@@ -127,6 +207,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   // Handle Load Demo Data
   const handleExecuteLoadDemo = async () => {
     setIsOperating(true);
+    setModalError(null);
     try {
       await seedDemoData(db, language, currency, currentNickname, await readPreserve());
       setIsDemoConfirmOpen(false);
@@ -134,6 +215,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       setTimeout(() => setFeedbackMsg(null), 3000);
     } catch (err) {
       console.error(err);
+      setModalError(t('settings.err_generic'));
     } finally {
       setIsOperating(false);
     }
@@ -142,6 +224,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   // Handle Reset Clean Slate
   const handleExecuteReset = async () => {
     setIsOperating(true);
+    setModalError(null);
     try {
       await seedCleanSlate(db, language, currency, currentNickname, await readPreserve());
       setIsResetConfirmOpen(false);
@@ -149,10 +232,112 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       setTimeout(() => setFeedbackMsg(null), 3000);
     } catch (err) {
       console.error(err);
+      setModalError(t('settings.err_generic'));
     } finally {
       setIsOperating(false);
     }
   };
+
+  const closeDemoConfirm = () => {
+    setIsDemoConfirmOpen(false);
+    setModalError(null);
+  };
+
+  const closeResetConfirm = () => {
+    setIsResetConfirmOpen(false);
+    setModalError(null);
+  };
+
+  /** Translated message for a backup failure: BackupError codes, else the generic fallback. */
+  const backupErrorMessage = (err: unknown): string =>
+    isBackupError(err) ? t(`settings.backup_err_${err.code}`) : t('settings.backup_err_GENERIC');
+
+  // Backup: export every table to a JSON file download.
+  const handleExportBackup = async () => {
+    setBackupError(null);
+    setIsBackupBusy(true);
+    try {
+      const backup = await exportBackup(db);
+      const blob = new Blob([serializeBackup(backup)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = suggestBackupFilename(new Date());
+      link.rel = 'noopener';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      // Revoke on the next tick: some browsers (iOS Safari) still read the URL after click().
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setFeedbackMsg(t('settings.backup_exported'));
+      setTimeout(() => setFeedbackMsg(null), 3000);
+    } catch (err) {
+      console.error(err);
+      setBackupError(t('settings.err_generic'));
+    } finally {
+      setIsBackupBusy(false);
+    }
+  };
+
+  // Restore step 1: read + validate the picked file, then ask for confirmation.
+  const handleBackupFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const file = input.files?.[0];
+    // Reset so picking the same file again still fires a change event.
+    input.value = '';
+    if (!file) return;
+    setBackupError(null);
+    setRestoreError(null);
+    setIsBackupBusy(true);
+    try {
+      const backup = parseBackup(await readFileAsText(file));
+      setPendingBackup(backup);
+    } catch (err) {
+      setBackupError(backupErrorMessage(err));
+    } finally {
+      setIsBackupBusy(false);
+    }
+  };
+
+  const closeRestoreConfirm = () => {
+    setPendingBackup(null);
+    setRestoreError(null);
+  };
+
+  // Restore step 2: one atomic replace of every table, then reload the app.
+  const handleExecuteRestore = async () => {
+    if (!pendingBackup) return;
+    setIsOperating(true);
+    setRestoreError(null);
+    try {
+      await restoreBackup(db, pendingBackup, { mode: 'replace' });
+      // The UI language is a per-device choice kept in localStorage: align it with the backup.
+      const restored = await db.user_settings.get('global');
+      if (
+        restored &&
+        (restored.language === 'pt-BR' || restored.language === 'en-US') &&
+        restored.language !== language
+      ) {
+        setLanguage(restored.language);
+      }
+      setPendingBackup(null);
+      setFeedbackMsg(t('settings.backup_success'));
+      setTimeout(() => onRestoreComplete(), RESTORE_RELOAD_DELAY_MS);
+    } catch (err) {
+      console.error(err);
+      setRestoreError(backupErrorMessage(err));
+    } finally {
+      setIsOperating(false);
+    }
+  };
+
+  const pendingCounts = pendingBackup ? backupRowCounts(db, pendingBackup) : null;
+  const pendingDate = (() => {
+    if (!pendingBackup?.exportedAt) return null;
+    const d = new Date(pendingBackup.exportedAt);
+    if (Number.isNaN(d.getTime())) return null;
+    return new Intl.DateTimeFormat(language, { dateStyle: 'medium', timeStyle: 'short' }).format(d);
+  })();
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -434,7 +619,70 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </Card>
 
-      {/* 6. Privacy & Security Pledge */}
+      {/* 6. Backup & Restore (the only copy of the data lives in this browser) */}
+      <Card
+        data-testid="settings-backup-card"
+        title={
+          <div className="flex items-center gap-2">
+            <DatabaseBackup className="w-4 h-4 text-brand" />
+            <span>{t('settings.backup_title')}</span>
+          </div>
+        }
+        subtitle={t('settings.backup_desc')}
+      >
+        <div className="space-y-3 mt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleExportBackup}
+              isLoading={isBackupBusy}
+              leadingIcon={<Download className="w-4 h-4" />}
+              data-testid="backup-export-button"
+            >
+              {t('settings.backup_export_btn')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isBackupBusy || isOperating}
+              leadingIcon={<Upload className="w-4 h-4" />}
+              data-testid="backup-import-button"
+            >
+              {t('settings.backup_import_btn')}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              onChange={handleBackupFileChange}
+              data-testid="backup-file-input"
+              aria-label={t('settings.backup_import_btn')}
+            />
+          </div>
+
+          {backupError && <ErrorNote message={backupError} testId="backup-error" />}
+
+          {storageEstimate && (
+            <p
+              className="text-[11px] text-text-secondary flex items-center gap-1.5"
+              data-testid="backup-storage-usage"
+            >
+              <HardDrive className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                {t('settings.backup_storage_usage', {
+                  used: formatStorageMegabytes(storageEstimate.usage, language),
+                  quota: formatStorageMegabytes(storageEstimate.quota, language),
+                })}
+              </span>
+            </p>
+          )}
+        </div>
+      </Card>
+
+      {/* 7. Privacy & Security Pledge */}
       <Card className="bg-surface-muted/20 border-brand-border/30">
         <div className="flex items-start gap-3">
           <ShieldCheck className="w-6 h-6 text-brand shrink-0 mt-0.5" />
@@ -452,7 +700,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* Modal: Confirm Demo Data */}
       <Modal
         isOpen={isDemoConfirmOpen}
-        onClose={() => setIsDemoConfirmOpen(false)}
+        onClose={closeDemoConfirm}
         title={t('settings.demo_modal_title')}
         subtitle={t('settings.demo_modal_subtitle')}
         maxWidth="md"
@@ -462,8 +710,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             {t('settings.demo_modal_desc')}
           </p>
 
+          {modalError && <ErrorNote message={modalError} />}
+
           <div className="flex items-center justify-end gap-2.5 pt-2">
-            <Button variant="ghost" onClick={() => setIsDemoConfirmOpen(false)} disabled={isOperating}>
+            <Button variant="ghost" onClick={closeDemoConfirm} disabled={isOperating}>
               {t('common.cancel')}
             </Button>
             <Button variant="primary" onClick={handleExecuteLoadDemo} isLoading={isOperating}>
@@ -476,7 +726,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* Modal: Confirm Clean Slate Reset */}
       <Modal
         isOpen={isResetConfirmOpen}
-        onClose={() => setIsResetConfirmOpen(false)}
+        onClose={closeResetConfirm}
         title={t('settings.reset_modal_title')}
         subtitle={t('settings.reset_modal_subtitle')}
         maxWidth="md"
@@ -489,12 +739,68 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </span>
           </div>
 
+          {modalError && <ErrorNote message={modalError} />}
+
           <div className="flex items-center justify-end gap-2.5 pt-2">
-            <Button variant="ghost" onClick={() => setIsResetConfirmOpen(false)} disabled={isOperating}>
+            <Button variant="ghost" onClick={closeResetConfirm} disabled={isOperating}>
               {t('common.cancel')}
             </Button>
             <Button variant="danger" onClick={handleExecuteReset} isLoading={isOperating}>
               {t('settings.confirm_reset')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal: Confirm Backup Restore (replaces every table) */}
+      <Modal
+        isOpen={pendingBackup !== null}
+        onClose={() => {
+          if (!isOperating) closeRestoreConfirm();
+        }}
+        title={t('settings.backup_confirm_title')}
+        subtitle={pendingDate ? t('settings.backup_file_date', { date: pendingDate }) : undefined}
+        maxWidth="md"
+      >
+        <div className="space-y-4" data-testid="backup-confirm-modal">
+          <div className="p-3 rounded-xl bg-danger-subtle/30 border border-danger/20 text-xs text-danger flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 shrink-0" />
+            <span>{t('settings.backup_confirm_desc')}</span>
+          </div>
+
+          {pendingCounts && (
+            <div>
+              <h4 className="text-xs font-semibold text-text-primary mb-2">
+                {t('settings.backup_rows_title')}
+              </h4>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+                {Object.entries(pendingCounts).map(([table, count]) => (
+                  <li
+                    key={table}
+                    data-testid={`backup-count-${table}`}
+                    className="flex items-center justify-between text-[11px] text-text-secondary"
+                  >
+                    <span>{t(`settings.backup_tables.${table}`)}</span>
+                    <span className="font-mono tabular-nums text-text-primary">{count}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {restoreError && <ErrorNote message={restoreError} testId="restore-error" />}
+
+          <div className="flex items-center justify-end gap-2.5 pt-2">
+            <Button variant="ghost" onClick={closeRestoreConfirm} disabled={isOperating}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleExecuteRestore}
+              isLoading={isOperating}
+              data-testid="backup-confirm-button"
+            >
+              {t('settings.backup_confirm_btn')}
             </Button>
           </div>
         </div>

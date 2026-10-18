@@ -23,7 +23,7 @@ if (
 ) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch((err) => {
-      console.log('SW registration skipped or failed:', err);
+      console.warn('SW registration skipped or failed:', err);
     });
   });
 }

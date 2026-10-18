@@ -12,7 +12,8 @@ import {
   useOptionalTranslation,
   useTranslation,
 } from '../i18n';
-import { db } from '../db';
+import { db, KEROO_DB_SCHEMA_V1 } from '../db';
+import { BACKUP_ERROR_CODES } from '../core/backup';
 import type { ImportWarningCode } from '../core/importParser';
 import type { KerooPose } from '../core/kerooMood';
 
@@ -569,6 +570,10 @@ describe('Translation keys used by the UI exist in both languages', () => {
     ...family('accounts.import_warn', [...Object.keys(IMPORT_WARNING_CODES), 'GENERIC']),
     // KerooMascot: t(`pet.aria.${pose}`).
     ...family('pet.aria', Object.keys(KEROO_POSES)),
+    // SettingsView: t(`settings.backup_err_${code}`) with a GENERIC fallback.
+    ...family('settings.backup_err', [...BACKUP_ERROR_CODES, 'GENERIC'], '_'),
+    // SettingsView restore modal: t(`settings.backup_tables.${table}`) for every Dexie table.
+    ...family('settings.backup_tables', Object.keys(KEROO_DB_SCHEMA_V1)),
   ];
 
   it('finds a healthy number of static keys in the sources', () => {
