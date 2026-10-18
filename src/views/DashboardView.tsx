@@ -223,6 +223,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     await handleBillPaymentAction(bill, today, {
       db,
       amountCents: payCents,
+      note: t('dashboard.bill_payment_note', { name: bill.name }),
     });
   };
 

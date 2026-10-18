@@ -133,7 +133,8 @@
     "insights_subtitle": "Deterministic local heuristics without external telemetry",
     "insights_empty": "No atypical spending anomalies detected. All balanced!",
     "transactions_empty": "No transactions recorded yet.",
-    "col_payee": "Description / Payee"
+    "col_payee": "Description / Payee",
+    "bill_payment_note": "Recurring payment: {name}"
   },
   "accounts": {
     "title": "Accounts & Ledger",

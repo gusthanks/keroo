@@ -475,9 +475,11 @@ export async function handleBillPaymentAction(
         paymentAccountId?: string;
         amountCents?: Cents;
         db?: any;
+        /** Ledger note for the payment transaction (callers pass a translated string). */
+        note?: string;
       },
   paymentDateArg?: ISODate,
-  optionsArg?: { paymentAccountId?: string; amountCents?: Cents; db?: any }
+  optionsArg?: { paymentAccountId?: string; amountCents?: Cents; db?: any; note?: string }
 ): Promise<BillPaymentActionResult> {
   let bill: RecurringBill;
   let paymentDate: ISODate;
@@ -514,6 +516,10 @@ export async function handleBillPaymentAction(
     updatedAt: nowIso,
   };
 
+  const paymentNote =
+    ('bill' in billOrParams ? billOrParams.note : optionsArg?.note) ??
+    `Recurring payment: ${bill.name}`;
+
   const paymentTransaction = {
     id: generateEntityId('tx'),
     accountId: paymentAccountId,
@@ -522,7 +528,7 @@ export async function handleBillPaymentAction(
     type: 'expense' as const,
     categoryId: bill.categoryId,
     payee: bill.name,
-    notes: `Pagamento recorrente: ${bill.name}`,
+    notes: paymentNote,
     status: 'cleared' as const,
     subscriptionId: bill.id,
     createdAt: nowIso,

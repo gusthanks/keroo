@@ -286,6 +286,7 @@ const UI_SOURCE_FILES: string[] = [
  */
 const LOCALE_FREE_CORE_FILES: string[] = [
   'src/core/accountForms.ts',
+  'src/core/backup.ts',
   'src/core/currency.ts',
   'src/core/dates.ts',
   'src/core/envelopes.ts',

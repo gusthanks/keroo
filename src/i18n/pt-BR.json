@@ -133,7 +133,8 @@
     "insights_subtitle": "Análises determinísticas locais sem envio para servidores",
     "insights_empty": "Sem alertas ou variações atípicas no momento. Tudo equilibrado!",
     "transactions_empty": "Nenhuma transação registrada ainda.",
-    "col_payee": "Descrição / Beneficiário"
+    "col_payee": "Descrição / Beneficiário",
+    "bill_payment_note": "Pagamento recorrente: {name}"
   },
   "accounts": {
     "title": "Contas & Extratos",
