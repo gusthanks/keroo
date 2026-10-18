@@ -19,7 +19,7 @@ Security problems should not go to the public tracker. See [SECURITY.md](SECURIT
 
 ## Development setup
 
-You need **Node.js 22 or newer** and npm 10. The repo pins Node 22 in `.nvmrc`, and `.npmrc` sets `engine-strict=true`, so npm refuses to install on an unsupported Node version.
+You need **Node.js 22.22.2 or newer on the 22 line, or 24.15 or newer**, and npm 10. The repo pins Node 22 in `.nvmrc`, and `.npmrc` sets `engine-strict=true`, so npm refuses to install on an unsupported Node version.
 
 ```bash
 git clone https://github.com/gusthanks/keroo.git

@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 ### Changed
 
 - CI uses `actions/checkout@v7` and `actions/setup-node@v7`. The workflow inputs did not change.
+- The test DOM is `jsdom` 30 (was 26). jsdom 30 needs Node `^22.22.2 || ^24.15.0 || >=26.0.0`, so `package.json` `engines` now uses the same range. Because `.npmrc` sets `engine-strict=true`, `npm install` stops on older Node 22 and 24 releases.
 
 ### Removed
 

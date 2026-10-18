@@ -65,7 +65,7 @@ Keroo, the frog, keeps an eye on your bills and spending and reacts to them. Its
 
 ## Quick start
 
-You need Node.js 22 or newer. `.nvmrc` pins Node 22, and `.npmrc` sets `engine-strict=true`, so older versions stop at install.
+You need Node.js 22.22.2 or newer on the 22 line, or 24.15 or newer. `.nvmrc` pins Node 22, and `.npmrc` sets `engine-strict=true`, so older versions stop at install.
 
 ```bash
 git clone https://github.com/gusthanks/keroo.git

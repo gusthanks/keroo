@@ -67,7 +67,7 @@ O Keroo, o sapo, fica de olho nas suas contas e nos seus gastos e reage a eles. 
 
 ## Começando
 
-Você precisa do Node.js 22 ou mais novo. O `.nvmrc` fixa o Node 22, e o `.npmrc` liga `engine-strict=true`, então versões antigas param já na instalação.
+Você precisa do Node.js 22.22.2 ou mais novo na linha 22, ou do 24.15 ou mais novo. O `.nvmrc` fixa o Node 22, e o `.npmrc` liga `engine-strict=true`, então versões antigas param já na instalação.
 
 ```bash
 git clone https://github.com/gusthanks/keroo.git

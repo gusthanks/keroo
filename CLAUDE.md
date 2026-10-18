@@ -86,7 +86,7 @@ keroo/
 ├── .gitattributes                # LF normalization; images and fonts marked binary
 ├── .gitignore                    # Ignored build output, dependencies and local files
 ├── .nvmrc                        # Node 22
-├── .npmrc                        # engine-strict=true (package.json requires Node >= 22)
+├── .npmrc                        # engine-strict=true (package.json requires Node ^22.22.2 || ^24.15.0 || >=26)
 ├── .claude/
 │   ├── launch.json               # Dev-server launch config (`npm run dev` on port 5173)
 │   └── commands/
