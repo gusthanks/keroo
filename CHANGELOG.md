@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - CI uses `actions/checkout@v7` and `actions/setup-node@v7`. The workflow inputs did not change.
 
+### Removed
+
+- The unused `tailwind-merge` dependency. No source file imported it, and the production bundle is byte-identical without it.
+
 ## [0.1.0] - 2026-10-18
 
 First public release. The interface is English-first: Keroo starts in `en-US`, switches to `pt-BR` automatically when the browser language is Portuguese, and keeps the two dictionaries at 100% key parity.
