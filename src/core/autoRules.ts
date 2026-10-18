@@ -15,65 +15,28 @@ import type {
   TransactionType,
   TransactionStatus,
   Transaction,
+  AutoRuleConditionField,
+  AutoRuleOperator,
+  AutoRuleCondition,
+  AutoRuleActionField,
+  AutoRuleAction,
+  AutoRule,
 } from '../types';
 
 // ============================================================================
 // Types & Interfaces
 // ============================================================================
 
-export type AutoRuleConditionField =
-  | 'payee'
-  | 'amount'
-  | 'amountCents'
-  | 'memo'
-  | 'notes'
-  | 'accountId';
-
-export type AutoRuleOperator =
-  | 'EQUALS'
-  | 'CONTAINS'
-  | 'STARTS_WITH'
-  | 'ENDS_WITH'
-  | 'REGEX'
-  | 'GREATER_THAN'
-  | 'LESS_THAN'
-  | 'equals'
-  | 'contains'
-  | 'starts_with'
-  | 'ends_with'
-  | 'regex'
-  | 'greater_than'
-  | 'less_than';
-
-export interface AutoRuleCondition {
-  field: AutoRuleConditionField;
-  operator: AutoRuleOperator;
-  value: string | number;
-}
-
-export type AutoRuleActionField =
-  | 'categoryId'
-  | 'payee'
-  | 'notes'
-  | 'memo'
-  | 'tags'
-  | 'isExcludedFromBudget'
-  | 'status';
-
-export interface AutoRuleAction {
-  field: AutoRuleActionField;
-  value: string | string[] | boolean;
-}
-
-export interface AutoRule {
-  id: string;
-  name: string;
-  priority: number; // 1 = highest priority, executed first
-  logic: 'AND' | 'OR';
-  conditions: AutoRuleCondition[];
-  actions: AutoRuleAction[];
-  isActive: boolean;
-}
+// The rule shape lives in src/types/index.ts (shared with the Dexie table);
+// re-exported here so engine consumers keep importing from this module.
+export type {
+  AutoRuleConditionField,
+  AutoRuleOperator,
+  AutoRuleCondition,
+  AutoRuleActionField,
+  AutoRuleAction,
+  AutoRule,
+};
 
 export type DraftAutoRule = Omit<AutoRule, 'id'> & { id?: string };
 

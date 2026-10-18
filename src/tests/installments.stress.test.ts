@@ -1,3 +1,15 @@
+/**
+ * src/tests/installments.stress.test.ts
+ *
+ * Stress tests for the credit card installment engine (src/core/installments.ts):
+ * 1. Cent conservation over 10,000 seeded-random inputs plus edge cases:
+ *    sum(I_k) === A, with the remainder on the 1st installment.
+ * 2. Month-end closing-day clamping from 2024 (leap year) through 2027.
+ * 3. Statement closing cutoff mapping and due-date computation.
+ * 4. Tabela Price (French amortization) and flat surcharge in exact integer cents.
+ * 5. 24-month timeline projection with concurrent overlapping plans.
+ */
+
 import { describe, it, expect } from 'vitest';
 import {
   isLeapYear,
@@ -13,7 +25,7 @@ import {
   getInstallmentObligationForMonth,
 } from '../core/installments';
 
-describe('Challenger M3 Empirical Stress Test Suite: Installments Engine', () => {
+describe('Installments engine stress tests', () => {
   // =========================================================================
   // 1. Cent Conservation: 10,000 Random Combinations + Edge Cases
   // =========================================================================

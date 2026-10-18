@@ -296,10 +296,15 @@ describe('Statistical Spending Heuristics (Keroo Insights)', () => {
       expect(usd.messagePt).toContain('US$');
       expect(usd.messageEn).toContain('$600.00');
 
-      const brl = detectDeliveryVsGrocerySpike(60000, 100000)!;
+      const brl = detectDeliveryVsGrocerySpike(60000, 100000, 'BRL')!;
       expect(brl.messagePt).toContain('R$');
       expect(brl.messageEn).toContain('R$');
       expect(brl.messageEn).not.toMatch(/(^|[^R])\$600/);
+
+      // No currency passed: the locale-neutral default is USD.
+      const fallback = detectDeliveryVsGrocerySpike(60000, 100000)!;
+      expect(fallback.messageEn).toContain('$600.00');
+      expect(fallback.messagePt).not.toContain('R$');
     });
 
     it('generates unique, stable ids for multiple category surges and injects createdAt', () => {

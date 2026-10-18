@@ -1,14 +1,14 @@
 /**
- * src/tests/challenger_m3_subscriptions_split_stress.test.ts
+ * src/tests/subscriptionsSplit.stress.test.ts
  *
- * Empirical Challenger Stress Test Suite for Milestone M3:
+ * Stress tests for the subscriptions radar and the bilateral split ledger:
  * 1. Anchor-day preservation across 48 monthly billing cycles (Jan 2026 - Dec 2029)
- *    verifying zero schedule drift across 30-day months, leap year Feb 29 (2028),
+ *    with zero schedule drift across 30-day months, leap-year Feb 29 (2028),
  *    and non-leap Feb 28.
  * 2. 5-state status machine exact boundary transitions (today, +/- 1..4 days, leap year, month/year ends).
- * 3. Proactive 3-day window detector (speech bubble check-in queue: 1, 2, 3 days included; 4+ excluded).
+ * 3. 3-day check-in window detector (speech bubble queue: 1, 2, 3 days included; 4+ excluded).
  * 4. Bilateral debt netting across 50 alternating transactions, odd-cent payer absorption (1, 3, 5, 10001 cents),
- *    zero-sum invariance at all steps, and full settlement reconciliation to exact 0 cents.
+ *    zero-sum invariance at every step, and full settlement reconciliation to exactly 0 cents.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -33,7 +33,7 @@ import {
 } from '../core/split';
 import type { RecurringBill, SplitExpense, SplitSettlement, ISODate } from '../types';
 
-describe('Empirical Challenger M3 Stress Tests — Subscriptions Radar & Bilateral Split Netting', () => {
+describe('Subscriptions radar & bilateral split netting stress tests', () => {
   // ==========================================================================
   // 1. Anchor-Day Preservation Stress Test (48 Months & Leap Year 2028)
   // ==========================================================================

@@ -1,23 +1,16 @@
 /**
- * src/tests/challenger_m4_mood_stress.test.ts
+ * src/tests/kerooMood.stress.test.ts
  *
- * EMPIRICAL ADVERSARIAL STRESS TEST SUITE — Stage 4 (Milestone M5).
- * Deterministic Keroo Pet Engine: Latency, State Transitions, and Queue Discipline.
- *
- * Verifies:
- * 1. Synchronous Latency Benchmark (10,000 iterations under varying realistic financial metrics).
- *    - 100% of calls complete in under 2.0ms.
- *    - Average call duration < 0.1ms.
- * 2. Inactivity vs Overdue Bills Preemption Hierarchy:
- *    - Priority 1 (SWEATING) strictly preempts Priority 2 (SLEEPY) when overdue bills exist.
- * 3. Clean Slate Zero-Budget Guard:
- *    - monthBudgetCents = 0 with expenses does NOT trigger SWEATING.
- * 4. Zero Income Guard:
- *    - monthIncomeCents = 0 does not trigger division by zero, NaN savings rate, or false SWEATING.
- * 5. Bill Check-In Queue Discipline:
- *    - 50 bills with varying due dates, cadences, snooze states, and amounts.
- *    - Strict drain sequence: Overdue (oldest first, then largest amount) -> Due Today (largest amount)
- *      -> Due Soon (soonest first, then largest amount) -> Drains to null ignoring safe, snoozed, inactive, paid.
+ * Stress tests for the deterministic Keroo mood engine (src/core/kerooMood.ts):
+ * 1. Synchronous latency benchmark: 10,000 evaluations over varied realistic metrics,
+ *    every call under 2.0ms and the average under 0.1ms.
+ * 2. Overdue bills vs inactivity: Priority 1 (SWEATING) strictly preempts
+ *    Priority 2 (SLEEPY) when overdue bills exist.
+ * 3. Clean-slate zero-budget guard: monthBudgetCents = 0 with expenses does NOT trigger SWEATING.
+ * 4. Zero-income guard: monthIncomeCents = 0 causes no division by zero, NaN savings rate or false SWEATING.
+ * 5. Bill check-in queue discipline over 50 bills with varying due dates, cadences, snooze states and amounts.
+ *    Drain order: Overdue (oldest first, then largest amount) -> Due Today (largest amount)
+ *    -> Due Soon (soonest first, then largest amount) -> null, ignoring safe, snoozed, inactive and paid bills.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -29,7 +22,7 @@ import {
 } from '../core/kerooMood';
 import type { RecurringBill, ISODate } from '../types';
 
-describe('Empirical Challenger M4 — Deterministic Keroo Pet Stress Harness', () => {
+describe('Keroo mood engine stress tests: latency, priority and check-in queue', () => {
   // ==========================================================================
   // 1. Synchronous Latency Benchmark (10,000 runs)
   // ==========================================================================
@@ -93,7 +86,7 @@ describe('Empirical Challenger M4 — Deterministic Keroo Pet Stress Harness', (
       const totalBatchDurationMs = tBatchEnd - tBatchStart;
       const averageDurationMs = totalBatchDurationMs / iterations;
 
-      console.log(`[Challenger M4 Benchmark] 10,000 iterations:`);
+      console.log(`[kerooMood benchmark] 10,000 iterations:`);
       console.log(`  - Total duration: ${totalBatchDurationMs.toFixed(3)} ms`);
       console.log(`  - Average duration per call: ${averageDurationMs.toFixed(5)} ms`);
       console.log(`  - Max single-call duration: ${maxDurationMs.toFixed(5)} ms`);

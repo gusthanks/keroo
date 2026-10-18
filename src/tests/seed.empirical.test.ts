@@ -1,3 +1,16 @@
+/**
+ * src/tests/seed.empirical.test.ts
+ *
+ * End-to-end checks for the clean-slate seed and the demo dataset:
+ * 1. KEROO_DB_SCHEMA_V1 table count and the clean-slate category definitions.
+ * 2. Clean-slate and demo datasets load without errors for every supported locale
+ *    and currency, including edge-case pet nicknames and rapid demo/clean toggling.
+ * 3. Demo data completeness: accounts, credit cards, installment plans (exact cent
+ *    conservation), subscriptions, split expenses, piggy banks and mascot mood.
+ * 4. Bidirectional pt-BR / en-US translation key parity with non-empty values.
+ * 5. docs/ROADMAP.md stage checkboxes are all checked.
+ */
+
 import { describe, it, expect, beforeEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -26,11 +39,11 @@ function extractAllJsonKeys(obj: Record<string, any>, prefix = ''): string[] {
   return keys.sort();
 }
 
-describe('Challenger M2 Empirical Validation Suite', () => {
+describe('Seed & demo datasets: loading, completeness, i18n parity and roadmap state', () => {
   let db: KerooDatabase;
 
   beforeEach(async () => {
-    const dbName = `challenger_test_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const dbName = `seed_test_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     db = new KerooDatabase(dbName);
     await db.open();
   });

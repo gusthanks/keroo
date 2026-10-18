@@ -12,11 +12,11 @@ export type SupportedTheme = 'light' | 'dark' | 'system';
 // 1. Account Entity
 // ==========================================
 export type AccountType =
-  | 'checking'     // Conta Corrente
-  | 'savings'      // Poupança / Reserva de Emergência
-  | 'credit_card'  // Cartão de Crédito
-  | 'cash'         // Dinheiro Físico / Carteira
-  | 'investment';  // Investimentos / Corretora
+  | 'checking'     // Checking account
+  | 'savings'      // Savings / emergency fund
+  | 'credit_card'  // Credit card
+  | 'cash'         // Physical cash / wallet
+  | 'investment';  // Investments / brokerage
 
 export interface Account {
   id: string; // UUID v4
@@ -44,7 +44,7 @@ export interface Account {
 // ==========================================
 export interface CategoryGroup {
   id: string;
-  name: string; // e.g., "Gastos Fixos & Moradia", "Estilo de Vida"
+  name: string; // e.g., "Fixed Costs & Housing", "Lifestyle"
   sortOrder: number;
   isArchived: boolean;
 }
@@ -52,7 +52,7 @@ export interface CategoryGroup {
 export interface Category {
   id: string;
   groupId: string; // FK -> CategoryGroup.id
-  name: string; // e.g., "Aluguel", "Supermercado", "Restaurantes"
+  name: string; // e.g., "Rent", "Groceries", "Restaurants"
   icon?: string;
   color?: string;
   sortOrder: number;
@@ -122,25 +122,50 @@ export interface Transaction {
 // ==========================================
 // 5. Auto-Categorization Rule Entity
 // ==========================================
-export type RuleField = 'payee' | 'notes' | 'amountCents' | 'accountId';
-export type RuleOperator =
-  | 'contains'
+// Single source of truth for the rule shape: the Dexie `auto_rules` table and
+// the rule engine in src/core/autoRules.ts both use these types.
+export type AutoRuleConditionField =
+  | 'payee'
+  | 'amount'
+  | 'amountCents'
+  | 'memo'
+  | 'notes'
+  | 'accountId';
+
+export type AutoRuleOperator =
+  | 'EQUALS'
+  | 'CONTAINS'
+  | 'STARTS_WITH'
+  | 'ENDS_WITH'
+  | 'REGEX'
+  | 'GREATER_THAN'
+  | 'LESS_THAN'
   | 'equals'
+  | 'contains'
   | 'starts_with'
   | 'ends_with'
   | 'regex'
   | 'greater_than'
   | 'less_than';
 
-export interface RuleCondition {
-  field: RuleField;
-  operator: RuleOperator;
+export interface AutoRuleCondition {
+  field: AutoRuleConditionField;
+  operator: AutoRuleOperator;
   value: string | number;
 }
 
-export interface RuleAction {
-  field: 'categoryId' | 'payee' | 'notes' | 'status';
-  value: string | boolean;
+export type AutoRuleActionField =
+  | 'categoryId'
+  | 'payee'
+  | 'notes'
+  | 'memo'
+  | 'tags'
+  | 'isExcludedFromBudget'
+  | 'status';
+
+export interface AutoRuleAction {
+  field: AutoRuleActionField;
+  value: string | string[] | boolean;
 }
 
 export interface AutoRule {
@@ -148,10 +173,16 @@ export interface AutoRule {
   name: string;
   priority: number; // 1 = highest, executed first
   logic: 'AND' | 'OR';
-  conditions: RuleCondition[];
-  actions: RuleAction[];
+  conditions: AutoRuleCondition[];
+  actions: AutoRuleAction[];
   isActive: boolean;
 }
+
+// Short aliases kept for docs/DATABASE_SCHEMA.md naming.
+export type RuleField = AutoRuleConditionField;
+export type RuleOperator = AutoRuleOperator;
+export type RuleCondition = AutoRuleCondition;
+export type RuleAction = AutoRuleAction;
 
 // ==========================================
 // 6. Credit Card Installment Plan Entity (1x-24x)
@@ -204,7 +235,7 @@ export type SubscriptionPaymentStatus =
 
 export interface RecurringBill {
   id: string;
-  name: string; // e.g., "Netflix", "Aluguel", "Spotify"
+  name: string; // e.g., "Netflix", "Rent", "Spotify"
   amountCents: Cents;
   currency: SupportedCurrency;
   cadence: SubscriptionCadence;
@@ -278,7 +309,7 @@ export interface SplitSettlement {
 // ==========================================
 export interface PiggyBank {
   id: string;
-  name: string; // e.g., "Reserva de Emergência", "Viagem Japão"
+  name: string; // e.g., "Emergency Fund", "Japan Trip"
   targetCents: Cents;
   savedCents: Cents;
   targetDate?: ISODate;

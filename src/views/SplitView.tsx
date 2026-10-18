@@ -30,6 +30,8 @@ import {
   UserPlus,
 } from 'lucide-react';
 
+type SplitRelationship = SplitParty['relationship'];
+
 export interface SplitViewProps {
   currency?: SupportedCurrency;
 }
@@ -59,9 +61,8 @@ export const SplitView: React.FC<SplitViewProps> = ({ currency = 'BRL' }) => {
 
   // New Contact Form State
   const [newContactName, setNewContactName] = useState('');
-  const [newContactRelationship, setNewContactRelationship] = useState<
-    'household_partner' | 'roommate' | 'friend' | 'family' | 'other'
-  >('household_partner');
+  const [newContactRelationship, setNewContactRelationship] =
+    useState<SplitRelationship>('household_partner');
   const [newContactPix, setNewContactPix] = useState('');
 
   // Active contact object
@@ -520,7 +521,7 @@ export const SplitView: React.FC<SplitViewProps> = ({ currency = 'BRL' }) => {
             <label className="text-xs font-medium text-text-primary">{t('split.relationship_label')}</label>
             <select
               value={newContactRelationship}
-              onChange={(e) => setNewContactRelationship(e.target.value as any)}
+              onChange={(e) => setNewContactRelationship(e.target.value as SplitRelationship)}
               className="w-full bg-surface-card border border-border-subtle rounded-xl px-3 py-2 text-base sm:text-sm text-text-primary outline-none focus:border-brand"
             >
               <option value="household_partner">{t('split.rel.household_partner')}</option>

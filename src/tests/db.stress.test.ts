@@ -1,3 +1,15 @@
+/**
+ * src/tests/db.stress.test.ts
+ *
+ * Stress tests for the Dexie database layer (KerooDatabase):
+ * 1. Insert and read back a valid entity in every one of the 14 tables.
+ * 2. Compound indexes: [categoryId+yearMonth] on monthly_envelopes,
+ *    [accountId+date] on transactions, [paymentStatus+nextDueDate] on recurring_bills.
+ * 3. resetToCleanSlate purges all user data and restores the pristine clean slate.
+ * 4. Integer-cent invariant: the monetary validation hooks reject fractional cents
+ *    on accounts, envelopes, recurring bills, piggy banks and split expenses.
+ */
+
 import { describe, it, expect, beforeEach } from 'vitest';
 import { KerooDatabase } from '../db';
 import {
@@ -21,7 +33,7 @@ import type {
   UserSettings,
 } from '../types';
 
-describe('Empirical Challenger: Dexie Database Engine & Invariants Stress Harness', () => {
+describe('Dexie database stress tests: tables, indexes, reset and integer cents', () => {
   let db: KerooDatabase;
 
   beforeEach(async () => {

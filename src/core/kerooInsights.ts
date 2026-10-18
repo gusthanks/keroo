@@ -11,7 +11,10 @@
  * 2. 3-Month Moving Average Category Surge Heuristic (category spending > 35% above baseline).
  * 3. Credit Card Installment Relief Month Celebration (upcoming decrease in installment debt).
  * 4. Annualized Subscription Cost Summary (normalization of recurring bills).
- * 5. Bilateral Split Net Receivables Alert (reminds when net receivables >= R$ 50,00).
+ * 5. Bilateral Split Net Receivables Alert (reminds when net receivables >= 5000 cents).
+ *
+ * Every detector takes an optional currency (default USD). pt-BR text is formatted with
+ * pt-BR conventions and en-US text with en-US conventions; callers pass the user's currency.
  */
 
 import type { Cents, InstallmentPlan, RecurringBill, YearMonth } from '../types';
@@ -95,7 +98,7 @@ export interface SplitPartyBalance {
 export function detectDeliveryVsGrocerySpike(
   deliveryCents: Cents,
   groceryCents: Cents,
-  currency: SupportedCurrency = 'BRL',
+  currency: SupportedCurrency = 'USD',
   options: InsightContextOptions = {}
 ): InsightItem | null {
   assertIntegerCents(deliveryCents, 'detectDeliveryVsGrocerySpike: deliveryCents');
@@ -170,8 +173,8 @@ export function detectDeliveryVsGrocerySpike(
 export function detectCategorySurge(
   currentCents: Cents,
   prior3MonthAveragesCents: Cents,
-  categoryName: string = 'esta categoria',
-  currency: SupportedCurrency = 'BRL',
+  categoryName?: string,
+  currency: SupportedCurrency = 'USD',
   options: InsightContextOptions = {}
 ): InsightItem | null {
   assertIntegerCents(currentCents, 'detectCategorySurge: currentCents');
@@ -198,14 +201,17 @@ export function detectCategorySurge(
   const currentFormattedEn = formatCurrency(currentCents, currency, 'en-US');
   const avgFormattedEn = formatCurrency(prior3MonthAveragesCents, currency, 'en-US');
 
-  const titlePt = `Aumento atípico em ${categoryName} 📈`;
-  const titleEn = `Unusual surge in ${categoryName} 📈`;
+  const namePt = categoryName ?? 'esta categoria';
+  const nameEn = categoryName ?? 'this category';
 
-  const messagePt = `Você gastou ${currentFormatted} este mês em ${categoryName}, um salto de +${surgePercent}% sobre a sua média trimestral (${avgFormatted}).`;
-  const messageEn = `You spent ${currentFormattedEn} this month on ${categoryName}, a +${surgePercent}% surge above your 3-month average (${avgFormattedEn}).`;
+  const titlePt = `Aumento atípico em ${namePt} 📈`;
+  const titleEn = `Unusual surge in ${nameEn} 📈`;
+
+  const messagePt = `Você gastou ${currentFormatted} este mês em ${namePt}, um salto de +${surgePercent}% sobre a sua média trimestral (${avgFormatted}).`;
+  const messageEn = `You spent ${currentFormattedEn} this month on ${nameEn}, a +${surgePercent}% surge above your 3-month average (${avgFormattedEn}).`;
 
   return {
-    id: buildInsightId('category_surge', categoryName, options.yearMonth ?? currentCents),
+    id: buildInsightId('category_surge', categoryName ?? 'category', options.yearMonth ?? currentCents),
     type: 'category_surge',
     level: 'warning',
     title: titlePt,
@@ -232,7 +238,7 @@ export function detectCategorySurge(
 /**
  * Evaluates active installment plans and detects when monthly debt commitments
  * decrease in the upcoming month (due to installment plans completing).
- * Triggers a celebration when obligations decrease by >= R$ 50,00 (5000 cents) or drop to zero.
+ * Triggers a celebration when obligations decrease by >= 5000 cents (50.00 in the user's currency) or drop to zero.
  *
  * @param plans Array of active credit card installment plans
  * @param currentYearMonth Format 'YYYY-MM' (e.g. '2026-10')
@@ -241,7 +247,7 @@ export function detectCategorySurge(
 export function detectInstallmentRelief(
   plans: InstallmentPlan[],
   currentYearMonth: YearMonth,
-  currency: SupportedCurrency = 'BRL',
+  currency: SupportedCurrency = 'USD',
   options: InsightContextOptions = {}
 ): InsightItem | null {
   if (!plans || plans.length === 0) {
@@ -268,7 +274,7 @@ export function detectInstallmentRelief(
   }
 
   // Check relief conditions:
-  // 1. Obligations decrease by >= 5000 cents (R$ 50,00) OR
+  // 1. Obligations decrease by >= 5000 cents (50.00 in any currency) OR
   // 2. Next month obligations drop to zero while current month has debt OR
   // 3. One or more installment plans conclude this month
   const reliefCents = currentMonthTotalCents - nextMonthTotalCents;
@@ -334,7 +340,7 @@ export function detectInstallmentRelief(
  */
 export function calculateAnnualizedSubscriptionsImpact(
   bills: RecurringBill[],
-  currency: SupportedCurrency = 'BRL',
+  currency: SupportedCurrency = 'USD',
   options: InsightContextOptions = {}
 ): InsightItem {
   const summary = calculateAnnualCommitment(bills || []);
@@ -376,7 +382,7 @@ export function calculateAnnualizedSubscriptionsImpact(
 // ============================================================================
 
 /**
- * Alerts the user when net receivables from friends or roommates exceed R$ 50,00 (5000 cents).
+ * Alerts the user when net receivables from friends or roommates reach 5000 cents (50.00 in the user's currency).
  * Helps users remember to request settlement without awkwardness.
  *
  * @param balances Array of party balance objects OR total net receivable in cents
@@ -384,7 +390,7 @@ export function calculateAnnualizedSubscriptionsImpact(
  */
 export function detectSplitReceivablesAlert(
   balances: SplitPartyBalance[] | Cents,
-  currency: SupportedCurrency = 'BRL',
+  currency: SupportedCurrency = 'USD',
   options: InsightContextOptions = {}
 ): InsightItem | null {
   let totalReceivableCents = 0;
@@ -402,7 +408,7 @@ export function detectSplitReceivablesAlert(
     }
   }
 
-  // Trigger alert when net receivable >= 5000 cents (R$ 50,00)
+  // Trigger alert when net receivable >= 5000 cents (50.00 in any currency)
   if (totalReceivableCents < 5000) {
     return null;
   }
@@ -456,7 +462,7 @@ export interface CollectInsightsParams {
   currentYearMonth?: YearMonth;
   bills?: RecurringBill[];
   splitBalances?: SplitPartyBalance[] | Cents;
-  /** Currency used to format every amount in both languages (default 'BRL'). */
+  /** Currency used to format every amount in both languages (default 'USD'). */
   currency?: SupportedCurrency;
   /** Injected epoch-ms timestamp for createdAt (keeps output deterministic). */
   now?: number;
@@ -467,7 +473,7 @@ export interface CollectInsightsParams {
  */
 export function generateAllKerooInsights(params: CollectInsightsParams): InsightItem[] {
   const insights: InsightItem[] = [];
-  const currency: SupportedCurrency = params.currency ?? 'BRL';
+  const currency: SupportedCurrency = params.currency ?? 'USD';
   const ctx: InsightContextOptions = { yearMonth: params.currentYearMonth, now: params.now };
 
   // 1. Delivery vs Grocery Spike

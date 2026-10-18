@@ -458,7 +458,7 @@ export function getUpcomingBillCheckIn(
 // ============================================================================
 
 /**
- * Handles the `[✅ Já paguei!]` / `[Paid!]` 1-click action:
+ * Handles the `[✅ Paid!]` 1-click check-in action:
  * - Advances the bill to the next billing cycle using anchorDay preservation.
  * - Sets lastPaymentDate to paymentDate.
  * - Clears any active snooze.
@@ -582,7 +582,7 @@ export async function handleBillPaymentAction(
 }
 
 /**
- * Handles the `[⏰ Lembrar amanhã]` / `[Snooze]` action:
+ * Handles the `[⏰ Snooze]` check-in action:
  * Snoozes the bill reminder by the specified number of days (default: 1 day).
  */
 export function handleBillSnoozeAction(
@@ -605,7 +605,7 @@ export function handleBillSnoozeAction(
 }
 
 /**
- * Handles the `[✏️ Ajustar valor]` / `[Edit amount]` action:
+ * Handles the `[✏️ Edit amount]` check-in action:
  * Modifies the recurring bill's amount in integer cents.
  */
 export function handleBillEditAmountAction(

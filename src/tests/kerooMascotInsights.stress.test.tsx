@@ -1,16 +1,15 @@
 /**
- * src/tests/challenger_m4_mascot_insights_stress.test.tsx
+ * src/tests/kerooMascotInsights.stress.test.tsx
  *
- * Empirical Challenger Stress Test Suite for Milestone M5 (Stage 4):
- * 1. Mascot SVG geometry & poses: verify all 10 poses render valid SVG trees
- *    with proper viewBox, path elements, and coin props without React console errors
- *    or invalid SVG attributes.
+ * Stress tests for the Keroo mascot, the spending insights and the speech bubble:
+ * 1. Mascot SVG geometry: all 10 poses render valid SVG trees with a proper viewBox,
+ *    path elements and coin props, without React console errors or invalid SVG attributes.
  * 2. Spending heuristics boundary conditions:
- *    - Delivery ratio exactly at 59.9% (no alert) vs 60.0% (alert triggered).
- *    - Category surge at 34.9% (no alert) vs 35.0% threshold (alert triggered).
- *    - Installment relief when monthly commitment drops from R$ 500 to R$ 0.
- *    - Bilateral split alert at R$ 49,99 (no alert) vs R$ 50,00 (alert triggered).
- * 3. Speech bubble interaction: verify action callbacks fire with exact bill ID and expected payloads.
+ *    - Delivery ratio at 59.9% (no alert) vs 60.0% (alert).
+ *    - Category surge at 34.9% (no alert) vs the 35.0% threshold (alert).
+ *    - Installment relief when the monthly commitment drops from R$ 500 to R$ 0.
+ *    - Split receivables alert at R$ 49,99 (no alert) vs R$ 50,00 (alert).
+ * 3. Speech bubble interaction: action callbacks fire with the exact bill ID and payloads.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -28,7 +27,7 @@ import {
 } from '../core/kerooInsights';
 import type { Cents, InstallmentPlan, RecurringBill } from '../types';
 
-describe('Empirical Challenger M4 Stress Tests — Mascot Rendering, Coin Props & Spending Heuristics', () => {
+describe('Keroo mascot rendering, coin props & spending heuristics stress tests', () => {
   // Console spy to verify zero React / SVG rendering warnings
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
   let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
@@ -322,7 +321,7 @@ describe('Empirical Challenger M4 Stress Tests — Mascot Rendering, Coin Props 
           ],
         };
 
-        const insight = detectInstallmentRelief([mockPlan], '2026-10');
+        const insight = detectInstallmentRelief([mockPlan], '2026-10', 'BRL');
         expect(insight).not.toBeNull();
         expect(insight!.type).toBe('installment_relief');
         expect(insight!.level).toBe('celebration');
