@@ -40,7 +40,7 @@ export const RoamingCompanion: React.FC<RoamingCompanionProps> = ({
   checkInPrompt,
   insightMessage,
   enabled = true,
-  locale = 'pt-BR',
+  locale = 'en-US',
   currency = 'BRL',
   onPayBill,
   onSnoozeBill,

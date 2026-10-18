@@ -1,12 +1,16 @@
 {
-  "name": "Keroo — Finanças Pessoais & Mascot Companion",
+  "id": "/",
+  "name": "Keroo — Personal Finance",
   "short_name": "Keroo",
-  "description": "Aplicativo financeiro local-first, privado e com mascote inteligente determinístico.",
+  "description": "Private, local-first personal finance with envelope budgeting, installment tracking, a bills radar, savings goals and a lucky fortune frog companion.",
+  "lang": "en",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#0D1117",
-  "theme_color": "#0D1117",
+  "orientation": "any",
+  "background_color": "#121417",
+  "theme_color": "#121417",
+  "categories": ["finance", "productivity"],
   "icons": [
     {
       "src": "/icons/icon-192.png",

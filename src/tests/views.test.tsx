@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
 import { I18nProvider } from '../i18n';
 import { db } from '../db';
@@ -36,7 +36,12 @@ const makeBill = (id: string, name: string, nextDueDate: string, isActive = true
 
 describe('Keroo Application Views Suite', () => {
   beforeEach(async () => {
+    localStorage.clear();
     await seedDemoData(db, 'pt-BR', 'BRL', 'Keroo');
+  });
+
+  afterEach(() => {
+    localStorage.clear();
   });
 
   const renderWithI18n = (ui: React.ReactElement) => {
@@ -210,6 +215,8 @@ describe('Keroo Application Views Suite', () => {
   });
 
   it('renders complete App with Sidebar navigation and switches active views', async () => {
+    // <App /> owns its I18nProvider (English-first); opt into pt-BR to keep the Portuguese labels.
+    localStorage.setItem('keroo_language', 'pt-BR');
     render(<App />);
 
     // Find desktop sidebar

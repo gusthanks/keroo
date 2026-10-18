@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { I18nProvider } from '../i18n';
 import { db } from '../db';
@@ -156,7 +156,8 @@ describe('Common Craft UI Components', () => {
         </Modal>
       );
 
-      const closeBtn = screen.getByRole('button', { name: /fechar/i });
+      // Rendered without an I18nProvider, the Modal falls back to the en-US default ("Close").
+      const closeBtn = screen.getByRole('button', { name: /close/i });
       fireEvent.click(closeBtn);
       expect(handleClose).toHaveBeenCalledTimes(1);
     });
@@ -235,6 +236,16 @@ describe('Common Craft UI Components', () => {
 });
 
 describe('Regression: navigation, palette, theme and piggy bank fixes', () => {
+  // The app is English-first; these regressions assert the Portuguese labels, so start clean
+  // and opt into pt-BR explicitly wherever <App /> owns its own I18nProvider.
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
   const withI18n = (ui: React.ReactElement) =>
     render(<I18nProvider initialLanguage="pt-BR">{ui}</I18nProvider>);
 
@@ -294,6 +305,7 @@ describe('Regression: navigation, palette, theme and piggy bank fixes', () => {
 
   it('header theme button toggles the theme instead of writing the click event to IndexedDB', async () => {
     await seedDemoData(db, 'pt-BR', 'BRL', 'Keroo', { theme: 'light' });
+    localStorage.setItem('keroo_language', 'pt-BR');
     render(<App />);
     const header = await screen.findByTestId('app-header');
     fireEvent.click(within(header).getByLabelText('Alternar tema'));

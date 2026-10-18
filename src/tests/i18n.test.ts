@@ -1,11 +1,18 @@
 import React from 'react';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import ptBR from '../i18n/pt-BR.json';
 import enUS from '../i18n/en-US.json';
-import { I18nProvider, translate, useOptionalTranslation, useTranslation } from '../i18n';
+import {
+  I18nProvider,
+  resolveInitialLocale,
+  translate,
+  useOptionalTranslation,
+  useTranslation,
+} from '../i18n';
+import { db } from '../db';
 
 function getAllKeys(obj: Record<string, any>, prefix = ''): string[] {
   let keys: string[] = [];
@@ -76,6 +83,10 @@ describe('translate() and the i18n hooks', () => {
     localStorage.clear();
   });
 
+  afterEach(() => {
+    localStorage.clear();
+  });
+
   it('returns the text of the requested language', () => {
     expect(translate('pt-BR', 'common.save')).toBe('Salvar');
     expect(translate('en-US', 'common.save')).toBe('Save');
@@ -97,14 +108,102 @@ describe('translate() and the i18n hooks', () => {
     expect(translate('en-US', 'split')).toBe('split'); // a namespace is not a string
   });
 
-  it('falls back to pt-BR for an unsupported language code', () => {
-    expect(translate('xx-XX' as never, 'common.cancel')).toBe('Cancelar');
+  it('falls back to en-US for an unsupported language code', () => {
+    expect(translate('xx-XX' as never, 'common.cancel')).toBe('Cancel');
   });
 
-  it('useOptionalTranslation works without a provider and defaults to pt-BR', () => {
+  it('useOptionalTranslation works without a provider and defaults to en-US', () => {
     const { result } = renderHook(() => useOptionalTranslation());
+    expect(result.current.language).toBe('en-US');
+    expect(result.current.t('common.close')).toBe('Close');
+  });
+
+  it('I18nProvider defaults to en-US (jsdom navigator.language) and sets <html lang> and the title', () => {
+    expect(navigator.language).toBe('en-US');
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(I18nProvider, { children });
+    const { result } = renderHook(() => useTranslation(), { wrapper });
+    expect(result.current.language).toBe('en-US');
+    expect(result.current.t('common.save')).toBe('Save');
+    expect(document.documentElement.lang).toBe('en-US');
+    expect(document.title).toBe(`${enUS.app.title} — ${enUS.app.subtitle}`);
+  });
+
+  it('I18nProvider starts in pt-BR when localStorage keroo_language is "pt-BR"', () => {
+    localStorage.setItem('keroo_language', 'pt-BR');
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(I18nProvider, { children });
+    const { result } = renderHook(() => useTranslation(), { wrapper });
     expect(result.current.language).toBe('pt-BR');
-    expect(result.current.t('common.close')).toBe('Fechar');
+    expect(result.current.t('common.save')).toBe('Salvar');
+    expect(document.documentElement.lang).toBe('pt-BR');
+    expect(document.title).toBe(`${ptBR.app.title} — ${ptBR.app.subtitle}`);
+  });
+
+  it('ignores an unsupported value saved in localStorage', () => {
+    localStorage.setItem('keroo_language', 'fr-FR');
+    expect(resolveInitialLocale()).toBe('en-US');
+    expect(resolveInitialLocale('pt-BR')).toBe('pt-BR');
+  });
+
+  it('I18nProvider starts in pt-BR when the browser language is Portuguese', () => {
+    const own = Object.getOwnPropertyDescriptor(window.navigator, 'language');
+    Object.defineProperty(window.navigator, 'language', { value: 'pt-BR', configurable: true });
+    try {
+      expect(resolveInitialLocale()).toBe('pt-BR');
+      const wrapper = ({ children }: { children: React.ReactNode }) =>
+        React.createElement(I18nProvider, { children });
+      const { result } = renderHook(() => useTranslation(), { wrapper });
+      expect(result.current.language).toBe('pt-BR');
+      expect(result.current.t('common.close')).toBe('Fechar');
+    } finally {
+      if (own) {
+        Object.defineProperty(window.navigator, 'language', own);
+      } else {
+        delete (window.navigator as { language?: string }).language;
+      }
+    }
+    expect(navigator.language).toBe('en-US');
+  });
+
+  it('a saved localStorage choice beats both initialLanguage and the browser language', () => {
+    localStorage.setItem('keroo_language', 'en-US');
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(I18nProvider, { initialLanguage: 'pt-BR', children });
+    const { result } = renderHook(() => useTranslation(), { wrapper });
+    expect(result.current.language).toBe('en-US');
+  });
+
+  it('setLanguage persists the choice to localStorage and to the Dexie user_settings row', async () => {
+    const now = new Date().toISOString();
+    await db.user_settings.put({
+      id: 'global',
+      language: 'en-US',
+      currency: 'USD',
+      theme: 'system',
+      onboardingCompleted: true,
+      petNickname: 'Keroo',
+      roamingPetEnabled: true,
+      rolloverModeDefault: 'rollover_negative',
+      createdAt: now,
+      updatedAt: now,
+    });
+    try {
+      const wrapper = ({ children }: { children: React.ReactNode }) =>
+        React.createElement(I18nProvider, { children });
+      const { result } = renderHook(() => useTranslation(), { wrapper });
+      expect(result.current.language).toBe('en-US');
+
+      act(() => result.current.setLanguage('pt-BR'));
+
+      expect(result.current.language).toBe('pt-BR');
+      expect(localStorage.getItem('keroo_language')).toBe('pt-BR');
+      await waitFor(async () => {
+        expect((await db.user_settings.get('global'))?.language).toBe('pt-BR');
+      });
+    } finally {
+      await db.user_settings.clear();
+    }
   });
 
   it('I18nProvider exposes t() bound to the active language with interpolation', () => {
