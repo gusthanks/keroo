@@ -191,13 +191,26 @@ export function maxCents(...cents: number[]): number {
 }
 
 // ============================================================================
+// Locale-derived defaults
+// ============================================================================
+
+/**
+ * Default display currency for a resolved UI locale: Brazilian Portuguese
+ * uses BRL; every other locale falls back to USD. Used wherever a currency
+ * has not been explicitly chosen yet (onboarding, missing settings).
+ */
+export function defaultCurrencyFor(locale: string | null | undefined): SupportedCurrency {
+  return locale === 'pt-BR' ? 'BRL' : 'USD';
+}
+
+// ============================================================================
 // Formatting
 // ============================================================================
 
 export function formatCurrency(
   cents: number,
-  currency: SupportedCurrency = 'BRL',
-  locale: SupportedLocale = 'pt-BR',
+  currency: SupportedCurrency = 'USD',
+  locale: SupportedLocale = 'en-US',
   options?: CurrencyFormatOptions
 ): string {
   assertIntegerCents(cents, 'formatCurrency: cents');

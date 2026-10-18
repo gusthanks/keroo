@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { db } from '../../db';
 import { seedCleanSlate, seedDemoData } from '../../db/seed';
 import { useTranslation } from '../../i18n';
+import { defaultCurrencyFor } from '../../core/currency';
 import type { SupportedCurrency } from '../../types';
 import { Sparkles, ArrowRight, ArrowLeft, Check, Coins, Globe, Heart } from 'lucide-react';
 
@@ -13,7 +14,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
   const { t, language, setLanguage } = useTranslation();
 
   const [step, setStep] = useState<number>(1);
-  const [selectedCurrency, setSelectedCurrency] = useState<SupportedCurrency>('BRL');
+  // The currency follows the active language (pt-BR -> BRL, otherwise USD)
+  // until the user explicitly taps a currency in step 2 ("currency touched").
+  // A non-null value is that explicit choice and no longer tracks the language.
+  const [touchedCurrency, setTouchedCurrency] = useState<SupportedCurrency | null>(null);
+  const selectedCurrency: SupportedCurrency = touchedCurrency ?? defaultCurrencyFor(language);
+  const currencyOptions: SupportedCurrency[] =
+    language === 'pt-BR' ? ['BRL', 'USD', 'EUR'] : ['USD', 'EUR', 'BRL'];
   const [petNickname, setPetNickname] = useState<string>('Keroo');
   const [loadDemo, setLoadDemo] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -127,11 +134,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
               </p>
 
               <div className="space-y-2 pt-2">
-                {(['BRL', 'USD', 'EUR'] as SupportedCurrency[]).map((cur) => (
+                {currencyOptions.map((cur) => (
                   <button
                     key={cur}
                     type="button"
-                    onClick={() => setSelectedCurrency(cur)}
+                    onClick={() => setTouchedCurrency(cur)}
                     className={`w-full p-3.5 rounded-xl border text-left btn-tactile transition-colors flex items-center justify-between ${
                       selectedCurrency === cur
                         ? 'border-brand bg-brand-subtle text-brand-text font-medium'

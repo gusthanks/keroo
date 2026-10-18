@@ -72,8 +72,8 @@ export const CLEAN_SLATE_SEED_CATEGORIES: SeedCategoryGroup[] = [
  */
 export async function seedCleanSlate(
   db: KerooDatabase,
-  lang: SupportedLocale = 'pt-BR',
-  currency: SupportedCurrency = 'BRL',
+  lang: SupportedLocale = 'en-US',
+  currency: SupportedCurrency = 'USD',
   petNickname: string = 'Keroo',
   preserve?: SeedPreserveOptions
 ): Promise<void> {
@@ -166,8 +166,8 @@ async function writeCleanSlate(
  */
 export async function seedDemoData(
   db: KerooDatabase,
-  lang: SupportedLocale = 'pt-BR',
-  currency: SupportedCurrency = 'BRL',
+  lang: SupportedLocale = 'en-US',
+  currency: SupportedCurrency = 'USD',
   petNickname: string = 'Keroo',
   preserve?: SeedPreserveOptions
 ): Promise<void> {
@@ -387,7 +387,7 @@ export async function seedDemoData(
       id: 'party_camila',
       name: isEn ? 'Camila (Partner)' : 'Camila (Parceira)',
       relationship: 'household_partner',
-      phoneOrPix: 'camila@pix.me',
+      phoneOrPix: isEn ? 'camila@example.com' : 'camila@pix.me',
       isArchived: false,
       createdAt: nowIso,
     };
@@ -462,8 +462,8 @@ export async function seedDemoData(
         date: pastDayThisMonth(10),
         amountCents: 45000, // R$ 450,00
         type: 'expense',
-        categoryId: 'cat_2_1', // Supermercado
-        payee: 'Pão de Açúcar',
+        categoryId: 'cat_2_1', // Groceries
+        payee: isEn ? 'Whole Foods Market' : 'Pão de Açúcar',
         notes: isEn ? 'Weekly groceries' : 'Compras da semana',
         status: 'cleared',
         createdAt: nowIso,
@@ -523,8 +523,8 @@ export async function seedDemoData(
  */
 export async function resetToCleanSlate(
   db: KerooDatabase,
-  lang: SupportedLocale = 'pt-BR',
-  currency: SupportedCurrency = 'BRL',
+  lang: SupportedLocale = 'en-US',
+  currency: SupportedCurrency = 'USD',
   petNickname: string = 'Keroo',
   preserve?: SeedPreserveOptions
 ): Promise<void> {
@@ -536,8 +536,8 @@ export async function resetToCleanSlate(
  */
 export async function loadDemoData(
   db: KerooDatabase,
-  lang: SupportedLocale = 'pt-BR',
-  currency: SupportedCurrency = 'BRL',
+  lang: SupportedLocale = 'en-US',
+  currency: SupportedCurrency = 'USD',
   petNickname: string = 'Keroo',
   preserve?: SeedPreserveOptions
 ): Promise<void> {

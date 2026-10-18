@@ -10,7 +10,7 @@ import type {
   TransactionType,
 } from './types';
 import { evaluateKerooMood, type KerooMetrics } from './core/kerooMood';
-import { parseCurrencyToCents } from './core/currency';
+import { parseCurrencyToCents, defaultCurrencyFor } from './core/currency';
 import { applyAutoRules } from './core/autoRules';
 import { getLocalTodayISO, getLocalYearMonth } from './core/dates';
 import { AppLayout, type ViewId } from './components/layout';
@@ -222,7 +222,7 @@ const MainAppContent: React.FC = () => {
 
     const cents = parseCurrencyToCents(quickAmountStr, {
       locale: language,
-      currency: settings?.currency || 'BRL',
+      currency: settings?.currency || defaultCurrencyFor(language),
     });
     const applied = applyAutoRules(
       {
@@ -247,7 +247,7 @@ const MainAppContent: React.FC = () => {
   // Submit Quick Add Transaction
   const handleSaveQuickTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
-    const curr = settings?.currency || 'BRL';
+    const curr = settings?.currency || defaultCurrencyFor(language);
     const amountCents = parseCurrencyToCents(quickAmountStr, {
       locale: language,
       currency: curr,
@@ -303,7 +303,7 @@ const MainAppContent: React.FC = () => {
     return <OnboardingWizard onComplete={() => window.location.reload()} />;
   }
 
-  const curr = settings.currency || 'BRL';
+  const curr = settings.currency || defaultCurrencyFor(language);
   const petNick = mascot?.nickname || settings.petNickname || 'Keroo';
   const roamingEnabled = settings.roamingPetEnabled ?? true;
 
