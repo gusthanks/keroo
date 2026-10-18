@@ -1,6 +1,6 @@
 # Development Roadmap — Keroo
 
-This roadmap outlines the sequential, self-contained development stages for **Keroo**. Any autonomous agent (Claude Code Opus, Gemini Antigravity, or Cursor) can read this document to identify the next incomplete task, implement it, run the required verification suite, and advance the project.
+This roadmap outlines the sequential, self-contained development stages for **Keroo**. Any contributor or autonomous coding agent can read this document to identify the next incomplete task, implement it, run the required verification suite, and advance the project.
 
 ---
 
@@ -9,8 +9,8 @@ This roadmap outlines the sequential, self-contained development stages for **Ke
 Establish foundational project architecture, multi-agent operational rules, design specifications, and database schemas prior to writing application code.
 
 - [x] Create root `CLAUDE.md` defining project architecture, strict invariants (integer cents, zero legacy spreadsheet reference, bilingual parity, sub-2ms deterministic pet), build/test commands, and the `/continue` protocol.
-- [x] Create root `AGENTS.md` defining universal cross-agent boundaries, workspace confinement (`g:\Meu Drive\keroo`), verification mandates, and handoff protocols.
-- [x] Create `.claude/commands/continue.md` enabling zero-context-loss stage resumption for Claude Code when running `/continue`.
+- [x] Create root `AGENTS.md` defining universal cross-agent boundaries, workspace confinement (the repository root), verification mandates, and handoff protocols.
+- [x] Create `.claude/commands/continue.md` enabling zero-context-loss stage resumption through the `/continue` slash command.
 - [x] Create `docs/ARCHITECTURE.md` specifying system topology, component dependency tree, local-first reactive data flow with Dexie.js (`useLiveQuery`), offline PWA configuration, sub-2ms deterministic pet engine, and CSV/OFX statement parser.
 - [x] Create `docs/DATABASE_SCHEMA.md` specifying Dexie.js v1 schema for 14 IndexedDB tables (12 domain entity tables + 2 singleton configuration tables), compound indexes, TypeScript entity interfaces, integrity constraints, clean-slate seed categories, and rich demo dataset.
 - [x] Create `docs/DESIGN_SYSTEM.md` specifying Sure-inspired craft principles, full OKLCH semantic palette (Light & Dark), typography hierarchy with mandatory `tabular-nums` and 16px mobile input floor, concentric radii geometry, adaptive layout specs, and Kawaii Doodle Frog mascot visual style with roaming companion engine.
@@ -22,7 +22,7 @@ Establish foundational project architecture, multi-agent operational rules, desi
 
 Scaffold the React + TypeScript + Tailwind CSS project, establish the Dexie.js database, implement the 60-second onboarding wizard, and configure testing infrastructure.
 
-- [x] Initialize project scaffolding using Vite with React 18/19 and TypeScript inside `g:\Meu Drive\keroo`.
+- [x] Initialize project scaffolding using Vite with React 18/19 and TypeScript inside the repository root.
 - [x] Configure Tailwind CSS with custom OKLCH semantic color variables (`surface`, `border`, `brand`, `coin`, `danger`, `warning`, `info`, `success`) and `tabular-nums`.
 - [x] Implement `src/db/db.ts` and `src/db/schema.ts` defining the Dexie `KerooDatabase` class with 14 IndexedDB tables (12 domain entity tables + 2 singleton configuration tables) and compound indexes.
 - [x] Implement clean-slate category seed generator (`src/db/seed.ts`) and rich demo dataset generator (`src/db/demoData.ts`).
@@ -60,9 +60,9 @@ Implement the zero-AI, sub-2ms deterministic mood state machine, interactive spe
 - [x] Implement `src/core/kerooMood.ts` evaluating the 5-state mood cascade (`THRIVING`, `CALM`, `ALERT`, `SWEATING`, `SLEEPY`) synchronously in $< 2\text{ms}$ with zero AI and zero external calls.
 - [x] Implement proactive bill queue prioritizer ranking overdue bills, bills due today, and bills due within 3 days.
 - [x] Implement interactive speech bubble controller with 1-click actions:
-  - `[✅ Já paguei!]` / `[Paid!]`: atomically marks bill paid, inserts transaction, debits account, updates envelope, and recalculates mood.
-  - `[⏰ Lembrar amanhã]` / `[Snooze]`: snoozes reminder by 24h and advances queue.
-  - `[✏️ Ajustar valor]` / `[Edit amount]`: expands inline integer-cent input before payment.
+  - `[Paid!]` (pt-BR: `Já paguei!`): atomically marks bill paid, inserts transaction, debits account, updates envelope, and recalculates mood.
+  - `[Snooze]` (pt-BR: `Lembrar amanhã`): snoozes reminder by 24h and advances queue.
+  - `[Edit]` (pt-BR: `Ajustar valor`): expands inline integer-cent input before payment.
 - [x] Implement statistical spending heuristics in `src/core/kerooInsights.ts`:
   - Delivery vs. Grocery Ratio Spike Heuristic (alerting when takeout $\ge 60\%$ of groceries).
   - 3-Month Moving Average Category Surge Heuristic (detecting $> 35\%$ spikes).
@@ -115,14 +115,14 @@ Perform automated test verification, build pipeline checks, edge-case hardening,
 - [x] Execute `npm test` and confirm 100% green test assertions across all test suites. *(2026-10-18: 21 files, 447 tests green)*
 - [x] Execute `npm run build` and confirm production bundle compiles cleanly. *(2026-10-18: built in 27s; only a chunk-size warning)*
 - [x] Verify clean-slate onboarding flow from first launch through language/currency selection to clean dashboard. *(Fixed: first launch was stuck on "Carregando..." because a missing `user_settings` row was treated as "still loading".)*
-- [x] Verify 1-click Demo Data toggle populates complete realistic dataset (cards, bills, cofrinhos, split tab, pet state). *(Demo seed is now atomic and ledger-consistent: card balance = open installment debt, posted 1st installment, anchor day = due day.)*
+- [x] Verify 1-click Demo Data toggle populates complete realistic dataset (cards, bills, piggy banks, split tab, pet state). *(Demo seed is now atomic and ledger-consistent: card balance = open installment debt, posted 1st installment, anchor day = due day.)*
 - [x] Verify 1-click Clean Slate Reset cleanly wipes the database back to clean-slate onboarding. *(Reset keeps the user's theme/roaming preference and returns to an empty dashboard with seed categories.)*
-- [x] Verify responsive layout across Desktop (≥ 1024px), Tablet (768px-1023px), and Mobile (< 768px with safe-area insets). *(Mobile bottom nav gained a "Mais" sheet so Cartões, Cofrinhos and Divisão are reachable on phones.)*
+- [x] Verify responsive layout across Desktop (≥ 1024px), Tablet (768px-1023px), and Mobile (< 768px with safe-area insets). *(Mobile bottom nav gained a "More" (pt-BR: "Mais") sheet so Cards & Installments (pt-BR: "Cartões & Parcelas"), Piggy Banks (pt-BR: "Cofrinhos") and Split & IOUs (pt-BR: "Divisão & Amigos") are reachable on phones.)*
 - [x] Verify Light and Dark mode appearance, APCA / WCAG contrast compliance, and instant theme switching. *(Fixed: the header/sidebar toggle wrote a PointerEvent to IndexedDB. Contrast relies on the OKLCH tokens in `docs/DESIGN_SYSTEM.md`; not instrument-measured.)*
 - [x] Verify bilingual translation parity with zero missing keys in both `pt-BR` and `en-US`. *(445 keys per language; `tests/i18n.test.ts` now also scans views for hardcoded Portuguese.)*
 - [x] Confirm local serving on `http://localhost:5173`.
 
 ### Stage 6 — 2026-10-18 review notes
-- Mascot redrawn from scratch (`src/components/keroo/KerooMascot.tsx`): single-blob sticker style matching `docs/mascot-references/`; PWA icons in `public/icons/` generated from it.
+- Mascot redrawn from scratch (`src/components/keroo/KerooMascot.tsx`): single-blob sticker art inspired by the kawaii doodle-frog sticker style (see CLAUDE.md section 6); PWA icons in `public/icons/` generated from it.
 - Core fixes: bill payment transaction now has an id and updates the month envelope; piggy-bank withdrawals cannot exceed the saved balance; statement import dedupes per account and parses `D`/`C` suffixes; all "today" values use `src/core/dates.ts` (local calendar, not UTC); installment flat surcharge keeps interest ≥ 0; `PAID_OK` is cycle-aware.
 - Known follow-ups (not blocking): persisted notes/payees written by the app are still Portuguese for en-US users; `importParser` warnings are Portuguese; the mascot `toast_face` and `peace_dab` poses could be polished further.

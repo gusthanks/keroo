@@ -1,15 +1,16 @@
 ---
-description: Redesign Keroo Mascot SVG artwork from scratch using the 9 reference images in docs/mascot-references/
+description: Redesign the Keroo mascot SVG artwork from scratch using the Mascot Style Guide in CLAUDE.md section 6
 ---
 
 # /mascot-redesign — Keroo Frog Mascot Visual Overhaul
 
-When the user runs `/mascot-redesign` in Claude Code, execute this autonomous workflow to redraw the Keroo mascot:
+When `/mascot-redesign` is invoked, execute this autonomous workflow to redraw the Keroo mascot:
 
-## 1. Inspect Reference Images
-Examine the 9 reference PNG images located in `docs/mascot-references/`:
-- `media_1792158191527.png` through `media_1792158399187.png`.
-- Observe the organic "blob" silhouette: smooth, continuous curves, chubby pear-shaped body, soft rounded limbs, expressive eyes with reflection shine dots, and the gold Jin Chan coin.
+## 1. Review the Style Guide
+Read the **Mascot Style Guide** in `CLAUDE.md` section 6 and open `public/icons/icon-512.png` as the canonical render:
+- Keep the organic "blob" silhouette: one smooth, continuous Bézier body (chubby and pear-shaped) whose top edge forms two "m"-shaped eye bumps, soft rounded limbs, and tiny bead-dot eyes.
+- Keep the palette and line work: flat lime `#86E63C` fill, thick uniform near-black outline, pink blush dots on playful poses, and the gold Jin Chan coin with a square hole.
+- All artwork is original SVG authored in this repository; do not trace or embed third-party illustrations.
 
 ## 2. Redraw `src/components/keroo/KerooMascot.tsx`
 Replace the SVG path definitions in `src/components/keroo/KerooMascot.tsx` with organic, hand-crafted vector shapes:
@@ -27,6 +28,7 @@ Replace the SVG path definitions in `src/components/keroo/KerooMascot.tsx` with 
   10. `curious_head_tilt`
 - Implement all coin props:
   - `none`, `mouth_clamp`, `flipping`, `hugging`, `polishing`, `swallowing`.
+- Keep the `pose-*` and `coin-*` `data-testid` hooks unchanged.
 
 ## 3. Automated Verification
 Verify that the redesign compiles and passes all test assertions:

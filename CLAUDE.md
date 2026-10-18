@@ -1,6 +1,6 @@
 # CLAUDE.md — Authoritative Engineering Guide for Keroo
 
-Welcome to **Keroo**. This document is the primary reference manual for any Claude Code (Opus) session. It establishes non-negotiable architectural invariants, development workflows, testing requirements, directory structure, and the multi-agent stage handoff protocol.
+Welcome to **Keroo**. This document is the primary reference manual for any contributor or coding agent working in this repository. It establishes non-negotiable architectural invariants, development workflows, testing requirements, directory structure, and the multi-agent stage handoff protocol.
 
 ---
 
@@ -28,7 +28,7 @@ All agents, engineers, and contributors MUST adhere strictly to these six projec
    - Divisions MUST use explicit rounding or remainder allocation: $\text{Math.round}()$ or integer floor with remainder.
 
 2. **100% Clean Slate (Zero Legacy Data)**:
-   - Do NOT search for, read, reference, or attempt to import any legacy spreadsheet (e.g., `FINANCES.xlsx`).
+   - Keroo ships no legacy-data importer; every install starts from an empty database or the optional demo dataset. Never add code, fixtures, or tests that depend on anyone's personal financial files (the CSV/OFX statement importer only processes files the user picks at runtime).
    - The application starts with an empty database and guides the user through a 60-second onboarding wizard with an optional 1-click Demo Data / Clean Slate Reset toggle.
 
 3. **Exact Remainder Distribution on 1st Installment**:
@@ -36,8 +36,9 @@ All agents, engineers, and contributors MUST adhere strictly to these six projec
      $$I_1 = \lfloor A / N \rfloor + (A \pmod N), \quad I_k = \lfloor A / N \rfloor \quad (\text{for } 2 \le k \le N)$$
    - This ensures $\sum_{k=1}^N I_k \equiv A$ down to the exact cent without penny loss or accumulation.
 
-4. **100% Bilingual Translation Parity (`pt-BR` & `en-US`)**:
-   - Every single UI string, button label, dialogue, status badge, error message, and Keroo pet prompt must exist in both `pt-BR` and `en-US`.
+4. **100% Bilingual Translation Parity (`en-US` & `pt-BR`)**:
+   - Every single UI string, button label, dialogue, status badge, error message, and Keroo pet prompt must exist in both `en-US` and `pt-BR`.
+   - `src/i18n/en-US.json` is the authoring source of truth; `src/i18n/pt-BR.json` must keep 100% key parity with it. The default UI language is `en-US`, with browser-locale detection selecting `pt-BR` when appropriate.
    - Automated tests verify bidirectional key equivalence. Missing keys break the build.
 
 5. **100% Deterministic Mascot Engine (< 2.0ms, Zero AI, Zero Cloud)**:
@@ -45,7 +46,7 @@ All agents, engineers, and contributors MUST adhere strictly to these six projec
    - Zero LLM calls, zero network fetches, zero cloud dependencies for mascot behavior.
 
 6. **Strict Workspace Confinement**:
-   - All reads, writes, and commands MUST target files strictly inside `O:\keroo`. Never touch external directories.
+   - All reads, writes, and commands MUST stay inside the repository root. Never touch files outside the checkout.
 
 ---
 
@@ -55,18 +56,19 @@ All agents, engineers, and contributors MUST adhere strictly to these six projec
 |---|---|---|
 | `npm install` | Install dependencies | Uses lockfile |
 | `npm run dev` | Launch local development server | Serves Vite app at `http://localhost:5173` |
-| `npm run build` | Compile production build | Runs `tsc -b` and `vite build` to `dist/` |
+| `npm run build` | Compile production build | Runs `tsc && vite build` to `dist/` |
 | `npm test` | Run complete automated test suite | Runs Vitest in single-run mode |
 | `npx vitest run` | Execute test suite | Runs tests without watch mode |
-| `npx vitest run --coverage` | Test suite with coverage | Verifies engine coverage |
-| `npx tsc --noEmit` | Strict TypeScript typecheck | Verifies zero compiler errors |
+| `npm run typecheck` | Strict TypeScript typecheck | Runs `tsc --noEmit`; must report zero errors |
+| `npm run test:coverage` | Coverage (requires @vitest/coverage-v8) | Runs `vitest run --coverage` |
+| `npx tsc --noEmit` | Strict TypeScript typecheck | Equivalent to `npm run typecheck` |
 
 ---
 
 ## 4. Architecture & Directory Quick-Map
 
 ```
-O:\keroo\
+keroo/
 ├── CLAUDE.md                     # Authoritative engineering guide (this file)
 ├── AGENTS.md                     # Universal multi-agent operational guide
 ├── .claude/
@@ -103,8 +105,8 @@ O:\keroo\
     │   └── demoData.ts           # 1-click rich demo dataset generator
     ├── i18n/                     # Bilingual translation engine
     │   ├── index.ts              # Translation hook & language state
-    │   ├── pt-BR.json            # Brazilian Portuguese dictionary (source of truth)
-    │   └── en-US.json            # American English dictionary (100% key parity)
+    │   ├── pt-BR.json            # Brazilian Portuguese dictionary (100% key parity with en-US)
+    │   └── en-US.json            # American English dictionary (authoring source of truth)
     ├── styles/                   # Design system tokens & Tailwind configuration
     │   ├── globals.css           # OKLCH custom properties, safe areas, fonts
     │   └── tailwind.config.js    # Tailwind theme extension
@@ -137,7 +139,7 @@ O:\keroo\
 
 ## 5. Multi-Agent Stage Handoff Protocol
 
-Development of Keroo is split across sequential stages managed in `docs/ROADMAP.md`. When switching agents (e.g., between Claude Code Opus and Gemini Antigravity) or resuming a session:
+Development of Keroo is split across sequential stages managed in `docs/ROADMAP.md`. When work changes hands between contributors or coding agents, or a session resumes:
 
 1. **Read Roadmap**: Inspect `docs/ROADMAP.md` and find the first unfinished stage (`[ ]`).
 2. **Review Blueprints**: Re-read the corresponding section in `docs/ARCHITECTURE.md`, `docs/DATABASE_SCHEMA.md`, or `docs/DESIGN_SYSTEM.md`.
@@ -147,27 +149,38 @@ Development of Keroo is split across sequential stages managed in `docs/ROADMAP.
    - Run `npm test` $\implies$ Must pass 100% green tests.
    - Run `npm run build` $\implies$ Production bundle must compile cleanly.
 5. **Update Roadmap**: Only after tests pass, check off the completed items with `[x]` in `docs/ROADMAP.md`.
-6. **Trigger `/continue`**: Claude Code users can simply type `/continue` in chat to automatically execute this loop.
-
+6. **Trigger `/continue`**: The repository ships a `/continue` slash command (`.claude/commands/continue.md`) that runs this loop end to end. Tools without slash-command support can follow that file as a step-by-step checklist.
 
 ---
 
-## 6. Mascot Character Redesign Kit (Claude Code Hand-off)
+## 6. Mascot Character Redesign Kit
 
-The visual design of the Keroo mascot is intentionally prepared for rapid visual overhaul in **Claude Code**. The complete asset references and component contracts are documented below:
+The Keroo mascot is drawn entirely in code as inline SVG, so it can be restyled without any image assets. The style guide and component contract below are the complete reference for any redesign.
 
-### Reference Images
-The 9 authoritative reference illustrations uploaded by the user are located at:
-`O:\keroo\docs\mascot-references\`
-- `media_1792158191527.png`: Kawaii frog sitting with gold coin in mouth (*mouth clamp*).
-- `media_1792158272100.png`: Fetal pose crying with waterfall tears.
-- `media_1792158279206.png`: Deflated puddle / melted blob frog.
-- `media_1792158298995.png`: Slice of toast slapped on frog face.
-- `media_1792158315043.png`: Peace sign ✌️ and sunglasses sipping drink.
-- `media_1792158377137.png`: Sleeping frog with snot bubble.
-- `media_1792158384573.png`: Cheeky tongue sticking out 😛.
-- `media_1792158391200.png`: Curious head tilt with question mark.
-- `media_1792158399187.png`: Multi-pose expression sheet with Jin Chan coin swallowing into piggy bank.
+### Mascot Style Guide
+Keroo is an original kawaii doodle-sticker frog inspired by the Jin Chan (lucky money frog) of East Asian folklore. All artwork is vector SVG authored in this repository; no third-party illustration is shipped or referenced.
+
+- **Silhouette**: ONE continuous Bézier "blob" body (chubby and pear-shaped), never assembled from geometric circles. The top edge rises into two eye bumps that read as a lowercase "m".
+- **Fill**: flat lime `#86E63C`; no gradients, no shading, no belly patch, no eye whites.
+- **Outline**: thick, uniform near-black stroke (`#1F1F1F`) with round caps and joins around the silhouette and limbs.
+- **Face**: tiny bead-dot eyes (short thick arcs when happy or sleepy), a single thin mouth stroke, and pink blush dots (`#F4899A`) on the playful poses.
+- **Coin**: the Jin Chan gold coin (`#FFD700` with a darker edge) with a square hole in the center.
+- **Glyphs**: decorative "?" and "z" marks are drawn as paths, never `<text>`, so rendering does not depend on installed fonts.
+- **Canonical render**: `public/icons/icon-512.png` (the PWA icons in `public/icons/` are generated from the component).
+
+**Poses** (`KerooPose` in `src/core/kerooMood.ts`, 10 total):
+1. `default_sitting`: calm sitting frog; the base for the coin props.
+2. `waterfall_tears`: curled-up fetal pose crying waterfall tears (overdue bills).
+3. `melted_blob`: deflated frog melted into a green puddle.
+4. `toast_face`: a slice of toast slapped on the face (too much delivery).
+5. `peace_dab`: celebrating with a peace sign and a dab.
+6. `sipping_drink`: relaxed in sunglasses, sipping a juice.
+7. `sleeping_bubble`: asleep on the coin with a nose bubble.
+8. `cheeky_tongue`: sticking the tongue out with a playful face.
+9. `coin_swallowing`: big open mouth gulping a gold coin into a piggy bank.
+10. `curious_head_tilt`: head tilted with a question mark ("did you pay that bill?").
+
+**Coin props** (`MascotCoinProp`): `none`, `mouth_clamp`, `flipping`, `hugging`, `polishing`, `swallowing`.
 
 ### Target Component Contract
 Component path: `src/components/keroo/KerooMascot.tsx`
@@ -187,8 +200,8 @@ export interface KerooMascotProps {
 }
 ```
 
-### Redesign Guidelines for Claude Code
-1. Inspect the reference PNGs in `docs/mascot-references/` using your vision capabilities.
-2. Note the single organic "blob" silhouette (smooth continuous bezier curve body rather than assembled geometric circles).
-3. Redraw `KerooMascot.tsx` replacing the current vector SVG paths with clean, organic continuous-path SVG artwork matching the 9 reference images.
-4. Keep the exact same `KerooMascotProps` interface and test attributes so all 24 mascot tests in `src/tests/kerooMascot.test.tsx` and `src/tests/challenger_m4_mascot_insights_stress.test.tsx` pass without modification!
+### Redesign Guidelines
+1. Read the Mascot Style Guide above and use `public/icons/icon-512.png` as the canonical look.
+2. Keep the single organic "blob" silhouette (smooth continuous Bézier body rather than assembled geometric circles).
+3. Redraw `KerooMascot.tsx` replacing the current vector SVG paths with clean, organic continuous-path SVG artwork matching the style guide above.
+4. Keep the exact same `KerooMascotProps` interface and test attributes (the `pose-*` and `coin-*` `data-testid` hooks) so all 24 mascot tests in `src/tests/kerooMascot.test.tsx` and `src/tests/challenger_m4_mascot_insights_stress.test.tsx` pass without modification.

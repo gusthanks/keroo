@@ -1,15 +1,15 @@
 # AGENTS.md — Universal Multi-Agent Operational Protocol
 
-This document applies to **all autonomous agents** operating within this workspace (including Claude Code, Gemini Antigravity, Cursor, and Codex). It defines non-negotiable workspace constraints, engineering invariants, verification mandates, and inter-agent handoff standards.
+This document applies to **all autonomous agents and human contributors** operating within this repository, whatever editor, assistant, or automation tool they use. It defines non-negotiable workspace constraints, engineering invariants, verification mandates, and inter-agent handoff standards.
 
 ---
 
 ## 1. Boundary Guard: Workspace Confinement
 
-- **Root Anchor**: `O:\keroo`
-- **Strict Boundary**: All tool operations—including reading files, writing files, directory listings, searching, and running shell commands—MUST remain strictly inside `O:\keroo`.
-- **Cross-Project Prohibition**: Never read, modify, or reference any files outside this root (e.g., other folders on drive `G:\` or elsewhere). Never import legacy spreadsheets (`FINANCES.xlsx`).
-- **Path Resolution**: Always resolve relative paths against the project root `O:\keroo`.
+- **Root**: the repository checkout.
+- **Strict Boundary**: All tool operations—including reading files, writing files, directory listings, searching, and running shell commands—MUST remain strictly inside the repository.
+- **Cross-Project Prohibition**: Never read, modify, or reference any files outside the repository (other projects, home directories, other drives, or personal documents). Never import legacy personal data; every install starts from an empty database or the optional demo dataset.
+- **Path Resolution**: Always resolve relative paths against the repository root.
 
 ---
 
@@ -27,13 +27,13 @@ All agents MUST enforce the following core principles across all code changes:
      $$I_1 = \lfloor A / N \rfloor + r, \quad I_k = \lfloor A / N \rfloor \quad (\text{for } k \in [2, N])$$
    - $\sum_{k=1}^N I_k \equiv A$ must hold unconditionally.
 
-3. **100% Bilingual Parity (`pt-BR` & `en-US`)**:
-   - When adding or modifying any translation string, update both `src/i18n/pt-BR.json` and `src/i18n/en-US.json`.
+3. **100% Bilingual Parity (`en-US` & `pt-BR`)**:
+   - When adding or modifying any translation string, update both `src/i18n/en-US.json` (authoring source of truth) and `src/i18n/pt-BR.json`.
    - Never leave untranslated keys or placeholder stubs. Automated test suites enforce complete dictionary parity.
 
 4. **Deterministic Keroo Pet (< 2.0ms Execution)**:
    - The mascot mood evaluator (`evaluateKerooMood`) must remain a pure, synchronous, deterministic function with zero asynchronous delays, zero cloud APIs, and zero AI overhead.
-   - Interactive speech bubble actions (`[✅ Já paguei!]`, `[⏰ Lembrar amanhã]`, `[✏️ Ajustar valor]`) must trigger atomic IndexedDB updates.
+   - Interactive speech bubble actions (`[Paid!]`, `[Snooze]`, `[Edit]`; pt-BR: `Já paguei!`, `Lembrar amanhã`, `Ajustar valor`) must trigger atomic IndexedDB updates.
 
 5. **Clean Slate Philosophy**:
    - Zero dependencies on external legacy databases or spreadsheets.

@@ -4,7 +4,7 @@ description: Read docs/ROADMAP.md, identify the first unfinished development sta
 
 # /continue — Seamless Multi-Agent Roadmap Runner
 
-When the user types `/continue` in chat, follow this autonomous execution protocol to advance Keroo to the next milestone without context loss:
+When `/continue` is invoked (or a contributor asks an agent to "continue the roadmap"), follow this autonomous execution protocol to advance Keroo to the next milestone without context loss:
 
 ## 1. Scan the Roadmap
 1. Open and inspect `docs/ROADMAP.md`.
@@ -12,25 +12,22 @@ When the user types `/continue` in chat, follow this autonomous execution protoc
 3. Verify that all preceding stages are marked complete (`- [x]`). If an earlier stage is incomplete, resume from that unfinished stage first.
 
 ## 2. Load Context & Blueprints
-1. Read `CLAUDE.md` for project invariants and operational guidelines.
+1. Read `CLAUDE.md` and `AGENTS.md` for project invariants and operational guidelines.
 2. Read the relevant architectural documentation in `docs/`:
    - `docs/ARCHITECTURE.md`: Component dependency tree, reactive Dexie hooks, data flow, state machine.
    - `docs/DATABASE_SCHEMA.md`: Dexie.js table schemas, compound indexes, TypeScript entity definitions, seed data.
    - `docs/DESIGN_SYSTEM.md`: OKLCH color tokens, typography, 16px mobile input floor, concentric radii, layout specs.
-3. If necessary, consult the detailed specification reports in `.agents/teamwork/`:
-   - `spec_miner_finance/report.md`: Financial formulas, installment math, subscriptions radar, split netting.
-   - `spec_miner_keroo_pet/report.md`: Keroo mascot SVG geometry, 5 moods, speech bubble check-in state machine, spending heuristics.
-   - `spec_miner_ui_continuity/report.md`: Sure-inspired UI patterns, Piggy Banks, Command Palette, PWA settings.
+3. Read the source files and tests the target stage touches before editing them; the code and its tests are the detailed specification.
 
 ## 3. Implement the Target Stage
 1. Follow the **Minimal Change Principle**: Implement only the components, engines, or views required by the current stage.
 2. Respect all **Non-Negotiable Invariants**:
    - **Integer Cents**: All monetary values stored and computed as integer cents ($C \in \mathbb{Z}$). Zero floating-point math.
-   - **Clean Slate**: No external spreadsheet data (`FINANCES.xlsx`).
+   - **Clean Slate**: No legacy-data import; every install starts from an empty database or the optional demo dataset.
    - **1st Installment Remainder**: Allocate $A \pmod N$ remainder cents exclusively to the first installment.
-   - **Bilingual Parity**: Provide 100% synchronized keys in both `pt-BR` and `en-US`.
+   - **Bilingual Parity**: Provide 100% synchronized keys in both `en-US` (authoring source of truth) and `pt-BR`.
    - **Deterministic Keroo Pet**: Sub-2ms synchronous evaluation, zero cloud/AI calls, atomic IndexedDB check-in actions.
-   - **Workspace Boundary**: Strictly stay inside `O:\keroo`.
+   - **Workspace Boundary**: Strictly stay inside the repository root.
 
 ## 4. Mandatory Automated Verification
 Execute the verification suite to ensure zero regressions:
