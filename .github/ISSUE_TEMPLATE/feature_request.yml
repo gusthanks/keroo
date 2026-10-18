@@ -1,0 +1,51 @@
+name: Feature request
+description: Suggest an idea or an improvement for Keroo.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. Start with the problem you want solved; the best solution often becomes clearer from there.
+
+        Keep in mind what Keroo is built around: everything stays in the browser (no server, no cloud sync), money is always integer cents, and the mascot is deterministic with no AI. Requests that go against those principles are unlikely to be accepted. If you just want to talk an idea through first, [GitHub Discussions](https://github.com/gusthanks/keroo/discussions) is a good place.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do, and what gets in the way today?
+      placeholder: I often want to ..., but ...
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How would you like Keroo to handle this? Sketches and examples help, as long as they contain no real financial data.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches or workarounds you have thought about or tried.
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which area is this about?
+      options:
+        - "Budgeting"
+        - "Cards & installments"
+        - "Bills"
+        - "Piggy banks"
+        - "Split"
+        - "Import & rules"
+        - "Mascot"
+        - "i18n"
+        - "PWA"
+        - "Docs"
+        - "Other"
+    validations:
+      required: true

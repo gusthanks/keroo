@@ -1,0 +1,86 @@
+# Label set for https://github.com/gusthanks/keroo
+#
+# This is a plain data file. Nothing in the repository reads it automatically, and
+# there is no workflow for it. To apply it, a maintainer can either:
+#
+#   1. Create the labels one by one with the GitHub CLI (--force updates a label that
+#      already exists), for example:
+#
+#        gh label create "area:budgeting" --color "0e8a16" \
+#          --description "Envelope budgeting and categories" --force
+#
+#      repeating it for every entry below, or by wrapping the call in a small script
+#      that reads this file; or
+#
+#   2. Point a label-sync GitHub Action at this file from a workflow of your own.
+#
+# Colors are six-digit hex values without "#". They are quoted on purpose, so YAML never
+# reads a value such as "5319e7" as a number. GitHub limits descriptions to 100 characters.
+
+- name: "bug"
+  color: "d73a4a"
+  description: "Something is not working as intended"
+
+- name: "enhancement"
+  color: "a2eeef"
+  description: "New feature or improvement"
+
+- name: "documentation"
+  color: "0075ca"
+  description: "Improvements or additions to the docs"
+
+- name: "good first issue"
+  color: "7057ff"
+  description: "Good for newcomers"
+
+- name: "help wanted"
+  color: "008672"
+  description: "Extra attention or a contributor is welcome"
+
+- name: "i18n"
+  color: "1d76db"
+  description: "Translations, locale handling and language support"
+
+- name: "pt-BR"
+  color: "2da44e"
+  description: "Brazilian Portuguese: translation or locale-specific behavior"
+
+- name: "en-US"
+  color: "3b5998"
+  description: "American English: translation or locale-specific behavior"
+
+- name: "area:budgeting"
+  color: "fbca04"
+  description: "Envelope budgeting, categories and rollover"
+
+- name: "area:installments"
+  color: "e99695"
+  description: "Credit cards and 1x-24x installments"
+
+- name: "area:bills"
+  color: "f9a825"
+  description: "Subscriptions, recurring bills and the bills radar"
+
+- name: "area:piggy-banks"
+  color: "f06292"
+  description: "Cofrinhos savings goals"
+
+- name: "area:split"
+  color: "5319e7"
+  description: "Split and IOU ledger"
+
+- name: "area:import"
+  color: "0052cc"
+  description: "CSV and OFX import, and auto-categorization rules"
+
+- name: "area:mascot"
+  color: "86e63c"
+  description: "Keroo the frog: moods, poses, insights and speech bubble"
+
+- name: "area:pwa"
+  color: "5ebeff"
+  description: "Installability, service worker and offline behavior"
+
+- name: "dependencies"
+  color: "0366d6"
+  description: "Dependency updates"

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions, ideas and general help
+    url: https://github.com/gusthanks/keroo/discussions
+    about: Ask a question or talk an idea through in GitHub Discussions before opening an issue.
+  - name: Report a security vulnerability
+    url: https://github.com/gusthanks/keroo/blob/main/SECURITY.md
+    about: Please do not open a public issue for vulnerabilities. Read the security policy and report it privately.

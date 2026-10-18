@@ -1,0 +1,90 @@
+name: Bug report
+description: Something in Keroo is broken or behaves in a way you did not expect.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this.
+
+        Keroo keeps all data in your own browser, so **please do not paste real financial data** here: no real account names, balances, transactions or backup files. A made-up example, or the built-in demo data, is enough.
+
+        Found a security problem? Do not use this form. Please read [SECURITY.md](https://github.com/gusthanks/keroo/blob/main/SECURITY.md) and report it privately.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What is the problem? A short, clear summary.
+      placeholder: When I mark a bill as paid, ...
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The smallest set of steps that triggers the bug.
+      placeholder: |
+        1. Open Settings and load the demo data
+        2. Go to Subscriptions
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happened instead? Screenshots are welcome if they contain no personal data. Include any error text from the browser console if you can.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and operating system
+      description: Name and version of your browser, and your operating system.
+      placeholder: Chrome on Windows 11, or Safari on iPhone (iOS 18)
+    validations:
+      required: true
+  - type: dropdown
+    id: install-mode
+    attributes:
+      label: How are you running Keroo?
+      options:
+        - In a browser tab
+        - Installed as a PWA (own app window or home screen icon)
+        - Not sure
+    validations:
+      required: true
+  - type: dropdown
+    id: language
+    attributes:
+      label: UI language
+      description: The language selected in Settings.
+      options:
+        - en-US
+        - pt-BR
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: |
+        The app does not display its version yet. If you built it from source, use `version` from `package.json`, or the output of `git describe`. Otherwise use the release or commit you deployed. An exported backup file also has an `appVersion` line near the top (do not attach the file).
+      placeholder: "0.1.0"
+    validations:
+      required: false
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I have not included any personal financial data (real account names, balances, transactions or backup files) in this report.
+          required: true
