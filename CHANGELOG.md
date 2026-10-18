@@ -11,6 +11,14 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 - CI uses `actions/checkout@v7` and `actions/setup-node@v7`. The workflow inputs did not change.
 - The test DOM is `jsdom` 30 (was 26). jsdom 30 needs Node `^22.22.2 || ^24.15.0 || >=26.0.0`, so `package.json` `engines` now uses the same range. Because `.npmrc` sets `engine-strict=true`, `npm install` stops on older Node 22 and 24 releases.
 - Typechecking uses TypeScript 7 (was 5.9), the native compiler. `tsconfig.json` drops `baseUrl`, which TypeScript 7 removed, and the `@/*` path alias is now relative (`./src/*`). The strict settings did not change and the code needed no fixes.
+- The build and test toolchain moves together to Vite 8 (Rolldown and Oxc replace Rollup and esbuild; Lightning CSS minifies the CSS), `@vitejs/plugin-react` 6, Vitest 5 and `@vitest/coverage-v8` 5. Production builds are about 2.5x faster.
+- `vite.config.ts` sets `build.target` to the documented browser floor (Chrome and Edge 111, Firefox 113, Safari 15.4). Without it, Vite 8's default target would have dropped Safari 15.4 to 16.3, including iPhones on those iOS versions.
+- `vite.config.ts` uses `import.meta.dirname` instead of `__dirname`, and its type reference is `vitest/config`.
+- The test setup loads `@testing-library/jest-dom/vitest` and declares the DOM matchers on `vitest.Matchers`, which is where Vitest 5 reads custom matcher types. The two tests that read files from disk reference the Node types themselves, because Vitest no longer pulls in `@types/node`.
+
+### Security
+
+- Vitest 5 clears the two critical `tinypool` advisories (GHSA-5gmw-xhrv-c9v3, GHSA-85c8-ppgw-ccpr), because Vitest no longer depends on `tinypool`, and the `vitest` / `@vitest/mocker` path traversal advisory (GHSA-82fw-gwwq-j7x9).
 
 ### Removed
 

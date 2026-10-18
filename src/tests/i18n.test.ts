@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import React from 'react';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';

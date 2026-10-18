@@ -1,3 +1,4 @@
+/// <reference types="node" />
 /**
  * src/tests/seed.empirical.test.ts
  *

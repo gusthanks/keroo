@@ -151,7 +151,7 @@ Keroo needs IndexedDB and Service Workers. In practice that means:
 - Firefox 113+
 - Safari 15.4+ (macOS, iOS and iPadOS)
 
-The JavaScript bundle uses Vite 6's default target (Chrome 87, Edge 88, Firefox 78, Safari 14), but the color system relies on CSS `oklch()` without fallbacks, and new records get their ids from `crypto.randomUUID()`. Those two set the real minimum above.
+The color system relies on CSS `oklch()` without fallbacks, and new records get their ids from `crypto.randomUUID()`. Those two set the minimum above, and the production build targets the same browsers (`build.target` in `vite.config.ts`).
 
 Open Keroo over HTTPS, or on `localhost` while developing. Browsers turn off service workers and `crypto.randomUUID()` on plain-HTTP pages, so opening the dev server from a phone at an address like `http://192.168.x.x:5173` will not fully work.
 
