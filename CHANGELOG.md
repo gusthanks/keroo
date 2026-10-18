@@ -30,7 +30,7 @@ First public release. The interface is English-first: Keroo starts in `en-US`, s
 - **Settings** for language, base currency, light/dark/system theme, the roaming companion, and demo data or clean-slate reset.
 - **Installable PWA** with a web app manifest, an offline service worker and iOS safe-area support. Responsive layout with a sidebar on desktop and a bottom navigation bar on phones.
 - **Languages and currencies.** `en-US` and `pt-BR` at full parity; the default currency follows the language (BRL for `pt-BR`, USD otherwise) and can be changed to USD, EUR or BRL at any time.
-- **Quality gates.** An automated suite of 22 Vitest files, typechecking, and a GitHub Actions workflow that runs typecheck, tests and build on Node 20 and 22, plus weekly Dependabot updates.
+- **Quality gates.** An automated suite of 22 Vitest files, typechecking, and a GitHub Actions workflow that runs typecheck, tests and build on Node 22 and 24, plus weekly Dependabot updates.
 - **Project files.** MIT license, contributing guide, code of conduct, security policy, issue forms and a pull request template.
 
 ### Known limitations

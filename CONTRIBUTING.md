@@ -19,7 +19,7 @@ Security problems should not go to the public tracker. See [SECURITY.md](SECURIT
 
 ## Development setup
 
-You need **Node.js 20 or newer** and npm 10. The repo pins Node 22 in `.nvmrc`, and `.npmrc` sets `engine-strict=true`, so npm refuses to install on an unsupported Node version.
+You need **Node.js 22 or newer** and npm 10. The repo pins Node 22 in `.nvmrc`, and `.npmrc` sets `engine-strict=true`, so npm refuses to install on an unsupported Node version.
 
 ```bash
 git clone https://github.com/gusthanks/keroo.git
@@ -46,7 +46,7 @@ Files use LF line endings, UTF-8 and two-space indentation. `.editorconfig` and 
 
 ## The three gates before a pull request
 
-Run all three locally. They must pass before you open a PR, and CI runs them on Node 20 and 22 (see `.github/workflows/ci.yml`).
+Run all three locally. They must pass before you open a PR, and CI runs them on Node 22 and 24 (see `.github/workflows/ci.yml`).
 
 ```bash
 npm run typecheck   # same as `npx tsc --noEmit`: must exit with 0 errors

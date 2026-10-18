@@ -67,7 +67,7 @@ O Keroo, o sapo, fica de olho nas suas contas e nos seus gastos e reage a eles. 
 
 ## Começando
 
-Você precisa do Node.js 20 ou mais novo. O `.nvmrc` fixa o Node 22, e o `.npmrc` liga `engine-strict=true`, então versões antigas param já na instalação.
+Você precisa do Node.js 22 ou mais novo. O `.nvmrc` fixa o Node 22, e o `.npmrc` liga `engine-strict=true`, então versões antigas param já na instalação.
 
 ```bash
 git clone https://github.com/gusthanks/keroo.git
@@ -126,7 +126,7 @@ Exporte um backup com frequência e guarde em um lugar de confiança.
 - **Só centavos inteiros.** Todo valor é guardado e calculado como um número inteiro de centavos. Hooks do Dexie rejeitam valores não inteiros em qualquer campo monetário, e as divisões usam arredondamento explícito ou distribuição do resto.
 - **Mascote determinístico.** `evaluateKerooMood` é uma função pura e síncrona, sem IA, sem rede e sem aleatoriedade. Os testes garantem menos de 2 ms por avaliação.
 - **Paridade total de tradução.** `src/i18n/en-US.json` é a fonte de autoria e `src/i18n/pt-BR.json` precisa ter exatamente as mesmas chaves. Os testes falham se faltar uma chave ou se houver texto de interface fixo no código.
-- **Testes.** 22 arquivos com 500 testes (Vitest, jsdom, fake-indexeddb). A CI roda a checagem de tipos, os testes e o build no Node 20 e 22.
+- **Testes.** 22 arquivos com 500 testes (Vitest, jsdom, fake-indexeddb). A CI roda a checagem de tipos, os testes e o build no Node 22 e 24.
 
 Para ir mais fundo (documentos em inglês):
 

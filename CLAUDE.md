@@ -86,7 +86,7 @@ keroo/
 ├── .gitattributes                # LF normalization; images and fonts marked binary
 ├── .gitignore                    # Ignored build output, dependencies and local files
 ├── .nvmrc                        # Node 22
-├── .npmrc                        # engine-strict=true (package.json requires Node >= 20)
+├── .npmrc                        # engine-strict=true (package.json requires Node >= 22)
 ├── .claude/
 │   ├── launch.json               # Dev-server launch config (`npm run dev` on port 5173)
 │   └── commands/
@@ -95,7 +95,7 @@ keroo/
 ├── .github/
 │   ├── dependabot.yml            # Weekly npm (minor/patch grouped) and GitHub Actions updates
 │   └── workflows/
-│       └── ci.yml                # CI on Node 20 & 22: npm ci, typecheck, vitest, build
+│       └── ci.yml                # CI on Node 22 & 24: npm ci, typecheck, vitest, build
 ├── docs/
 │   ├── ARCHITECTURE.md           # System topology, data flow, reactive patterns
 │   ├── DATABASE_SCHEMA.md        # Dexie.js 14 IndexedDB tables (12 domain entity tables + 2 singleton configuration tables), indexes, TypeScript schemas

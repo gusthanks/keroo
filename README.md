@@ -65,7 +65,7 @@ Keroo, the frog, keeps an eye on your bills and spending and reacts to them. Its
 
 ## Quick start
 
-You need Node.js 20 or newer. `.nvmrc` pins Node 22, and `.npmrc` sets `engine-strict=true`, so older versions stop at install.
+You need Node.js 22 or newer. `.nvmrc` pins Node 22, and `.npmrc` sets `engine-strict=true`, so older versions stop at install.
 
 ```bash
 git clone https://github.com/gusthanks/keroo.git
@@ -132,7 +132,7 @@ Export a backup regularly and keep it somewhere you trust.
 - **Integer cents only.** Every amount is stored and computed as a whole number of cents. Dexie hooks reject non-integer values on every monetary field, and divisions use explicit rounding or remainder allocation.
 - **A deterministic mascot.** `evaluateKerooMood` is a pure, synchronous function with no AI, no network calls and no randomness. Tests keep it under 2 ms per evaluation.
 - **100% translation parity.** `src/i18n/en-US.json` is the authoring source, and `src/i18n/pt-BR.json` must have exactly the same keys. Tests fail on a missing key or a hardcoded UI string.
-- **Tests.** 22 test files with 500 tests (Vitest, jsdom, fake-indexeddb). CI runs the typecheck, the tests and the build on Node 20 and 22.
+- **Tests.** 22 test files with 500 tests (Vitest, jsdom, fake-indexeddb). CI runs the typecheck, the tests and the build on Node 22 and 24.
 
 Further reading:
 
