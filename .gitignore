@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.vite/
+*.log
+.DS_Store
+Thumbs.db
+coverage/
+
+# Local-only agent scaffolding and third-party reference art (never published)
+.agents/
+docs/mascot-references/

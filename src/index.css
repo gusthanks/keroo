@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================================
+   LIGHT THEME (Default)
+   ========================================================= */
+:root {
+  /* Surfaces */
+  --surface-canvas: oklch(0.985 0.002 90);        /* Clean off-white canvas */
+  --surface-card: oklch(1.000 0.000 0);           /* Pure white elevated cards */
+  --surface-muted: oklch(0.965 0.004 90);         /* Table headers, inactive tracks */
+  --surface-hover: oklch(0.935 0.006 90);         /* Hover and pressed states */
+  --surface-overlay: oklch(0.20 0.01 240 / 0.40); /* Modal backdrop with blur */
+
+  /* Structural 1px Borders */
+  --border-subtle: oklch(0.900 0.005 90);         /* Structural 1px card/divider border */
+  --border-strong: oklch(0.820 0.008 90);         /* Focused inputs, active tabs */
+
+  /* Typography & Foreground */
+  --text-primary: oklch(0.200 0.010 240);         /* High contrast body, headers, numbers */
+  --text-secondary: oklch(0.480 0.015 240);       /* Subtitles, table labels, notes */
+  --text-muted: oklch(0.660 0.010 240);           /* Placeholders, disabled states */
+  --text-inverse: oklch(0.985 0.002 90);          /* Text on solid dark/primary buttons */
+
+  /* Brand Accent: Jade / Lime Green (Mascot Hue ~135°-155°) */
+  --color-brand: oklch(0.620 0.180 142);          /* Primary brand buttons & active toggles */
+  --color-brand-hover: oklch(0.560 0.190 142);    /* Darker green hover state */
+  --color-brand-subtle: oklch(0.950 0.045 142);   /* Light green tinted badge/container */
+  --color-brand-border: oklch(0.830 0.090 142);   /* Subtle green accent border */
+  --color-brand-text: oklch(0.360 0.130 142);     /* High-contrast accessible green text */
+
+  /* Secondary Accent: Jin Chan Fortune Gold Coin (Hue ~85°) */
+  --color-coin: oklch(0.760 0.160 85);            /* Gold coin body & shining highlights */
+  --color-coin-subtle: oklch(0.960 0.040 85);     /* Gold tint for piggy bank cards */
+  --color-coin-text: oklch(0.460 0.130 85);       /* Legible gold coin accent text */
+
+  /* Functional Status Indicators */
+  --color-danger: oklch(0.580 0.200 25);          /* Expenses, overdue bills, deficits */
+  --color-danger-subtle: oklch(0.960 0.040 25);
+  --color-warning: oklch(0.680 0.160 65);         /* Due soon, budget alert, caution */
+  --color-warning-subtle: oklch(0.960 0.040 65);
+  --color-info: oklch(0.580 0.150 245);           /* Transfers, neutral recurring bills */
+  --color-info-subtle: oklch(0.950 0.035 245);
+  --color-success: oklch(0.580 0.170 145);        /* Income, paid bills, settled IOUs */
+  --color-success-subtle: oklch(0.950 0.040 145);
+}
+
+/* =========================================================
+   DARK THEME (.dark class on <html>)
+   ========================================================= */
+.dark {
+  /* Surfaces */
+  --surface-canvas: oklch(0.140 0.006 240);       /* Deep slate dark canvas */
+  --surface-card: oklch(0.180 0.008 240);         /* Elevated dark card surface */
+  --surface-muted: oklch(0.220 0.010 240);        /* Muted containers, table headers */
+  --surface-hover: oklch(0.260 0.012 240);        /* Hovered card/button state */
+  --surface-overlay: oklch(0.06 0.01 240 / 0.70); /* Dark modal backdrop */
+
+  /* Structural 1px Borders */
+  --border-subtle: oklch(0.270 0.010 240);       /* 1px subtle dark border */
+  --border-strong: oklch(0.380 0.012 240);       /* Strong active borders */
+
+  /* Typography & Foreground */
+  --text-primary: oklch(0.960 0.005 240);         /* Bright neutral white */
+  --text-secondary: oklch(0.720 0.012 240);       /* Secondary descriptions */
+  --text-muted: oklch(0.500 0.012 240);           /* Placeholders and disabled text */
+  --text-inverse: oklch(0.140 0.006 240);         /* Dark text on light buttons */
+
+  /* Brand Accent: Jade / Lime Green (Dark Tuned) */
+  --color-brand: oklch(0.740 0.170 142);          /* Bright luminous green accent */
+  --color-brand-hover: oklch(0.800 0.160 142);
+  --color-brand-subtle: oklch(0.230 0.060 142);   /* Dark green container tint */
+  --color-brand-border: oklch(0.380 0.100 142);
+  --color-brand-text: oklch(0.880 0.130 142);
+
+  /* Secondary Accent: Fortune Gold Coin (Dark Tuned) */
+  --color-coin: oklch(0.820 0.150 85);
+  --color-coin-subtle: oklch(0.240 0.060 85);
+  --color-coin-text: oklch(0.920 0.120 85);
+
+  /* Functional Status Indicators */
+  --color-danger: oklch(0.700 0.190 25);
+  --color-danger-subtle: oklch(0.240 0.060 25);
+  --color-warning: oklch(0.780 0.150 65);
+  --color-warning-subtle: oklch(0.250 0.060 65);
+  --color-info: oklch(0.720 0.140 245);
+  --color-info-subtle: oklch(0.230 0.050 245);
+  --color-success: oklch(0.740 0.170 145);
+  --color-success-subtle: oklch(0.230 0.060 145);
+}
+
+/* Base Body Styles */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Mandatory Tabular Numerals for currency, metrics, dates */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tactile micro-depression on active buttons & cards */
+.btn-tactile {
+  transition: transform 100ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms ease;
+}
+.btn-tactile:active {
+  transform: scale(0.97);
+}
