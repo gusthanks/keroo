@@ -20,7 +20,7 @@ import {
   generateAllKerooInsights,
   type InsightItem,
 } from '../core/kerooInsights';
-import { formatCurrency } from '../core/currency';
+import { formatCurrency, defaultCurrencyFor } from '../core/currency';
 import {
   getLocalTodayISO,
   getLocalYearMonth,
@@ -55,9 +55,10 @@ export interface DashboardViewProps {
 export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigate,
   onQuickAdd,
-  currency = 'BRL',
+  currency: currencyProp,
 }) => {
   const { t, language } = useTranslation();
+  const currency: SupportedCurrency = currencyProp ?? defaultCurrencyFor(language);
   const today = getLocalTodayISO();
   const currentYearMonth = getLocalYearMonth();
 
@@ -203,13 +204,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   // Statistical Insights
   const insights: InsightItem[] = useMemo(() => {
-    // TODO(currency): pass `currency` once generateAllKerooInsights accepts it.
     return generateAllKerooInsights({
       installmentPlans,
       currentYearMonth,
       bills: recurringBills,
+      currency,
     });
-  }, [installmentPlans, currentYearMonth, recurringBills]);
+  }, [installmentPlans, currentYearMonth, recurringBills, currency]);
 
   // Current active prompt for speech bubble
   const activePrompt: BillCheckInPrompt | null = useMemo(() => {

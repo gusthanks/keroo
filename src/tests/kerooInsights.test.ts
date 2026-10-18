@@ -322,4 +322,86 @@ describe('Statistical Spending Heuristics (Keroo Insights)', () => {
       expect(a[0].messageEn).toContain('€');
     });
   });
+
+  describe('8. Regression: dashboard insights honour the user currency', () => {
+    // Same call shape DashboardView uses: installment plans + recurring bills + currency.
+    const plan: InstallmentPlan = {
+      id: 'plan_tv',
+      accountId: 'acc_cc',
+      description: 'TV 2x',
+      totalAmountCents: 100001,
+      originalPrincipalCents: 100001,
+      totalInstallments: 2,
+      purchaseDate: '2026-09-01',
+      interestType: 'none',
+      createdAt: '2026-09-01',
+      installments: [
+        {
+          index: 1,
+          statementMonth: '2026-09',
+          dueDate: '2026-09-10',
+          amountCents: 50001, // remainder cent on the 1st installment
+          principalCents: 50001,
+          interestCents: 0,
+          isPaid: true,
+        },
+        {
+          index: 2,
+          statementMonth: '2026-10', // last installment -> relief next month
+          dueDate: '2026-10-10',
+          amountCents: 50000,
+          principalCents: 50000,
+          interestCents: 0,
+          isPaid: false,
+        },
+      ],
+    };
+
+    const bill: RecurringBill = {
+      id: 'bill_netflix',
+      name: 'Netflix',
+      amountCents: 1599,
+      currency: 'USD',
+      cadence: 'monthly',
+      anchorDay: 5,
+      startDate: '2026-01-05',
+      nextDueDate: '2026-11-05',
+      paymentStatus: 'UPCOMING_SAFE',
+      categoryId: 'cat_entertainment',
+      paymentAccountId: 'acc_chase',
+      isActive: true,
+      autoRenew: true,
+      reminderDaysBefore: 3,
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+    };
+
+    it('formats every money-bearing insight with $ and never R$ when currency is USD', () => {
+      const insights = generateAllKerooInsights({
+        installmentPlans: [plan],
+        currentYearMonth: '2026-10',
+        bills: [bill],
+        currency: 'USD',
+      });
+
+      const types = insights.map((i) => i.type);
+      expect(types).toContain('installment_relief');
+      expect(types).toContain('annualized_subscriptions');
+
+      const texts = insights.flatMap((i) => [
+        i.title,
+        i.titlePt,
+        i.titleEn,
+        i.message,
+        i.messagePt,
+        i.messageEn,
+      ]);
+      expect(texts.some((text) => text.includes('$'))).toBe(true);
+      expect(texts.some((text) => text.includes('R$'))).toBe(false);
+
+      // 1599 * 12 = 19188 cents -> $191.88 in the English copy
+      const annual = insights.find((i) => i.type === 'annualized_subscriptions')!;
+      expect(annual.messageEn).toContain('$191.88');
+    });
+  });
 });
