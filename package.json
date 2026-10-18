@@ -43,7 +43,7 @@
     "dexie-react-hooks": "^1.1.7",
     "lucide-react": "^0.475.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react-dom": "^19.3.1",
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
@@ -52,7 +52,7 @@
     "@testing-library/react": "^16.2.0",
     "@types/node": "^22.13.4",
     "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/coverage-v8": "^3.2.7",
     "autoprefixer": "^10.4.20",
