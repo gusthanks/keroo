@@ -29,12 +29,38 @@ export type ImportWarningCode =
   | 'AMBIGUOUS_DATE_FORMAT'
   | 'AMBIGUOUS_AMOUNT';
 
+/** Values a UI needs to render a warning in the user's language (e.g. `{row}`, `{value}`). */
+export type ImportWarningParams = Record<string, string | number>;
+
+/**
+ * A non-fatal, row-level import problem.
+ *
+ * The parser is locale-free: code (plus params) is the contract a UI translates (key
+ * accounts.import_warn.<code> with params). message is an English, developer-facing
+ * fallback only and must never be shown to users as-is.
+ */
 export interface ImportRowWarning {
   rowIndex: number;
   rawRow: string;
   code: ImportWarningCode;
   message: string;
+  params?: ImportWarningParams;
 }
+
+/** Options shared by every parser entry point. */
+export interface ImportParseOptions {
+  /**
+   * Payee used when a row has neither a description nor a memo. Callers pass a translated
+   * label (e.g. `t('accounts.import_no_description')`); defaults to DEFAULT_FALLBACK_PAYEE.
+   */
+  fallbackPayee?: string;
+}
+
+/** Locale-free default payee for rows without any description. */
+export const DEFAULT_FALLBACK_PAYEE = 'No description';
+
+const resolveFallbackPayee = (options?: ImportParseOptions): string =>
+  options?.fallbackPayee?.trim() || DEFAULT_FALLBACK_PAYEE;
 
 export interface ImportTransactionDraft {
   id: string;
@@ -607,7 +633,12 @@ function matchHeaderTokens(headers: string[]): HeaderMapping {
   return mapping;
 }
 
-export function parseCsv(fileContent: string, defaultAccountId: string): ParsedImportResult {
+export function parseCsv(
+  fileContent: string,
+  defaultAccountId: string,
+  options?: ImportParseOptions
+): ParsedImportResult {
+  const fallbackPayee = resolveFallbackPayee(options);
   const lines = fileContent.split(/\r?\n/).filter((l) => l.trim().length > 0);
   const delimiter = detectDelimiter(lines);
   const allRows = parseCsvRows(fileContent, delimiter);
@@ -618,7 +649,7 @@ export function parseCsv(fileContent: string, defaultAccountId: string): ParsedI
   if (allRows.length === 0) {
     return {
       transactions: [],
-      warnings: [{ rowIndex: 0, rawRow: '', code: 'INCOMPLETE_ROW', message: 'Nenhum registro encontrado no CSV.' }],
+      warnings: [{ rowIndex: 0, rawRow: '', code: 'INCOMPLETE_ROW', message: 'No records found in the CSV file.' }],
       metadata: { fileType: 'csv', detectedDelimiter: delimiter, totalRowsProcessed: 0, validRowsCount: 0, invalidRowsCount: 0 },
       success: false,
     };
@@ -644,7 +675,15 @@ export function parseCsv(fileContent: string, defaultAccountId: string): ParsedI
   if (headerRowIndex === -1 || !mapping) {
     return {
       transactions: [],
-      warnings: [{ rowIndex: 1, rawRow: allRows[0]?.join(delimiter) || '', code: 'UNKNOWN_HEADER', message: 'Cabeçalhos do CSV não reconhecidos.' }],
+      warnings: [
+        {
+          rowIndex: 1,
+          rawRow: allRows[0]?.join(delimiter) || '',
+          code: 'UNKNOWN_HEADER',
+          message: 'CSV column headers were not recognized.',
+          params: { header: allRows[0]?.join(delimiter) || '' },
+        },
+      ],
       metadata: { fileType: 'csv', detectedDelimiter: delimiter, totalRowsProcessed: allRows.length, validRowsCount: 0, invalidRowsCount: allRows.length },
       success: false,
     };
@@ -659,7 +698,7 @@ export function parseCsv(fileContent: string, defaultAccountId: string): ParsedI
       rowIndex: 0,
       rawRow: '',
       code: 'AMBIGUOUS_DATE_FORMAT',
-      message: 'Formato de data ambíguo; assumindo DD/MM/AAAA. Confira as datas.', // i18n-todo
+      message: 'Ambiguous date format; assuming DD/MM/YYYY. Please check the dates.',
     });
   }
 
@@ -691,9 +730,21 @@ export function parseCsv(fileContent: string, defaultAccountId: string): ParsedI
     if (!parsedDate) {
       const isSummary = /total|saldo|resumo/i.test(rawLine);
       if (isSummary) {
-        warnings.push({ rowIndex: r + 1, rawRow: rawLine, code: 'SKIPPED_PREAMBLE_ROW', message: 'Linha de rodapé ignorada.' });
+        warnings.push({
+          rowIndex: r + 1,
+          rawRow: rawLine,
+          code: 'SKIPPED_PREAMBLE_ROW',
+          message: 'Summary/footer row skipped.',
+          params: { row: r + 1 },
+        });
       } else {
-        warnings.push({ rowIndex: r + 1, rawRow: rawLine, code: 'INVALID_DATE', message: `Data inválida "${rawDate}". Linha ignorada.` });
+        warnings.push({
+          rowIndex: r + 1,
+          rawRow: rawLine,
+          code: 'INVALID_DATE',
+          message: `Invalid date "${rawDate ?? ''}". Row skipped.`,
+          params: { row: r + 1, value: rawDate ?? '' },
+        });
         invalidCount++;
       }
       continue;
@@ -732,13 +783,25 @@ export function parseCsv(fileContent: string, defaultAccountId: string): ParsedI
     }
 
     if (!amountResult) {
-      warnings.push({ rowIndex: r + 1, rawRow: rawLine, code: 'INVALID_AMOUNT', message: `Valor inválido ou ausente. Linha ignorada.` });
+      warnings.push({
+        rowIndex: r + 1,
+        rawRow: rawLine,
+        code: 'INVALID_AMOUNT',
+        message: 'Invalid or missing amount. Row skipped.',
+        params: { row: r + 1, value: usedAmountRaw },
+      });
       invalidCount++;
       continue;
     }
 
     if (amountResult.cents === 0) {
-      warnings.push({ rowIndex: r + 1, rawRow: rawLine, code: 'ZERO_AMOUNT', message: `Transação com valor zero ignorada.` });
+      warnings.push({
+        rowIndex: r + 1,
+        rawRow: rawLine,
+        code: 'ZERO_AMOUNT',
+        message: 'Zero-amount transaction skipped.',
+        params: { row: r + 1 },
+      });
       continue;
     }
 
@@ -750,7 +813,7 @@ export function parseCsv(fileContent: string, defaultAccountId: string): ParsedI
       notes = '';
     }
     if (!payee) {
-      payee = 'Transação sem descrição';
+      payee = fallbackPayee;
     }
 
     const fitid = mapping.fitidIndex !== -1 ? row[mapping.fitidIndex]?.trim() : undefined;
@@ -793,7 +856,15 @@ export function parseCsv(fileContent: string, defaultAccountId: string): ParsedI
       rowIndex: firstAmbiguousRow,
       rawRow: allRows[firstAmbiguousRow - 1]?.join(delimiter) || '',
       code: 'AMBIGUOUS_AMOUNT',
-      message: `${ambiguousAmountsCount} valor(es) com 3 dígitos após um único separador: ${ambiguousAsDecimal} lido(s) como decimal, ${ambiguousAsThousands} como milhar (padrão decimal do arquivo: ${decimalHint ?? 'nenhum'}).`, // i18n-todo
+      message: `${ambiguousAmountsCount} amount(s) with 3 digits after a single separator: ${ambiguousAsDecimal} read as decimal, ${ambiguousAsThousands} as thousands (file decimal separator: ${decimalHint ?? 'none'}).`,
+      params: {
+        row: firstAmbiguousRow,
+        count: ambiguousAmountsCount,
+        asDecimal: ambiguousAsDecimal,
+        asThousands: ambiguousAsThousands,
+        // Locale-free: the separator character itself, or an em dash when the file shows none.
+        separator: decimalHint ?? '—',
+      },
     });
   }
 
@@ -855,14 +926,19 @@ export function parseOfxDate(dateStr: string): ISODate | null {
   return isValidISODate(isoDate) ? isoDate : null;
 }
 
-export function parseOfx(fileContent: string, defaultAccountId: string): ParsedImportResult {
+export function parseOfx(
+  fileContent: string,
+  defaultAccountId: string,
+  options?: ImportParseOptions
+): ParsedImportResult {
+  const fallbackPayee = resolveFallbackPayee(options);
   const warnings: ImportRowWarning[] = [];
   const transactions: ImportTransactionDraft[] = [];
 
   if (!fileContent || !/<STMTTRN/i.test(fileContent)) {
     return {
       transactions: [],
-      warnings: [{ rowIndex: 0, rawRow: '', code: 'INCOMPLETE_ROW', message: 'Nenhuma transação <STMTTRN> encontrada no arquivo OFX.' }],
+      warnings: [{ rowIndex: 0, rawRow: '', code: 'INCOMPLETE_ROW', message: 'No <STMTTRN> transactions found in the OFX file.' }],
       metadata: { fileType: 'ofx', totalRowsProcessed: 0, validRowsCount: 0, invalidRowsCount: 0 },
       success: false,
     };
@@ -903,7 +979,13 @@ export function parseOfx(fileContent: string, defaultAccountId: string): ParsedI
 
     const parsedDate = parseOfxDate(dtPosted);
     if (!parsedDate) {
-      warnings.push({ rowIndex: idx + 1, rawRow: block.slice(0, 100), code: 'INVALID_DATE', message: `Data OFX inválida "${dtPosted}".` });
+      warnings.push({
+        rowIndex: idx + 1,
+        rawRow: block.slice(0, 100),
+        code: 'INVALID_DATE',
+        message: `Invalid OFX date "${dtPosted}".`,
+        params: { row: idx + 1, value: dtPosted },
+      });
       invalidCount++;
       return;
     }
@@ -912,7 +994,13 @@ export function parseOfx(fileContent: string, defaultAccountId: string): ParsedI
       decimalHint: ofxDecimalStyle ?? (trnAmt.includes(',') ? ',' : '.'),
     });
     if (!amountResult) {
-      warnings.push({ rowIndex: idx + 1, rawRow: block.slice(0, 100), code: 'INVALID_AMOUNT', message: `Valor OFX inválido "${trnAmt}".` });
+      warnings.push({
+        rowIndex: idx + 1,
+        rawRow: block.slice(0, 100),
+        code: 'INVALID_AMOUNT',
+        message: `Invalid OFX amount "${trnAmt}".`,
+        params: { row: idx + 1, value: trnAmt },
+      });
       invalidCount++;
       return;
     }
@@ -945,7 +1033,7 @@ export function parseOfx(fileContent: string, defaultAccountId: string): ParsedI
       payee = memo;
       notes = '';
     } else if (!payee) {
-      payee = 'Transação OFX sem descrição';
+      payee = fallbackPayee;
     }
 
     if (checkNum && !notes.includes(checkNum)) {
@@ -1004,12 +1092,13 @@ export function parseOfx(fileContent: string, defaultAccountId: string): ParsedI
 export async function parseImportFile(
   fileContent: string,
   fileType: 'csv' | 'ofx' | 'auto',
-  defaultAccountId: string
+  defaultAccountId: string,
+  options?: ImportParseOptions
 ): Promise<ParsedImportResult> {
   if (!fileContent || !fileContent.trim()) {
     return {
       transactions: [],
-      warnings: [{ rowIndex: 0, rawRow: '', code: 'INCOMPLETE_ROW', message: 'O arquivo importado está vazio.' }],
+      warnings: [{ rowIndex: 0, rawRow: '', code: 'INCOMPLETE_ROW', message: 'The imported file is empty.' }],
       metadata: { fileType: fileType === 'auto' ? 'csv' : fileType, totalRowsProcessed: 0, validRowsCount: 0, invalidRowsCount: 0 },
       success: false,
     };
@@ -1023,8 +1112,8 @@ export async function parseImportFile(
       : fileType;
 
   if (resolvedType === 'ofx') {
-    return parseOfx(fileContent, defaultAccountId);
+    return parseOfx(fileContent, defaultAccountId, options);
   } else {
-    return parseCsv(fileContent, defaultAccountId);
+    return parseCsv(fileContent, defaultAccountId, options);
   }
 }

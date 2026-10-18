@@ -135,7 +135,12 @@ export const CreditCardsView: React.FC<CreditCardsViewProps> = ({ currency = 'BR
           type: 'cc_installment',
           categoryId: null,
           payee: description.trim(),
-          notes: `Parcela 1/${numInstallments} - ${description.trim()}`,
+          // Persisted ledger note, written in the active language (same wording as the demo seed).
+          notes: t('credit_cards.installment_note', {
+            index: 1,
+            total: numInstallments,
+            description: description.trim(),
+          }),
           status: 'cleared',
           installmentPlanId: plan.id,
           installmentIndex: 1,

@@ -100,7 +100,19 @@
     "coin_action": "Polindo a Moeda da Sorte",
     "roaming_aria": "Keroo mascote companheiro flutuante",
     "drag_me": "Arraste-me!",
-    "disable_roaming": "Desativar passeio"
+    "disable_roaming": "Desativar passeio",
+    "aria": {
+      "default_sitting": "Keroo sapinho mascote da sorte e finanças",
+      "waterfall_tears": "Keroo sapinho chorando cachoeiras de lágrimas com contas em atraso",
+      "melted_blob": "Keroo sapinho derretido no chão como uma poça verde",
+      "toast_face": "Keroo sapinho com uma fatia de pão na cara de tanto pedir delivery",
+      "peace_dab": "Keroo sapinho comemorando fazendo sinal da paz e dab",
+      "sipping_drink": "Keroo sapinho relaxado de óculos escuros tomando um suco",
+      "sleeping_bubble": "Keroo sapinho dormindo com uma bolha no nariz em cima da moeda",
+      "cheeky_tongue": "Keroo sapinho mostrando a língua e fazendo careta divertida",
+      "coin_swallowing": "Keroo sapinho de bocão aberto engolindo uma moeda dourada no cofrinho",
+      "curious_head_tilt": "Keroo sapinho com a cabeça inclinada perguntando se você pagou a conta"
+    }
   },
   "dashboard": {
     "net_worth": "Patrimônio Líquido",
@@ -185,7 +197,22 @@
     "err_import_none": "Nenhuma transação válida encontrada no arquivo.",
     "err_import_all_dupes": "Todas as {count} transações já existem nesta conta. Nada novo para importar.",
     "err_import_process": "Erro ao processar extrato",
-    "err_import_save": "Erro ao salvar importação"
+    "err_import_save": "Erro ao salvar importação",
+    "import_no_description": "Transação sem descrição",
+    "import_warn": {
+      "GENERIC": "Não foi possível importar o extrato. Confira se o arquivo é um CSV ou OFX válido.",
+      "INCOMPLETE_ROW": "Nenhuma transação encontrada no arquivo.",
+      "UNKNOWN_HEADER": "Cabeçalhos do CSV não reconhecidos. O arquivo precisa de uma coluna de data e de uma coluna de valor ou descrição.",
+      "UNRECOGNIZED_DELIMITER": "Não foi possível detectar o separador de colunas do CSV.",
+      "AMBIGUOUS_DATE_FORMAT": "Formato de data ambíguo; assumindo DD/MM/AAAA. Confira as datas.",
+      "SKIPPED_PREAMBLE_ROW": "Linha {row}: linha de resumo ou rodapé ignorada.",
+      "INVALID_DATE": "Linha {row}: data inválida \"{value}\". Linha ignorada.",
+      "INVALID_AMOUNT": "Linha {row}: valor inválido ou ausente. Linha ignorada.",
+      "ZERO_AMOUNT": "Linha {row}: transação com valor zero ignorada.",
+      "MISSING_PAYEE": "Linha {row}: transação sem descrição.",
+      "AMBIGUOUS_AMOUNT": "{count} valor(es) com 3 dígitos após um único separador: {asDecimal} lido(s) como decimal, {asThousands} como milhar (separador decimal do arquivo: {separator}).",
+      "UNPARSED_TAGS": "Algumas tags do OFX não puderam ser lidas."
+    }
   },
   "credit_cards": {
     "title": "Cartões & Projeção de Parcelas",
@@ -234,7 +261,8 @@
     "rate_label": "Taxa de Juros Mensal (%)",
     "rate_placeholder": "Ex: 1,99",
     "rate_helper": "Amortização segundo fórmula Tabela Price com conservação de centavos",
-    "save_button": "Salvar Parcelamento"
+    "save_button": "Salvar Parcelamento",
+    "installment_note": "Parcela {index}/{total} - {description}"
   },
   "subscriptions": {
     "title": "Assinaturas & Boletos Recorrentes",
@@ -326,7 +354,9 @@
     "create_button": "Criar Cofrinho",
     "err_no_account": "Cadastre uma conta antes de movimentar o cofrinho.",
     "err_exceeds": "Valor maior que o guardado no cofrinho ({amount}).",
-    "err_generic": "Não foi possível concluir a movimentação."
+    "err_generic": "Não foi possível concluir a movimentação.",
+    "deposit_note": "Aporte (depósito) no cofrinho {name}",
+    "withdraw_note": "Resgate (saque) do cofrinho {name}"
   },
   "split": {
     "title": "Divisão de Contas & Amigos (IOUs)",

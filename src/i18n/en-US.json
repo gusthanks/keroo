@@ -100,7 +100,19 @@
     "coin_action": "Polishing the Fortune Coin",
     "roaming_aria": "Keroo floating companion mascot",
     "drag_me": "Drag me!",
-    "disable_roaming": "Disable roaming"
+    "disable_roaming": "Disable roaming",
+    "aria": {
+      "default_sitting": "Keroo the frog, lucky finance mascot",
+      "waterfall_tears": "Keroo the frog crying waterfalls of tears over overdue bills",
+      "melted_blob": "Keroo the frog melted on the floor like a green puddle",
+      "toast_face": "Keroo the frog with a slice of bread on its face from ordering too much delivery",
+      "peace_dab": "Keroo the frog celebrating with a peace sign and a dab",
+      "sipping_drink": "Keroo the frog relaxing in sunglasses, sipping a juice",
+      "sleeping_bubble": "Keroo the frog asleep on its coin with a bubble on its nose",
+      "cheeky_tongue": "Keroo the frog sticking out its tongue and making a silly face",
+      "coin_swallowing": "Keroo the frog with its big mouth open, swallowing a golden coin into the piggy bank",
+      "curious_head_tilt": "Keroo the frog tilting its head, asking whether you paid the bill"
+    }
   },
   "dashboard": {
     "net_worth": "Net Worth",
@@ -185,7 +197,22 @@
     "err_import_none": "No valid transactions found in the file.",
     "err_import_all_dupes": "All {count} transactions already exist in this account. Nothing new to import.",
     "err_import_process": "Error processing statement",
-    "err_import_save": "Error saving import"
+    "err_import_save": "Error saving import",
+    "import_no_description": "No description",
+    "import_warn": {
+      "GENERIC": "The statement could not be imported. Check that the file is a valid CSV or OFX export.",
+      "INCOMPLETE_ROW": "No transactions were found in the file.",
+      "UNKNOWN_HEADER": "The CSV column headers were not recognized. The file needs a date column plus an amount or description column.",
+      "UNRECOGNIZED_DELIMITER": "Could not detect the CSV column separator.",
+      "AMBIGUOUS_DATE_FORMAT": "Ambiguous date format; assuming DD/MM/YYYY. Please check the dates.",
+      "SKIPPED_PREAMBLE_ROW": "Row {row}: summary or footer row skipped.",
+      "INVALID_DATE": "Row {row}: invalid date \"{value}\". The row was skipped.",
+      "INVALID_AMOUNT": "Row {row}: invalid or missing amount. The row was skipped.",
+      "ZERO_AMOUNT": "Row {row}: zero-amount transaction skipped.",
+      "MISSING_PAYEE": "Row {row}: the transaction has no description.",
+      "AMBIGUOUS_AMOUNT": "{count} amount(s) with 3 digits after a single separator: {asDecimal} read as decimal, {asThousands} as thousands (file decimal separator: {separator}).",
+      "UNPARSED_TAGS": "Some OFX tags could not be read."
+    }
   },
   "credit_cards": {
     "title": "Credit Cards & Installments",
@@ -234,7 +261,8 @@
     "rate_label": "Monthly Interest Rate (%)",
     "rate_placeholder": "e.g. 1.99",
     "rate_helper": "Amortization using the Price Table formula with cent conservation",
-    "save_button": "Save Installment Plan"
+    "save_button": "Save Installment Plan",
+    "installment_note": "Installment {index}/{total} - {description}"
   },
   "subscriptions": {
     "title": "Subscriptions & Recurring Bills",
@@ -326,7 +354,9 @@
     "create_button": "Create Piggy Bank",
     "err_no_account": "Add an account before moving money in or out of the piggy bank.",
     "err_exceeds": "Amount exceeds what is saved in the piggy bank ({amount}).",
-    "err_generic": "Could not complete the transaction."
+    "err_generic": "Could not complete the transaction.",
+    "deposit_note": "Deposit into piggy bank {name}",
+    "withdraw_note": "Withdrawal from piggy bank {name}"
   },
   "split": {
     "title": "Split Expenses & Friends (IOUs)",
@@ -424,7 +454,7 @@
     "privacy_desc": "Keroo runs entirely on your browser's IndexedDB storage. Your balances, bank statements, card purchases and split expenses are never sent to external servers, analytics or cloud AI.",
     "demo_modal_title": "Load Demo Data?",
     "demo_modal_subtitle": "This will replace the current database with simulated data",
-    "demo_modal_desc": "This operation will erase the current data and insert a complete set of accounts (Nubank, Itaú), installment purchases, bills and piggy banks for visual testing.",
+    "demo_modal_desc": "This operation will erase the current data and insert a complete set of sample accounts, installment purchases, bills and piggy banks for visual testing.",
     "confirm_load": "Confirm and Load",
     "reset_modal_title": "Reset All Data (Clean Slate)?",
     "reset_modal_subtitle": "Irreversible full wipe action",

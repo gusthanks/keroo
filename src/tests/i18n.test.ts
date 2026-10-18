@@ -13,6 +13,8 @@ import {
   useTranslation,
 } from '../i18n';
 import { db } from '../db';
+import type { ImportWarningCode } from '../core/importParser';
+import type { KerooPose } from '../core/kerooMood';
 
 function getAllKeys(obj: Record<string, any>, prefix = ''): string[] {
   let keys: string[] = [];
@@ -32,6 +34,35 @@ function lookup(dict: Record<string, any>, keyPath: string): unknown {
     .split('.')
     .reduce<any>((cur, part) => (cur && typeof cur === 'object' ? cur[part] : undefined), dict);
 }
+
+/** Every import warning code; `satisfies` makes tsc fail when the parser gains a new code. */
+const IMPORT_WARNING_CODES = {
+  INVALID_DATE: true,
+  INVALID_AMOUNT: true,
+  MISSING_PAYEE: true,
+  UNRECOGNIZED_DELIMITER: true,
+  UNKNOWN_HEADER: true,
+  INCOMPLETE_ROW: true,
+  SKIPPED_PREAMBLE_ROW: true,
+  ZERO_AMOUNT: true,
+  UNPARSED_TAGS: true,
+  AMBIGUOUS_DATE_FORMAT: true,
+  AMBIGUOUS_AMOUNT: true,
+} satisfies Record<ImportWarningCode, true>;
+
+/** Every mascot pose; `satisfies` makes tsc fail when a pose is added without an aria label. */
+const KEROO_POSES = {
+  default_sitting: true,
+  waterfall_tears: true,
+  melted_blob: true,
+  toast_face: true,
+  peace_dab: true,
+  sipping_drink: true,
+  sleeping_bubble: true,
+  cheeky_tongue: true,
+  coin_swallowing: true,
+  curious_head_tilt: true,
+} satisfies Record<KerooPose, true>;
 
 describe('Bilingual i18n Key Parity (pt-BR and en-US)', () => {
   const ptKeys = getAllKeys(ptBR);
@@ -240,11 +271,34 @@ const UI_SOURCE_FILES: string[] = [
   'src/components/layout/AppLayout.tsx',
   'src/components/keroo/SpeechBubble.tsx',
   'src/components/keroo/RoamingCompanion.tsx',
+  'src/components/keroo/KerooMascot.tsx',
   ...readdirSync(resolve(PROJECT_ROOT, 'src/components/common'))
     .filter((name) => name.endsWith('.tsx'))
     .sort()
     .map((name) => `src/components/common/${name}`),
 ];
+
+/**
+ * Locale-free engine modules: they produce data (codes, params, cents), never user-facing
+ * Portuguese text. kerooInsights.ts / kerooMood.ts carry bilingual pet copy by design and
+ * autoRules.ts matches Portuguese bank-statement keywords, so they are not listed.
+ */
+const LOCALE_FREE_CORE_FILES: string[] = [
+  'src/core/accountForms.ts',
+  'src/core/currency.ts',
+  'src/core/dates.ts',
+  'src/core/envelopes.ts',
+  'src/core/importParser.ts',
+  'src/core/installments.ts',
+  'src/core/split.ts',
+  'src/core/subscriptions.ts',
+];
+
+/**
+ * Everything the hardcoded-Portuguese guard scans: UI files get the JSX text/attribute scan,
+ * engine modules (plain .ts, where `<`/`>` are code) get the string-literal scan instead.
+ */
+const GUARDED_SOURCE_FILES: string[] = [...UI_SOURCE_FILES, ...LOCALE_FREE_CORE_FILES];
 
 const readSource = (file: string) => readFileSync(resolve(PROJECT_ROOT, file), 'utf8');
 
@@ -345,10 +399,62 @@ function findHardcodedPortuguese(source: string): string[] {
   return offenders;
 }
 
+/**
+ * For non-JSX engine modules: every quoted / template string literal (outside comments) that
+ * contains a Portuguese accented letter or a common Portuguese UI word. Literals holding regex
+ * metacharacters (e.g. the '(D[EÉ]BITO|DEBIT)' token source) are matching patterns, not text.
+ */
+function findPortugueseStringLiterals(source: string): string[] {
+  const code = stripComments(source);
+  const offenders: string[] = [];
+  const literal = /'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"|`((?:[^`\\]|\\.)*)`/g;
+  for (const m of code.matchAll(literal)) {
+    const text = (m[1] ?? m[2] ?? m[3] ?? '').replace(/\$\{[^}]*\}/g, ' ');
+    if (/[[\]|^\\]/.test(text)) continue;
+    if (isSuspicious(text)) offenders.push(text);
+  }
+  return offenders;
+}
+
+/** Bare English UI words that must come from `common.*` keys instead of JSX literals. */
+const BARE_ENGLISH_LABEL = /^(?:Save|Cancel|Close|Delete|Loading)(?:\.\.\.|…)?$/;
+
+/** JSX text nodes that are exactly one of the bare English words above. */
+function findBareEnglishLabels(source: string): string[] {
+  const code = neutraliseCodeAngles(stripTranslationCalls(stripComments(source)));
+  const offenders: string[] = [];
+  for (const m of code.matchAll(/>([^<>]*)</g)) {
+    let text = m[1];
+    for (;;) {
+      const next = text.replace(/\{[^{}]*\}/g, ' ');
+      if (next === text) break;
+      text = next;
+    }
+    const trimmed = text.trim().replace(/\s+/g, ' ');
+    if (BARE_ENGLISH_LABEL.test(trimmed)) offenders.push(trimmed);
+  }
+  return offenders;
+}
+
+/** Every .tsx file under the given source folders (recursive, sorted, repo-relative). */
+function listTsxFiles(...dirs: string[]): string[] {
+  const out: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(resolve(PROJECT_ROOT, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${entry.name}`;
+      if (entry.isDirectory()) walk(rel);
+      else if (entry.name.endsWith('.tsx')) out.push(rel);
+    }
+  };
+  dirs.forEach(walk);
+  return out.sort();
+}
+
 describe('Hardcoded-string guard (every UI string must come from the dictionaries)', () => {
   it('scans the expected set of UI files', () => {
     expect(UI_SOURCE_FILES.length).toBeGreaterThanOrEqual(22);
-    for (const file of UI_SOURCE_FILES) {
+    expect(LOCALE_FREE_CORE_FILES).toContain('src/core/importParser.ts');
+    for (const file of GUARDED_SOURCE_FILES) {
       expect(readSource(file).length).toBeGreaterThan(0);
     }
   });
@@ -380,6 +486,26 @@ describe('Hardcoded-string guard (every UI string must come from the dictionarie
     it('does not mistake "Contas"/"Novos" (different words) for the listed whole words', () => {
       expect(findHardcodedPortuguese('<span>Contabil Novos Valores</span>')).toEqual([]);
     });
+
+    it('flags Portuguese string literals in engine code, but not comments or pattern sources', () => {
+      expect(findPortugueseStringLiterals("const m = 'Data inválida';")).toEqual(['Data inválida']);
+      expect(findPortugueseStringLiterals('payee = "Transação sem descrição";')).toEqual([
+        'Transação sem descrição',
+      ]);
+      expect(findPortugueseStringLiterals('const n = `Parcela ${i} - Valor`;')).toEqual(['Parcela   - Valor']);
+      expect(findPortugueseStringLiterals("const m = 'Invalid date'; // Data inválida")).toEqual([]);
+      expect(findPortugueseStringLiterals("const DC = '(D[EÉ]BITO|DEBIT)';")).toEqual([]);
+      expect(findPortugueseStringLiterals("const s = decimalHint ?? '—';")).toEqual([]);
+    });
+
+    it('flags bare English Save/Cancel/Close/Delete/Loading JSX text only', () => {
+      expect(findBareEnglishLabels('<button>Save</button>')).toEqual(['Save']);
+      expect(findBareEnglishLabels('<Button>\n  Cancel\n</Button>')).toEqual(['Cancel']);
+      expect(findBareEnglishLabels('<span>Loading...</span>')).toEqual(['Loading...']);
+      expect(findBareEnglishLabels("<button>{t('common.save')}</button>")).toEqual([]);
+      expect(findBareEnglishLabels('<p>Save money every month</p>')).toEqual([]);
+      expect(findBareEnglishLabels('{/* Close */}\n<i />')).toEqual([]);
+    });
   });
 
   for (const file of UI_SOURCE_FILES) {
@@ -388,9 +514,24 @@ describe('Hardcoded-string guard (every UI string must come from the dictionarie
     });
   }
 
-  it('has no leftover i18n-todo markers in the UI sources', () => {
-    const withMarker = UI_SOURCE_FILES.filter((file) => readSource(file).includes('i18n-todo'));
+  for (const file of LOCALE_FREE_CORE_FILES) {
+    it(`${file} has no Portuguese string literals (it must stay locale-free)`, () => {
+      expect(findPortugueseStringLiterals(readSource(file))).toEqual([]);
+    });
+  }
+
+  it('has no leftover i18n-todo markers in the guarded sources', () => {
+    const withMarker = GUARDED_SOURCE_FILES.filter((file) => readSource(file).includes('i18n-todo'));
     expect(withMarker).toEqual([]);
+  });
+
+  it('no view or component hardcodes Save/Cancel/Close/Delete/Loading as JSX text', () => {
+    const files = listTsxFiles('src/views', 'src/components');
+    expect(files.length).toBeGreaterThan(20);
+    const offenders = files.flatMap((file) =>
+      findBareEnglishLabels(readSource(file)).map((text) => `${file}: ${text}`)
+    );
+    expect(offenders).toEqual([]);
   });
 });
 
@@ -424,6 +565,10 @@ describe('Translation keys used by the UI exist in both languages', () => {
       'annually',
     ]),
     ...family('pet', ['thriving', 'calm', 'alert', 'sweating', 'sleepy'].map((m) => `mood_${m}`)),
+    // AccountsView: t(`accounts.import_warn.${warning.code}`) with a GENERIC fallback.
+    ...family('accounts.import_warn', [...Object.keys(IMPORT_WARNING_CODES), 'GENERIC']),
+    // KerooMascot: t(`pet.aria.${pose}`).
+    ...family('pet.aria', Object.keys(KEROO_POSES)),
   ];
 
   it('finds a healthy number of static keys in the sources', () => {

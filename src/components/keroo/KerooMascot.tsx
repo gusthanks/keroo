@@ -19,6 +19,7 @@
 
 import React, { useId, useMemo } from 'react';
 import type { KerooPose } from '../../core/kerooMood';
+import { useOptionalTranslation } from '../../i18n';
 
 export type MascotCoinProp =
   | 'none'
@@ -795,18 +796,12 @@ const MOTION_CSS = `
 /* Component                                                                 */
 /* ------------------------------------------------------------------------ */
 
-const LABELS: Record<KerooPose, string> = {
-  default_sitting: 'Keroo sapinho mascote da sorte e finanças',
-  waterfall_tears: 'Keroo sapinho chorando cachoeiras de lágrimas com contas em atraso',
-  melted_blob: 'Keroo sapinho derretido no chão como uma poça verde',
-  toast_face: 'Keroo sapinho com uma fatia de pão na cara de tanto pedir delivery',
-  peace_dab: 'Keroo sapinho comemorando fazendo sinal da paz e dab',
-  sipping_drink: 'Keroo sapinho relaxado de óculos escuros tomando um suco',
-  sleeping_bubble: 'Keroo sapinho dormindo com uma bolha no nariz em cima da moeda',
-  cheeky_tongue: 'Keroo sapinho mostrando a língua e fazendo careta divertida',
-  coin_swallowing: 'Keroo sapinho de bocão aberto engolindo uma moeda dourada no cofrinho',
-  curious_head_tilt: 'Keroo sapinho com a cabeça inclinada perguntando se você pagou a conta',
-};
+/**
+ * Accessible name of each pose, from the dictionaries (`pet.aria.<pose>`, one key per KerooPose
+ * in both pt-BR and en-US). An unknown runtime pose falls back to the default sitting label.
+ */
+const ariaKeyFor = (pose: KerooPose): string =>
+  Object.prototype.hasOwnProperty.call(POSES, pose) ? `pet.aria.${pose}` : 'pet.aria.default_sitting';
 
 export const KerooMascot: React.FC<KerooMascotProps> = ({
   pose = 'default_sitting',
@@ -818,6 +813,7 @@ export const KerooMascot: React.FC<KerooMascotProps> = ({
   ariaLabel,
   style,
 }) => {
+  const { t } = useOptionalTranslation();
   const pixelSize = typeof size === 'number' ? size : SIZE_MAP[size] || 80;
   const gradId = `coinGrad-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
 
@@ -835,7 +831,7 @@ export const KerooMascot: React.FC<KerooMascotProps> = ({
   return (
     <div
       role="img"
-      aria-label={ariaLabel || LABELS[pose] || LABELS.default_sitting}
+      aria-label={ariaLabel || t(ariaKeyFor(pose))}
       onClick={onClick}
       className={`inline-flex items-center justify-center select-none relative ${
         onClick ? 'cursor-pointer hover:opacity-95 active:scale-95 transition-transform' : ''

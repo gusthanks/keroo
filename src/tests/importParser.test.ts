@@ -348,4 +348,32 @@ describe('Bank Statement Import Parser (src/core/importParser.ts)', () => {
       expect(res.warnings[0].code).toBe('INCOMPLETE_ROW');
     });
   });
+
+  describe('Locale-free output (codes + params, caller-supplied fallback payee)', () => {
+    it('attaches translation params to row warnings and keeps messages free of Portuguese', () => {
+      const csv = `data,valor,descricao\n10/10/2026,-50.00,Valido\nINVALID_DATE,-30.00,Data Ruim\n12/10/2026,INVALID_VAL,Valor Ruim`;
+      const result = parseCsv(csv, accountId);
+
+      const badDate = result.warnings.find((w) => w.code === 'INVALID_DATE');
+      expect(badDate?.params).toEqual({ row: badDate?.rowIndex, value: 'INVALID_DATE' });
+      const badAmount = result.warnings.find((w) => w.code === 'INVALID_AMOUNT');
+      expect(badAmount?.params?.row).toBe(badAmount?.rowIndex);
+      for (const w of result.warnings) {
+        expect(w.message).not.toMatch(/[À-ÖØ-öø-ÿ]/);
+      }
+    });
+
+    it('uses the caller-supplied fallback payee for rows without any description (CSV and OFX)', async () => {
+      const csv = `data,valor,descricao\n10/10/2026,-50.00,`;
+      const ofx = `<OFX><STMTTRN><DTPOSTED>20261015</DTPOSTED><TRNAMT>-10.00</TRNAMT></STMTTRN></OFX>`;
+
+      expect(parseCsv(csv, accountId).transactions[0].payee).toBe('No description');
+      expect(parseOfx(ofx, accountId).transactions[0].payee).toBe('No description');
+
+      const options = { fallbackPayee: 'Transação sem descrição' };
+      expect(parseCsv(csv, accountId, options).transactions[0].payee).toBe('Transação sem descrição');
+      const viaEntry = await parseImportFile(ofx, 'auto', accountId, options);
+      expect(viaEntry.transactions[0].payee).toBe('Transação sem descrição');
+    });
+  });
 });

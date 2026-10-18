@@ -146,8 +146,10 @@ export const PiggyBanksView: React.FC<PiggyBanksViewProps> = ({
           type: 'transfer',
           categoryId: null,
           payee: piggy.name,
-          // Persisted DB value (ledger note): intentionally stored as-is, not translated at render time.
-          notes: `${isDeposit ? 'Aporte (depósito) no' : 'Resgate (saque) do'} cofrinho ${piggy.name}`,
+          // Persisted ledger note, written once in the active language (not re-translated at render time).
+          notes: isDeposit
+            ? t('piggy_banks.deposit_note', { name: piggy.name })
+            : t('piggy_banks.withdraw_note', { name: piggy.name }),
           status: 'cleared',
           createdAt: nowIso,
           updatedAt: nowIso,

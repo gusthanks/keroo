@@ -13,7 +13,11 @@ import { formatCurrency, parseCurrencyToCents } from '../core/currency';
 import { applyAutoRules, filterDuplicateTransactions } from '../core/autoRules';
 import { getLocalTodayISO, formatDateForLocale } from '../core/dates';
 import { parseDayOfMonth, getCurrencySymbol } from '../core/accountForms';
-import { parseImportFile, type ImportTransactionDraft } from '../core/importParser';
+import {
+  parseImportFile,
+  type ImportRowWarning,
+  type ImportTransactionDraft,
+} from '../core/importParser';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
@@ -296,6 +300,14 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ currency = 'BRL' }) 
     };
   };
 
+  // The parser is locale-free: render its warning from the machine code + params, never from
+  // its English developer message. Unknown codes fall back to a generic, translated message.
+  const describeImportWarning = (warning: ImportRowWarning): string => {
+    const key = `accounts.import_warn.${warning.code}`;
+    const text = t(key, { row: warning.rowIndex, ...warning.params });
+    return text === key ? t('accounts.import_warn.GENERIC') : text;
+  };
+
   // Parse Bank Statement Preview
   const handleParseImport = async () => {
     if (!importContent.trim()) {
@@ -311,11 +323,14 @@ export const AccountsView: React.FC<AccountsViewProps> = ({ currency = 'BRL' }) 
     try {
       setImportError(null);
       setImportStats(null);
-      const res = await parseImportFile(importContent, 'auto', accId);
+      const res = await parseImportFile(importContent, 'auto', accId, {
+        fallbackPayee: t('accounts.import_no_description'),
+      });
       const invalid = res.metadata?.invalidRowsCount ?? 0;
       if (!res.success || res.transactions.length === 0) {
         setImportDrafts([]);
-        setImportError(res.warnings[0]?.message || t('accounts.err_import_none'));
+        const firstWarning = res.warnings[0];
+        setImportError(firstWarning ? describeImportWarning(firstWarning) : t('accounts.err_import_none'));
         return;
       }
       const { unique, duplicatesCount } = await dedupeAgainstAccount(res.transactions, accId);
