@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 - `vite.config.ts` sets `build.target` to the documented browser floor (Chrome and Edge 111, Firefox 113, Safari 15.4). Without it, Vite 8's default target would have dropped Safari 15.4 to 16.3, including iPhones on those iOS versions.
 - `vite.config.ts` uses `import.meta.dirname` instead of `__dirname`, and its type reference is `vitest/config`.
 - The test setup loads `@testing-library/jest-dom/vitest` and declares the DOM matchers on `vitest.Matchers`, which is where Vitest 5 reads custom matcher types. The two tests that read files from disk reference the Node types themselves, because Vitest no longer pulls in `@types/node`.
+- Keroo runs on React 19 (was 18). `react`, `react-dom`, `@types/react` and `@types/react-dom` move to 19.3 together, because `react-dom` 19 needs the same `react` version. The code needed no changes: it already mounts with `createRoot`, takes `act` from `@testing-library/react`, and uses no `defaultProps`, `propTypes`, string refs, legacy context or `useRef()` without an argument. `@testing-library/react`, `dexie-react-hooks` and `lucide-react` already accept React 19, so they stay on their current versions.
+- The production JavaScript bundle grows by about 79 kB (23 kB gzip), from the larger `react-dom` 19 runtime.
 
 ### Security
 

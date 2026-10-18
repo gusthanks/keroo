@@ -13,7 +13,7 @@ Keroo is engineered as a zero-cloud, privacy-first, client-side web application 
 |                                  Client Browser / PWA                             |
 |                                                                                   |
 |  +-----------------------------------------------------------------------------+  |
-|  |                     Presentation Layer (React 18 + Tailwind CSS)            |  |
+|  |                     Presentation Layer (React 19 + Tailwind CSS)            |  |
 |  |  Sure-Inspired UI  •  OKLCH Tokens  •  Tabular Numerals  •  Mascot Vector    |  |
 |  +-----------------------------------------------------------------------------+  |
 |                                         ▲                                         |
@@ -46,7 +46,7 @@ Keroo is engineered as a zero-cloud, privacy-first, client-side web application 
 ```
 
 ### Core Technology Stack
-- **Runtime & Build**: Vite 8 (Rolldown + Oxc) + React 18 + TypeScript 7 (strict mode).
+- **Runtime & Build**: Vite 8 (Rolldown + Oxc) + React 19 + TypeScript 7 (strict mode).
 - **Styling & Tokens**: Tailwind CSS 3 (`tailwind.config.js`) mapping semantic color tokens (`surface`, `border`, `text`, `brand`, `coin`, `danger`, `warning`, `info`, `success`) to the OKLCH custom properties in `src/index.css`, a standard system sans-serif font stack, and mandatory `tabular-nums` formatting for all monetary values.
 - **Local Database**: IndexedDB (14 IndexedDB tables: 12 domain entity tables + 2 singleton configuration tables) wrapped by **Dexie.js** with `dexie-react-hooks` (`useLiveQuery`) providing observable, reactive database subscriptions.
 - **Icons**: Lucide React for consistent, lightweight vector iconography.
