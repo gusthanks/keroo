@@ -24,7 +24,7 @@ Scaffold the React + TypeScript + Tailwind CSS project, establish the Dexie.js d
 
 - [x] Initialize project scaffolding using Vite with React 18/19 and TypeScript inside the repository root.
 - [x] Configure Tailwind CSS with custom OKLCH semantic color variables (`surface`, `border`, `brand`, `coin`, `danger`, `warning`, `info`, `success`) and `tabular-nums`.
-- [x] Implement `src/db/db.ts` and `src/db/schema.ts` defining the Dexie `KerooDatabase` class with 14 IndexedDB tables (12 domain entity tables + 2 singleton configuration tables) and compound indexes.
+- [x] Implement `src/db/index.ts` and `src/db/schema.ts` defining the Dexie `KerooDatabase` class with 14 IndexedDB tables (12 domain entity tables + 2 singleton configuration tables) and compound indexes.
 - [x] Implement clean-slate category seed generator (`src/db/seed.ts`) and rich demo dataset generator (`src/db/demoData.ts`).
 - [x] Implement bilingual i18n dictionary system (`src/i18n/index.tsx`, `src/i18n/pt-BR.json`, `src/i18n/en-US.json`) with initial 100% key parity.
 - [x] Build 4-step 60-second Clean-Slate Onboarding Wizard (`src/components/onboarding/OnboardingWizard.tsx`) covering Language (`pt-BR`/`en-US`), Base Currency (`BRL`/`USD`/`EUR`), Pet Nickname, and Demo Data / Clean Slate toggle.
@@ -42,7 +42,7 @@ Implement the pure, deterministic business logic engines for integer-cent curren
 - [x] Implement optional installment interest (Tabela Price compound interest) and upfront surcharge fee calculators in `src/core/installments.ts`.
 - [x] Implement `src/core/subscriptions.ts` providing anchor-day preservation across leap years and month ends, cadence normalization (weekly to annual), and 5-state status machine (`PAID_OK`, `UPCOMING_SAFE`, `DUE_SOON`, `DUE_TODAY`, `OVERDUE`).
 - [x] Implement `src/core/split.ts` calculating zero-sum bilateral debt netting between parties, 50/50 utility splits with odd-cent absorption by payer, and running IOU settlements.
-- [x] Implement `src/core/rules.ts` deterministic auto-categorization and payee normalization engine.
+- [x] Implement `src/core/autoRules.ts` deterministic auto-categorization and payee normalization engine.
 - [x] Implement `src/core/importParser.ts` for CSV (auto-delimiter and date detection) and OFX 1.0/2.0 statement parsing with hash-based deduplication.
 - [x] Write exhaustive unit test suites achieving 100% green tests:
   - `tests/currency.test.ts`
@@ -70,7 +70,7 @@ Implement the zero-AI, sub-2ms deterministic mood state machine, interactive spe
   - Annualized Subscription Cost Summary.
   - Bilateral Split Net Receivables Alert ($\ge R\$\ 50,00$).
 - [x] Implement Mascot Art & Charismatic Reactive Poses:
-  - Kawaii Doodle Frog vector geometry (`#8CE93A` / `#7ED321`, organic 2.5px rounded stroke, bead eyes).
+  - Kawaii Doodle Frog vector geometry (`#8CE93A` / `#7ED321`, organic 2.5px rounded stroke, bead eyes). *(Superseded by the Stage 6 redraw: flat `#86E63C` fill and `#1F1F1F` outline; see CLAUDE.md section 6.)*
   - Jin Chan Golden Fortune Coin prop interaction mechanics (mouth clamp, flipping, hugging, polishing, swallowing into piggy banks).
   - Dramatic & comedic poses: fetal pose waterfall tears, melted frog blob, toast on face, peace sign `✌️` & dab, leaning sipping juice, sleeping with snot bubble, cheeky face `😛`.
 - [x] Write comprehensive unit tests in `tests/kerooMood.test.ts` and `tests/kerooInsights.test.ts` verifying all state transitions, benchmark latencies ($< 2\text{ms}$), and speech trigger rules.
@@ -88,7 +88,7 @@ Build all application views, responsive navigation, Piggy Banks (*Cofrinhos*), C
   - Top header with Keroo mini status widget and quick search trigger.
 - [x] Build Sure-inspired UI library (`src/components/common/`): `Button`, `Card`, `Input`, `Modal`, `Badge`, `ProgressBar`.
 - [x] Build Dashboard View (`src/views/DashboardView.tsx`) with live Keroo widget, speech bubble check-in queue, KPI cards, and upcoming bills radar.
-- [x] Build Roaming Mascot Companion Layer ("Pet que passeia pelo app"):
+- [x] Build Roaming Mascot Companion Layer ("Roaming Companion Pet"; pt-BR UI label: "Pet que passeia pelo app"):
   - Screen hopping and card perching atop dashboard cards.
   - Drag-and-drop interactive physics with spring docking.
   - Persistent user toggle in Settings (`user_settings.roamingPetEnabled`).
@@ -114,7 +114,7 @@ Perform automated test verification, build pipeline checks, edge-case hardening,
 - [x] Execute `npx tsc --noEmit` and confirm 0 TypeScript compiler errors. *(2026-10-18: 0 errors)*
 - [x] Execute `npm test` and confirm 100% green test assertions across all test suites. *(2026-10-18: 21 files, 447 tests green)*
 - [x] Execute `npm run build` and confirm production bundle compiles cleanly. *(2026-10-18: built in 27s; only a chunk-size warning)*
-- [x] Verify clean-slate onboarding flow from first launch through language/currency selection to clean dashboard. *(Fixed: first launch was stuck on "Carregando..." because a missing `user_settings` row was treated as "still loading".)*
+- [x] Verify clean-slate onboarding flow from first launch through language/currency selection to clean dashboard. *(Fixed: first launch was stuck on "Loading..." (pt-BR: "Carregando...") because a missing `user_settings` row was treated as "still loading".)*
 - [x] Verify 1-click Demo Data toggle populates complete realistic dataset (cards, bills, piggy banks, split tab, pet state). *(Demo seed is now atomic and ledger-consistent: card balance = open installment debt, posted 1st installment, anchor day = due day.)*
 - [x] Verify 1-click Clean Slate Reset cleanly wipes the database back to clean-slate onboarding. *(Reset keeps the user's theme/roaming preference and returns to an empty dashboard with seed categories.)*
 - [x] Verify responsive layout across Desktop (≥ 1024px), Tablet (768px-1023px), and Mobile (< 768px with safe-area insets). *(Mobile bottom nav gained a "More" (pt-BR: "Mais") sheet so Cards & Installments (pt-BR: "Cartões & Parcelas"), Piggy Banks (pt-BR: "Cofrinhos") and Split & IOUs (pt-BR: "Divisão & Amigos") are reachable on phones.)*
@@ -125,4 +125,4 @@ Perform automated test verification, build pipeline checks, edge-case hardening,
 ### Stage 6 — 2026-10-18 review notes
 - Mascot redrawn from scratch (`src/components/keroo/KerooMascot.tsx`): single-blob sticker art inspired by the kawaii doodle-frog sticker style (see CLAUDE.md section 6); PWA icons in `public/icons/` generated from it.
 - Core fixes: bill payment transaction now has an id and updates the month envelope; piggy-bank withdrawals cannot exceed the saved balance; statement import dedupes per account and parses `D`/`C` suffixes; all "today" values use `src/core/dates.ts` (local calendar, not UTC); installment flat surcharge keeps interest ≥ 0; `PAID_OK` is cycle-aware.
-- Known follow-ups (not blocking): persisted notes/payees written by the app are still Portuguese for en-US users; `importParser` warnings are Portuguese; the mascot `toast_face` and `peace_dab` poses could be polished further.
+- Known follow-ups (not blocking): the mascot `toast_face` and `peace_dab` poses could be polished further. *(Since resolved: installment and piggy-bank ledger notes are written with `t()` and `importParser` warnings carry codes the view translates. Still open: the bill-payment note written by `handleBillPaymentAction` in `src/core/kerooMood.ts` is Portuguese for every locale.)*

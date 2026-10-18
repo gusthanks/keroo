@@ -22,7 +22,7 @@ Dexie.js uses a concise schema syntax where:
 - Subsequent fields are indexed for fast querying, filtering, and ordering.
 - Compound indexes are declared inside brackets (e.g., `[accountId+date]`).
 
-The schema defines **14 IndexedDB tables (12 domain entity tables + 2 singleton configuration tables)**:
+The schema defines **14 IndexedDB tables (12 domain entity tables + 2 singleton configuration tables)**. It lives in `src/db/schema.ts` and is registered by the `KerooDatabase` class in `src/db/index.ts`:
 
 ```typescript
 export const KEROO_DB_SCHEMA_V1 = {
@@ -68,6 +68,8 @@ export const KEROO_DB_SCHEMA_V1 = {
 
 ## 3. Entity TypeScript Interfaces
 
+The interfaces below mirror `src/types/index.ts`, the single source of truth for entity types (`src/db/schema.ts` and `src/db/index.ts` re-export them).
+
 ```typescript
 // ==========================================
 // Base Primitive Types
@@ -83,11 +85,11 @@ export type SupportedTheme = 'light' | 'dark' | 'system';
 // 1. Account Entity
 // ==========================================
 export type AccountType =
-  | 'checking'     // Conta Corrente
-  | 'savings'      // Poupança / Reserva de Emergência
-  | 'credit_card'  // Cartão de Crédito
-  | 'cash'         // Dinheiro Físico / Carteira
-  | 'investment';  // Investimentos / Corretora
+  | 'checking'     // Checking account
+  | 'savings'      // Savings / emergency fund
+  | 'credit_card'  // Credit card
+  | 'cash'         // Physical cash / wallet
+  | 'investment';  // Investments / brokerage
 
 export interface Account {
   id: string; // UUID v4
@@ -115,7 +117,7 @@ export interface Account {
 // ==========================================
 export interface CategoryGroup {
   id: string;
-  name: string; // e.g., "Gastos Fixos & Moradia", "Estilo de Vida"
+  name: string; // e.g., "Housing & Fixed Bills", "Lifestyle & Leisure"
   sortOrder: number;
   isArchived: boolean;
 }
@@ -123,7 +125,7 @@ export interface CategoryGroup {
 export interface Category {
   id: string;
   groupId: string; // FK -> CategoryGroup.id
-  name: string; // e.g., "Aluguel", "Supermercado", "Restaurantes"
+  name: string; // e.g., "Rent / Mortgage", "Groceries", "Restaurants & Cafes"
   icon?: string;
   color?: string;
   sortOrder: number;
@@ -173,7 +175,7 @@ export interface Transaction {
   totalInstallments?: number; // e.g. 10
 
   // Subscription metadata
-  subscriptionId?: string; // FK -> Subscription.id
+  subscriptionId?: string; // FK -> RecurringBill.id
 
   // Split / IOU metadata
   splitExpenseId?: string; // FK -> SplitExpense.id
@@ -193,25 +195,51 @@ export interface Transaction {
 // ==========================================
 // 5. Auto-Categorization Rule Entity
 // ==========================================
-export type RuleField = 'payee' | 'notes' | 'amountCents' | 'accountId';
-export type RuleOperator =
-  | 'contains'
+// Single source of truth for the rule shape: the Dexie `auto_rules` table and
+// the rule engine in src/core/autoRules.ts both use these types.
+export type AutoRuleConditionField =
+  | 'payee'
+  | 'amount'       // same as 'amountCents'
+  | 'amountCents'
+  | 'memo'         // same as 'notes'
+  | 'notes'
+  | 'accountId';
+
+// Both spellings are accepted; the engine upper-cases the operator before evaluating it.
+export type AutoRuleOperator =
+  | 'EQUALS'
+  | 'CONTAINS'
+  | 'STARTS_WITH'
+  | 'ENDS_WITH'
+  | 'REGEX'
+  | 'GREATER_THAN'
+  | 'LESS_THAN'
   | 'equals'
+  | 'contains'
   | 'starts_with'
   | 'ends_with'
   | 'regex'
   | 'greater_than'
   | 'less_than';
 
-export interface RuleCondition {
-  field: RuleField;
-  operator: RuleOperator;
+export interface AutoRuleCondition {
+  field: AutoRuleConditionField;
+  operator: AutoRuleOperator;
   value: string | number;
 }
 
-export interface RuleAction {
-  field: 'categoryId' | 'payee' | 'notes' | 'status';
-  value: string | boolean;
+export type AutoRuleActionField =
+  | 'categoryId'
+  | 'payee'
+  | 'notes'
+  | 'memo'                  // same as 'notes'
+  | 'tags'                  // merged into the transaction's tag set
+  | 'isExcludedFromBudget'
+  | 'status';
+
+export interface AutoRuleAction {
+  field: AutoRuleActionField;
+  value: string | string[] | boolean;
 }
 
 export interface AutoRule {
@@ -219,10 +247,16 @@ export interface AutoRule {
   name: string;
   priority: number; // 1 = highest, executed first
   logic: 'AND' | 'OR';
-  conditions: RuleCondition[];
-  actions: RuleAction[];
+  conditions: AutoRuleCondition[];
+  actions: AutoRuleAction[];
   isActive: boolean;
 }
+
+// Older short names, kept as aliases:
+export type RuleField = AutoRuleConditionField;
+export type RuleOperator = AutoRuleOperator;
+export type RuleCondition = AutoRuleCondition;
+export type RuleAction = AutoRuleAction;
 
 // ==========================================
 // 6. Credit Card Installment Plan Entity (1x-24x)
@@ -273,9 +307,9 @@ export type SubscriptionPaymentStatus =
   | 'DUE_TODAY'
   | 'OVERDUE';
 
-export interface Subscription {
+export interface RecurringBill {
   id: string;
-  name: string; // e.g., "Netflix", "Aluguel", "Spotify"
+  name: string; // e.g., "Netflix", "Rent", "Spotify"
   amountCents: Cents;
   currency: SupportedCurrency;
   cadence: SubscriptionCadence;
@@ -294,6 +328,8 @@ export interface Subscription {
   createdAt: string;
   updatedAt: string;
 }
+
+export type Subscription = RecurringBill; // Alias
 
 // ==========================================
 // 8. Split / IOU Ledger Entities
@@ -346,7 +382,7 @@ export interface SplitSettlement {
 // ==========================================
 export interface PiggyBank {
   id: string;
-  name: string; // e.g., "Reserva de Emergência", "Viagem Japão"
+  name: string; // e.g., "Emergency Fund", "Japan Trip"
   targetCents: Cents;
   savedCents: Cents;
   targetDate?: ISODate;
@@ -362,7 +398,7 @@ export interface PiggyBank {
 // ==========================================
 export type KerooMood = 'thriving' | 'calm' | 'alert' | 'sweating' | 'sleepy';
 
-export interface KerooState {
+export interface KerooPetState {
   id: 'current'; // Singleton key
   nickname: string;
   mood: KerooMood;
@@ -370,6 +406,8 @@ export interface KerooState {
   lastInteractionDate: ISODate;
   lastEvaluatedTimestamp: number;
 }
+
+export type KerooState = KerooPetState; // Alias
 
 // ==========================================
 // 11. User Preferences & Global Settings (Singleton)
@@ -430,40 +468,46 @@ export interface UserSettings {
 
 ## 5. Clean-Slate Default Seed Data
 
-When the user completes the onboarding wizard without demo data, the database is seeded with standard category groups and categories:
+When the user completes the onboarding wizard without demo data, `seedCleanSlate()` in `src/db/seed.ts` seeds 6 category groups and 24 categories, named in the selected language (`groupEn` / `categoriesEn` for `en-US`, `group` / `categories` for `pt-BR`). IDs do not depend on the language: groups are `grp_1` to `grp_6` and categories are `cat_<group>_<index>` (e.g. `cat_2_1` is Groceries / Supermercado).
 
 ```typescript
-export const CLEAN_SLATE_SEED_CATEGORIES = [
+export const CLEAN_SLATE_SEED_CATEGORIES: SeedCategoryGroup[] = [
   {
     group: 'Moradia & Contas Fixas',
     groupEn: 'Housing & Fixed Bills',
-    categories: ['Aluguel / Condomínio', 'Energia Elétrica', 'Água & Saneamento', 'Internet Fibra', 'Gás']
+    categories: ['Aluguel / Condomínio', 'Energia Elétrica', 'Água & Saneamento', 'Internet Fibra', 'Gás'],
+    categoriesEn: ['Rent / Mortgage', 'Electricity', 'Water & Sewer', 'Fiber Internet', 'Gas'],
   },
   {
     group: 'Alimentação & Mercado',
     groupEn: 'Food & Groceries',
-    categories: ['Supermercado', 'Restaurantes & Cafés', 'Delivery (iFood / Takeout)', 'Padaria & Lanches']
+    categories: ['Supermercado', 'Restaurantes & Cafés', 'Delivery (iFood / Takeout)', 'Padaria & Lanches'],
+    categoriesEn: ['Groceries', 'Restaurants & Cafes', 'Delivery & Takeout', 'Bakery & Snacks'],
   },
   {
     group: 'Transporte & Mobilidade',
     groupEn: 'Transportation & Mobility',
-    categories: ['Combustível', 'Transporte Público / Metrô', 'Uber / Táxi', 'Seguro & Manutenção Auto']
+    categories: ['Combustível', 'Transporte Público / Metrô', 'Uber / Táxi', 'Seguro & Manutenção Auto'],
+    categoriesEn: ['Fuel / Gas', 'Public Transit / Metro', 'Rideshare / Taxi', 'Auto Insurance & Maintenance'],
   },
   {
     group: 'Estilo de Vida & Lazer',
     groupEn: 'Lifestyle & Leisure',
-    categories: ['Assinaturas & Streaming', 'Compras & Vestuário', 'Viagens & Passeios', 'Cinema & Cultura']
+    categories: ['Assinaturas & Streaming', 'Compras & Vestuário', 'Viagens & Passeios', 'Cinema & Cultura'],
+    categoriesEn: ['Subscriptions & Streaming', 'Shopping & Clothing', 'Travel & Trips', 'Cinema & Culture'],
   },
   {
     group: 'Saúde & Cuidados',
     groupEn: 'Health & Personal Care',
-    categories: ['Farmácia & Medicamentos', 'Plano de Saúde', 'Academia & Esportes', 'Barbearia & Salão']
+    categories: ['Farmácia & Medicamentos', 'Plano de Saúde', 'Academia & Esportes', 'Barbearia & Salão'],
+    categoriesEn: ['Pharmacy & Medicine', 'Health Insurance', 'Gym & Fitness', 'Barber & Salon'],
   },
   {
     group: 'Metas & Investimentos',
     groupEn: 'Goals & Investments',
-    categories: ['Reserva de Emergência', 'Aportes em Investimentos', 'Poupança Viagem']
-  }
+    categories: ['Reserva de Emergência', 'Aportes em Investimentos', 'Poupança Viagem'],
+    categoriesEn: ['Emergency Fund', 'Investments', 'Travel Savings'],
+  },
 ];
 ```
 
@@ -471,26 +515,58 @@ export const CLEAN_SLATE_SEED_CATEGORIES = [
 
 ## 6. One-Click Rich Demo Dataset
 
-When the user selects **"Carregar Dados de Demonstração / Load Demo Data"**, the following deterministic dataset is seeded:
+When the user selects **"Load Demo Data"** (pt-BR UI label: "Carregar Dados de Demonstração") in onboarding, in Settings, or from the command palette, `seedDemoData()` in `src/db/seed.ts` rebuilds the clean-slate categories and then seeds the deterministic dataset below in a single atomic transaction.
+
+Record IDs, amounts, and dates are identical in both languages; only display names, payees, and notes follow the selected language. Amounts are stored as integer cents and do not change with the currency: each is listed as its cents value followed by the formatted amount, which the app renders in the user's chosen currency (USD, BRL, or EUR).
 
 1. **Accounts**:
-   - `Nubank Conta` (Checking, initial: R$ 3.450,00, current: R$ 3.450,00, currency: BRL).
-   - `Nubank Ultravioleta` (Credit Card, limit: R$ 15.000,00, closing day: 20, due day: 27).
-   - `Itaú Reserva` (Savings, initial: R$ 8.000,00, current: R$ 8.000,00).
+
+   | ID | en-US name | pt-BR name | Details |
+   |---|---|---|---|
+   | `acc_nubank_conta` | Chase Checking | Nubank Conta | Checking. Initial `30000` (300.00); current `345000` (3,450.00) = initial + salary − groceries − rent. |
+   | `acc_nubank_ultravioleta` | Chase Sapphire | Nubank Ultravioleta | Credit card. Limit `1500000` (15,000.00), closing day 20, due day 27, current balance `-240000` (open installment debt), paid from `acc_nubank_conta`. |
+   | `acc_itau_reserva` | High Yield Savings | Itaú Reserva | Savings. Initial and current `800000` (8,000.00). |
+
 2. **Credit Card Installments**:
-   - `Notebook Dell Inspiron`: 3x installments of R$ 800,00 (Total R$ 2.400,00). Statement months: 1/3 (Due current month), 2/3 (Next month), 3/3 (Subsequent month).
-3. **Recurring Subscriptions**:
-   - `Netflix Premium`: R$ 55,90 / month, anchor day: 15, status: `PAID_OK`.
-   - `Spotify Family`: R$ 34,90 / month, anchor day: 22, status: `DUE_SOON` (due in 2 days).
-   - `Internet Fibra Claro`: R$ 129,90 / month, anchor day: 5, status: `UPCOMING_SAFE`.
+   - `inst_dell_notebook`, "Notebook Dell Inspiron" in both languages: 3 interest-free installments of `80000` (800.00), total `240000` (2,400.00), on the credit card. Statement months are the current month (1/3), the next month (2/3), and the month after (3/3), each due on day 27. Installment 1/3 is also posted as a `cc_installment` transaction.
+
+3. **Recurring Bills**:
+
+   | ID | en-US name | pt-BR name | Amount / month | Anchor day | Status |
+   |---|---|---|---|---|---|
+   | `bill_netflix` | Netflix Premium | Netflix Premium | `5590` (55.90) | 15 | `PAID_OK` |
+   | `bill_spotify` | Spotify Family | Spotify Family | `3490` (34.90) | day of today + 2 days | `DUE_SOON` (due in 2 days) |
+   | `bill_internet_fibra` | Fiber Internet | Internet Fibra Claro | `12990` (129.90) | 5 | `UPCOMING_SAFE` |
+
 4. **Piggy Banks (Cofrinhos)**:
-   - `Reserva de Emergência`: Target R$ 15.000,00 | Saved R$ 8.000,00 (53%).
-   - `Viagem Japão 2027`: Target R$ 20.000,00 | Saved R$ 4.500,00 (22%).
+
+   | ID | en-US name | pt-BR name | Target | Saved |
+   |---|---|---|---|---|
+   | `piggy_reserva` | Emergency Fund | Reserva de Emergência | `1500000` (15,000.00) | `800000` (8,000.00), 53% |
+   | `piggy_viagem_japao` | Japan Trip 2027 | Viagem Japão 2027 | `2000000` (20,000.00) by 2027-04-01 | `450000` (4,500.00), 22% |
+
 5. **Split / IOU Ledger**:
-   - Contact: `Camila (Parceira)` (household_partner).
-   - Shared Expense: `Aluguel & Condomínio` (R$ 2.400,00 split 50/50, User paid, Camila owes R$ 1.200,00).
-   - Net balance: Camila owes User +R$ 1.200,00.
-6. **Keroo Companion**:
-   - Nickname: `Keroo`.
-   - Mood: `ALERT` (due to Spotify bill due in 2 days).
-   - Speech Bubble: Prompting check-in on the upcoming Spotify bill.
+
+   | ID | en-US | pt-BR | Details |
+   |---|---|---|---|
+   | `party_camila` | Camila (Partner), `camila@example.com` | Camila (Parceira), `camila@pix.me` | `household_partner` |
+   | `split_exp_aluguel` | Rent & Condo Fee | Aluguel & Condomínio | `240000` (2,400.00) split 50/50, paid by the user; Camila owes `120000` (1,200.00). |
+
+6. **Transactions** (current month):
+
+   | ID | en-US payee / notes | pt-BR payee / notes | Type & amount |
+   |---|---|---|---|
+   | `tx_salary` | Tech Corp Inc / Monthly Salary | Empresa Tech Ltda / Salário Mensal | `income` `600000` (6,000.00) into checking |
+   | `tx_groceries` | Whole Foods Market / Weekly groceries | Pão de Açúcar / Compras da semana | `expense` `45000` (450.00), Groceries |
+   | `tx_rent` | Property Manager / Full rent payment (50% split with Camila) | Administradora Imóveis / Pagamento integral aluguel (50% Camila) | `split_share` `240000` (2,400.00), linked to `split_exp_aluguel` |
+   | `tx_dell_installment_1` | Notebook Dell Inspiron / Installment 1/3 - Notebook Dell Inspiron | Notebook Dell Inspiron / Parcela 1/3 - Notebook Dell Inspiron | `cc_installment` `80000` (800.00) on the credit card |
+
+7. **Monthly Envelopes** (current month):
+   - Rent / Mortgage (`cat_1_1`): assigned `240000`, activity `240000`, available `0`.
+   - Groceries (`cat_2_1`): assigned `120000`, activity `45000`, available `75000`.
+   - Subscriptions & Streaming (`cat_4_1`): assigned `15000`, activity `5590`, available `9410`.
+
+8. **Keroo Companion**:
+   - Nickname: the onboarding pet nickname (default `Keroo`).
+   - Mood: `alert`, because the Spotify bill is due in 2 days.
+   - Mood reason: "Spotify Family is due in 2 days! Check your bill radar." (pt-BR: "Spotify Family vence em 2 dias! Confira o radar de contas.").

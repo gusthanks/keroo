@@ -37,4 +37,4 @@ npx tsc --noEmit
 npm test
 npm run build
 ```
-Ensure all 24 mascot tests in `src/tests/kerooMascot.test.tsx` and `src/tests/challenger_m4_mascot_insights_stress.test.tsx` pass cleanly.
+Ensure all 53 tests in `src/tests/kerooMascot.test.tsx` (21) and `src/tests/kerooMascotInsights.stress.test.tsx` (32) pass cleanly.

@@ -180,43 +180,44 @@ Interactive buttons and cards feature a spring-like micro-scale depression on ac
 ### 5.1 Desktop Viewport (`≥ 1024px`)
 - **Fixed Left Sidebar**:
   - Width: `260px` (or collapsed to `72px` icon view).
-  - Contains project logo, Keroo status widget, main navigation links (Dashboard, Accounts, Credit Cards, Subscriptions, Piggy Banks, Split Ledger, Settings), and Theme/Language toggles at the bottom.
+  - Contains the Keroo logo, an Add Transaction button, the main navigation links (Dashboard, Accounts, Cards & Installments, Subscriptions & Bills, Piggy Banks, Split & IOUs, Settings), and Language/Theme toggles at the bottom.
 - **Main Viewport Area**:
-  - Container: `max-w-6xl mx-auto px-8 py-6`.
+  - Container: `max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8` (with extra bottom padding on mobile to clear the bottom bar).
   - Layout Grid: 3-column summary cards, 2-column core dashboard (Left: Keroo mascot speech bubble & upcoming bills; Right: Account balances & quick actions).
 
 ### 5.2 Mobile Viewport (`< 768px`)
 - **Desktop Sidebar**: Hidden (`hidden md:flex`).
-- **Sticky Top Bar**:
-  - Height: `56px`.
-  - Displays Keroo mini avatar with mood badge, current section title, and a search icon triggering `Cmd+K`.
+- **Sticky Top Bar** (`Header.tsx`):
+  - Height: `64px` (`h-16`).
+  - Displays the current section title, a search button that opens the `Cmd+K` command palette, and a theme toggle; the Keroo mini status (mood badge) appears from the `sm` breakpoint up.
 - **Bottom Navigation Bar**:
   - Fixed position: `fixed bottom-0 left-0 right-0 z-50`.
   - Background: `var(--surface-card)` with `1px` top border `var(--border-subtle)` and backdrop blur.
   - Height: `64px + env(safe-area-inset-bottom)`.
   - Safe Area Padding: `padding-bottom: max(0.75rem, env(safe-area-inset-bottom))` ensuring clearance from the iPhone Home Indicator bar.
-  - 5 Primary Navigation Tabs (minimum 48px touch targets):
-    1. 🏠 **Início / Home** (`/`)
-    2. 💳 **Contas / Accounts** (`/accounts`)
-    3. ➕ **Novo / Add** (Floating Quick Action Button)
-    4. 📅 **Contas / Bills** (`/bills`)
-    5. ⚙️ **Mais / More** (`/settings`)
+  - 5 Primary Navigation Tabs (minimum 48px touch targets). Keroo switches views by ID (`ViewId`) rather than URL routes; labels below are en-US with the pt-BR UI label in parentheses:
+    1. **Dashboard** (pt-BR: Painel), view `dashboard`.
+    2. **Accounts** (pt-BR: Contas), view `accounts`.
+    3. **+** Floating quick-add button that opens the new-transaction modal.
+    4. **Subscriptions & Bills** (pt-BR: Assinaturas & Boletos), view `subscriptions`.
+    5. **More** (pt-BR: Mais): opens a sheet with Cards & Installments, Piggy Banks, Split & IOUs, and Settings.
 
 ---
 
 ## 6. Keroo Mascot Visual Styling & Roaming Companion System
 
 ### 6.1 "Kawaii Doodle Frog" Visual Style
-- **Aesthetic**: Expressive, hand-drawn vector doodle mascot.
+The authoritative spec is the Mascot Style Guide in `CLAUDE.md` section 6; the values below mirror `src/components/keroo/KerooMascot.tsx`.
+- **Aesthetic**: Flat, sticker-style vector doodle mascot drawn as inline SVG.
 - **Body Geometry & Color**:
-  - Body fill: Lime green `#8CE93A` / `#7ED321` or OKLCH `oklch(0.78 0.22 135)`.
-  - Belly accent: Light cream mint `oklch(0.92 0.06 130)`.
-  - Outline: Organic rounded thick black strokes (`stroke-width: 2.5px`, `stroke-linecap: round`, `stroke-linejoin: round`).
-  - Eyes: Expressive black bead eyes with distinct white reflection shine dots.
+  - Silhouette: ONE continuous Bézier blob body whose top edge forms the two eye bumps.
+  - Body fill: flat lime green `#86E63C`; no gradients, no shading, no belly patch.
+  - Outline: thick, uniform near-black strokes (`#1F1F1F`, `stroke-linecap: round`, `stroke-linejoin: round`).
+  - Eyes: tiny bead-dot eyes with no eye whites (short thick arcs when happy or sleepy); pink blush dots (`#F4899A`) on playful poses.
 
 ### 6.2 Jin Chan Golden Fortune Coin (Core Interactive Prop)
 The golden coin is Keroo's constant companion and interactive prop:
-- Base color: `oklch(0.82 0.18 85)` with embossed border `oklch(0.70 0.16 75)` and square hole in the center.
+- Base color: gold `#FFD700` with a darker `#C88A00` edge and a square hole in the center.
 - **Prop Interactions**:
   - **Mouth Clamp**: Clamps the coin firmly in his mouth like the traditional Jin Chan frog.
   - **Coin Flip**: Flips the coin in the air with a sparkle particle when walking or hopping.
@@ -235,7 +236,7 @@ Keroo expresses financial events with rich, humorous reactions:
    - Trigger: Delivery vs Grocery spending ratio spike alert.
    - Pose: Wide eyes with a slice of toast slapped directly across his face.
 4. **Peace Sign (`✌️`) & Dab (`THRIVING`)**:
-   - Trigger: User clicks `[✅ Já paguei!]`, pays off credit card debt, or saves $> 20\%$.
+   - Trigger: User clicks `[✅ Paid!]` (pt-BR UI label: `Já paguei!`), pays off credit card debt, or saves $> 20\%$.
    - Pose: Dynamic double-finger peace pose with sparkle stars bobbing around.
 5. **Leaning & Sipping Juice/Coffee (`CALM`)**:
    - Trigger: All bills paid, budget healthy.
@@ -250,8 +251,8 @@ Keroo expresses financial events with rich, humorous reactions:
    - Trigger: User taps/clicks Keroo directly.
    - Pose: Pokes tongue out playfully with a wink.
 
-### 6.4 Roaming Companion Layer ("Pet que passeia pelo app")
+### 6.4 Roaming Companion Layer
 - **Layering**: High z-index floating layer (`pointer-events-auto` on the pet, `pointer-events-none` on overlay backdrop).
 - **Perching**: Snaps dynamically to card header borders across the dashboard.
 - **Drag-and-Drop**: Users can drag Keroo with cursor or touch; on release, a physics spring settles Keroo onto the nearest card edge.
-- **Toggle Setting**: Can be disabled at any time via `user_settings.roamingPetEnabled` (Settings $\to$ "Pet que passeia pelo app").
+- **Toggle Setting**: Can be disabled at any time via `user_settings.roamingPetEnabled` (Settings $\to$ "Roaming Companion Pet"; pt-BR UI label: "Pet que passeia pelo app"), from the pet's own "Disable roaming" button, or with the command palette.

@@ -67,72 +67,111 @@ All agents, engineers, and contributors MUST adhere strictly to these six projec
 
 ## 4. Architecture & Directory Quick-Map
 
+Generated from `git ls-files`; keep it in sync when files are added, renamed, or deleted.
+
 ```
 keroo/
 ├── CLAUDE.md                     # Authoritative engineering guide (this file)
 ├── AGENTS.md                     # Universal multi-agent operational guide
+├── LICENSE                       # MIT license
+├── package.json                  # npm scripts (dev, build, typecheck, test, test:coverage) & dependencies
+├── package-lock.json             # npm lockfile
+├── index.html                    # Vite entry HTML: viewport-fit=cover, iOS web-app meta tags, light/dark theme-color pair
+├── vite.config.ts                # Vite + React plugin, `@` -> src alias, Vitest config (jsdom, src/tests/setup.ts)
+├── tsconfig.json                 # Strict TypeScript config for src/ (bundler resolution, `@/*` paths)
+├── tsconfig.node.json            # TypeScript config for vite.config.ts
+├── tailwind.config.js            # Tailwind theme: semantic color tokens mapped to the CSS variables in src/index.css
+├── postcss.config.js             # PostCSS pipeline (tailwindcss + autoprefixer)
+├── .editorconfig                 # UTF-8, LF, 2-space indentation
+├── .gitattributes                # LF normalization; images and fonts marked binary
+├── .gitignore                    # Ignored build output, dependencies and local files
+├── .nvmrc                        # Node 22
+├── .npmrc                        # engine-strict=true (package.json requires Node >= 20)
 ├── .claude/
+│   ├── launch.json               # Dev-server launch config (`npm run dev` on port 5173)
 │   └── commands/
-│       └── continue.md           # Instructions for /continue slash command
+│       ├── continue.md           # /continue: run the next unfinished roadmap stage
+│       └── mascot-redesign.md    # /mascot-redesign: redraw the mascot SVG from the style guide
+├── .github/
+│   ├── dependabot.yml            # Weekly npm (minor/patch grouped) and GitHub Actions updates
+│   └── workflows/
+│       └── ci.yml                # CI on Node 20 & 22: npm ci, typecheck, vitest, build
 ├── docs/
 │   ├── ARCHITECTURE.md           # System topology, data flow, reactive patterns
 │   ├── DATABASE_SCHEMA.md        # Dexie.js 14 IndexedDB tables (12 domain entity tables + 2 singleton configuration tables), indexes, TypeScript schemas
 │   ├── DESIGN_SYSTEM.md          # OKLCH tokens, typography, 1px borders, layout
 │   └── ROADMAP.md                # 6 sequential stages with granular checkboxes
 ├── public/
-│   ├── manifest.json             # PWA web app manifest
-│   ├── sw.js                     # Service worker offline caching
-│   └── icons/                    # App icons (192px, 512px, maskable)
+│   ├── manifest.json             # PWA web app manifest (standalone; theme/background color #121417)
+│   ├── sw.js                     # Service worker offline caching (stale-while-revalidate)
+│   └── icons/                    # PNG icons rendered from the mascot: favicon-32, apple-touch-icon, icon-192, icon-512, maskable-512
 └── src/
-    ├── main.tsx                  # Application bootstrap & mount
-    ├── App.tsx                   # Top-level router & onboarding guard
+    ├── main.tsx                  # Application bootstrap & mount; registers sw.js in production builds only
+    ├── App.tsx                   # Top-level view router, onboarding guard, theme sync, Cmd+K, quick-add transaction modal
+    ├── index.css                 # Tailwind layers, OKLCH custom properties (light & .dark), system font stack, tabular-nums, tactile buttons
+    ├── types/
+    │   └── index.ts              # Entity TypeScript types (Account, Transaction, AutoRule, RecurringBill, ...) + doc-name aliases
     ├── core/                     # Pure financial & mascot engines (zero UI)
-    │   ├── currency.ts           # Integer cents formatting & parsing (BRL/USD/EUR)
+    │   ├── currency.ts           # Integer cents arithmetic, formatting & parsing (BRL/USD/EUR); defaultCurrencyFor(locale)
     │   ├── dates.ts              # LOCAL-calendar date helpers (getLocalTodayISO, formatDateForLocale) — never use toISOString() for "today"
     │   ├── accountForms.ts       # Pure helpers shared by views (bill radar selection, rate parsing, cadence/status labels)
-    │   ├── envelopes.ts          # Envelope budgeting & rollover calculations
-    │   ├── installments.ts       # 1x–24x card installment schedule generator
-    │   ├── subscriptions.ts      # Recurring bills radar & status state machine
+    │   ├── envelopes.ts          # Envelope budgeting, To-Be-Budgeted pool & rollover calculations
+    │   ├── installments.ts       # 1x–24x card installment schedule generator (remainder on the 1st installment)
+    │   ├── subscriptions.ts      # Recurring bills radar & 5-state status machine
     │   ├── split.ts              # Bilateral debt netting & 50/50 split math
-    │   ├── kerooMood.ts          # 5-mood deterministic evaluator (< 2ms)
+    │   ├── kerooMood.ts          # 5-mood deterministic evaluator (< 2ms), mascot poses & bill check-in queue
     │   ├── kerooInsights.ts      # Statistical spending heuristics (delivery spike, etc.)
-    │   ├── rules.ts              # Auto-categorization rule processor
-    │   └── importParser.ts       # CSV & OFX bank statement parsers
+    │   ├── autoRules.ts          # Auto-categorization rule engine, payee cleaning & SHA-256 dedup hashing
+    │   ├── importParser.ts       # CSV & OFX bank statement parsers
+    │   └── backup.ts             # JSON backup export / validated atomic restore of every Dexie table (`keroo-backup` v1)
     ├── db/                       # Local-first persistence layer
-    │   ├── db.ts                 # Dexie database instance & table indexing
-    │   ├── schema.ts             # TypeScript entity interfaces
-    │   ├── seed.ts               # Clean-slate default category seed
-    │   └── demoData.ts           # 1-click rich demo dataset generator
+    │   ├── index.ts              # KerooDatabase (Dexie) class & the `db` instance; re-exports schema and validation
+    │   ├── schema.ts             # KEROO_DB_SCHEMA_V1 table/index declarations; re-exports the entity types from src/types
+    │   ├── validation.ts         # Dexie hooks rejecting non-integer cents on every monetary field
+    │   ├── seed.ts               # Clean-slate category seed + bilingual demo dataset (seedCleanSlate, seedDemoData, reset/load)
+    │   └── demoData.ts           # Re-exports seedDemoData / loadDemoData from seed.ts
     ├── i18n/                     # Bilingual translation engine
-    │   ├── index.ts              # Translation hook & language state
-    │   ├── pt-BR.json            # Brazilian Portuguese dictionary (100% key parity with en-US)
-    │   └── en-US.json            # American English dictionary (authoring source of truth)
-    ├── styles/                   # Design system tokens & Tailwind configuration
-    │   ├── globals.css           # OKLCH custom properties, safe areas, fonts
-    │   └── tailwind.config.js    # Tailwind theme extension
-    ├── components/               # Sure-inspired UI components
-    │   ├── layout/               # AppLayout, DesktopSidebar, MobileBottomNav, TopHeader
+    │   ├── index.tsx             # I18nProvider, useTranslation, translate(), resolveInitialLocale (English-first boot)
+    │   ├── en-US.json            # American English dictionary (authoring source of truth)
+    │   └── pt-BR.json            # Brazilian Portuguese dictionary (100% key parity with en-US)
+    ├── components/               # Sure-inspired UI components (each folder except onboarding/ has an index.ts barrel)
+    │   ├── layout/               # AppLayout, Sidebar, BottomNav (with "More" sheet), Header
     │   ├── common/               # Button, Card, Input, Modal, Badge, ProgressBar
-    │   ├── keroo/                # KerooMascot (SVG), SpeechBubble, InsightPill
+    │   ├── keroo/                # KerooMascot (SVG), SpeechBubble, RoamingCompanion
     │   ├── command/              # CommandPalette (Cmd+K / Ctrl+K)
-    │   ├── onboarding/           # OnboardingWizard (4-step 60s setup)
-    │   └── forms/                # Transaction, Installment, PiggyBank, Bill modals
-    ├── views/                    # Full page views
+    │   └── onboarding/           # OnboardingWizard (4-step 60s setup)
+    ├── views/                    # Full page views + index.ts barrel; form modals live inside their views
     │   ├── DashboardView.tsx     # Overview with live Keroo widget
     │   ├── AccountsView.tsx      # Checking/savings accounts & ledger
     │   ├── CreditCardsView.tsx   # Card statements & 1x-24x installment timeline
     │   ├── SubscriptionsView.tsx # Recurring bills radar & annual cost impact
-    │   ├── PiggyBanksView.tsx    # Cofrinhos savings goals & deposit dialog
+    │   ├── PiggyBanksView.tsx    # Piggy Banks (Cofrinhos) savings goals & deposit dialog
     │   ├── SplitView.tsx         # Shared expense netting & IOU tabs
     │   └── SettingsView.tsx      # Language, currency, theme, demo reset
-    └── tests/                    # Automated Vitest test suites
-        ├── currency.test.ts
-        ├── installments.test.ts
-        ├── subscriptions.test.ts
-        ├── split.test.ts
-        ├── kerooMood.test.ts
-        ├── kerooInsights.test.ts
-        └── i18n.test.ts
+    └── tests/                    # Vitest suites: 22 test files + setup.ts
+        ├── setup.ts                            # Test setup: jest-dom matchers + fake-indexeddb (not a test file)
+        ├── accountForms.test.ts                # accountForms helpers: day/percent parsing, locale labels, bills-radar selection
+        ├── autoRules.test.ts                   # Rule conditions/priority, payee cleaning, rule suggestions, SHA-256 & frequency dedup
+        ├── backup.test.ts                      # Backup export/restore, atomic rollback, file validation, Settings Backup & Restore card
+        ├── commonUi.test.tsx                   # Button/Card/Input/Modal/Badge/ProgressBar + navigation, palette and theme regressions
+        ├── currency.test.ts                    # Integer-cent guards, arithmetic, formatting and parsing
+        ├── db.test.ts                          # KerooDatabase schema, clean-slate seeding, demo data loading, cent invariants
+        ├── db.stress.test.ts                   # All 14 tables round-trip, compound indexes, clean-slate reset, integer-cent hooks
+        ├── envelopes.test.ts                   # YearMonth utils, available balance, activity, TBB pool, rollovers
+        ├── i18n.test.ts                        # Key parity, translate()/hooks, hardcoded-string guard, every t("...") key exists
+        ├── importParser.test.ts                # CSV/OFX parsing, amount/delimiter/date detection, Brazilian bank formats
+        ├── installments.test.ts                # Date clamping, 1st-installment remainder, statement mapping, Tabela Price, timelines
+        ├── installments.stress.test.ts         # 10,000-input cent conservation, month-end clamping 2024-2027, 24-month projections
+        ├── kerooInsights.test.ts               # The five statistical spending heuristics
+        ├── kerooMascot.test.tsx                # 10 poses, coin props, sizing/ARIA, SpeechBubble actions, RoamingCompanion
+        ├── kerooMascotInsights.stress.test.tsx # SVG validity of every pose, heuristic threshold boundaries, speech bubble callbacks
+        ├── kerooMood.test.ts                   # 5-mood cascade, guards, < 2ms benchmark, bill check-in queue
+        ├── kerooMood.stress.test.ts            # 10,000-evaluation latency benchmark, priority and zero-budget/zero-income guards
+        ├── seed.empirical.test.ts              # Seed/demo datasets across locales & currencies, i18n parity, ROADMAP checkboxes
+        ├── split.test.ts                       # Odd-cent payer absorption, percentage/exact splits, bilateral netting
+        ├── subscriptions.test.ts               # Anchor-day preservation, cadence normalization, status machine, 3-day radar, snooze
+        ├── subscriptionsSplit.stress.test.ts   # 48-cycle anchor-day drift, status boundaries, 50-transaction netting
+        └── views.test.tsx                      # Every page view renders; bills radar, re-import and validation regressions
 ```
 
 ---
@@ -204,4 +243,4 @@ export interface KerooMascotProps {
 1. Read the Mascot Style Guide above and use `public/icons/icon-512.png` as the canonical look.
 2. Keep the single organic "blob" silhouette (smooth continuous Bézier body rather than assembled geometric circles).
 3. Redraw `KerooMascot.tsx` replacing the current vector SVG paths with clean, organic continuous-path SVG artwork matching the style guide above.
-4. Keep the exact same `KerooMascotProps` interface and test attributes (the `pose-*` and `coin-*` `data-testid` hooks) so all 24 mascot tests in `src/tests/kerooMascot.test.tsx` and `src/tests/challenger_m4_mascot_insights_stress.test.tsx` pass without modification.
+4. Keep the exact same `KerooMascotProps` interface and test attributes (the `pose-*` and `coin-*` `data-testid` hooks) so all 53 tests in `src/tests/kerooMascot.test.tsx` (21) and `src/tests/kerooMascotInsights.stress.test.tsx` (32) pass without modification.

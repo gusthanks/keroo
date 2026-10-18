@@ -13,7 +13,7 @@ Keroo is engineered as a zero-cloud, privacy-first, client-side web application 
 |                                  Client Browser / PWA                             |
 |                                                                                   |
 |  +-----------------------------------------------------------------------------+  |
-|  |                     Presentation Layer (React 19 + Tailwind CSS)            |  |
+|  |                     Presentation Layer (React 18 + Tailwind CSS)            |  |
 |  |  Sure-Inspired UI  •  OKLCH Tokens  •  Tabular Numerals  •  Mascot Vector    |  |
 |  +-----------------------------------------------------------------------------+  |
 |                                         ▲                                         |
@@ -46,11 +46,11 @@ Keroo is engineered as a zero-cloud, privacy-first, client-side web application 
 ```
 
 ### Core Technology Stack
-- **Runtime & Build**: Vite + React 19 + TypeScript (Strict Mode).
-- **Styling & Tokens**: Tailwind CSS configured with custom OKLCH semantic design tokens (`jade`, `coin`, `surface`, `border`, `status`), standard system sans-serif font stack, and mandatory `tabular-nums` formatting for all monetary values.
+- **Runtime & Build**: Vite 6 + React 18 + TypeScript (strict mode).
+- **Styling & Tokens**: Tailwind CSS 3 (`tailwind.config.js`) mapping semantic color tokens (`surface`, `border`, `text`, `brand`, `coin`, `danger`, `warning`, `info`, `success`) to the OKLCH custom properties in `src/index.css`, a standard system sans-serif font stack, and mandatory `tabular-nums` formatting for all monetary values.
 - **Local Database**: IndexedDB (14 IndexedDB tables: 12 domain entity tables + 2 singleton configuration tables) wrapped by **Dexie.js** with `dexie-react-hooks` (`useLiveQuery`) providing observable, reactive database subscriptions.
 - **Icons**: Lucide React for consistent, lightweight vector iconography.
-- **Testing Framework**: Vitest with unit test coverage across all pure math, financial, installment, bill status, split netting, and pet state engines.
+- **Testing Framework**: Vitest (jsdom, Testing Library, `fake-indexeddb`) with unit test coverage across all pure math, financial, installment, bill status, split netting, and pet state engines, plus component, view, database, and i18n suites in `src/tests/`.
 
 ---
 
@@ -58,72 +58,75 @@ Keroo is engineered as a zero-cloud, privacy-first, client-side web application 
 
 The codebase enforces strict separation of concerns: **UI components never perform financial calculations directly**; they delegate all arithmetic, state transitions, and validation to pure, deterministic engine functions located in `src/core/`.
 
+The tree below mirrors `git ls-files src` (the repository-wide map lives in `CLAUDE.md` section 4).
+
 ```
 src/
-├── main.tsx
-├── App.tsx
+├── main.tsx                            <-- React mount; registers public/sw.js in production builds only
+├── App.tsx                             <-- View router, onboarding guard, theme sync, Cmd+K, quick-add modal
+├── index.css                           <-- Tailwind layers, OKLCH CSS variables (light & .dark), font stack
+│
+├── types/
+│   └── index.ts                        <-- Entity TypeScript types (single source of truth) + doc-name aliases
 │
 ├── core/                               <-- Pure Deterministic Engines (Zero React, Zero DOM)
-│   ├── currency.ts                     <-- Integer cents arithmetic & formatters (BRL, USD, EUR)
+│   ├── currency.ts                     <-- Integer cents arithmetic & formatters (BRL, USD, EUR); defaultCurrencyFor
+│   ├── dates.ts                        <-- Local-calendar "today" & date formatting helpers (never UTC)
+│   ├── accountForms.ts                 <-- Shared view helpers: day/rate parsing, cadence/status labels, bills radar
 │   ├── envelopes.ts                    <-- Zero-based budgeting, TBB pool, rollover mechanics
 │   ├── installments.ts                 <-- 1x–24x schedule, closing/due day projection, remainder
 │   ├── subscriptions.ts                <-- Recurring bill cadence, 3-day radar, status machine
 │   ├── split.ts                        <-- Bilateral debt netting, 50/50 split math, running tabs
-│   ├── kerooMood.ts                    <-- 5-mood deterministic state machine (< 2ms)
+│   ├── kerooMood.ts                    <-- 5-mood deterministic state machine (< 2ms), poses, bill check-in actions
 │   ├── kerooInsights.ts                <-- Spending surge, delivery spike, installment relief
-│   ├── rules.ts                        <-- Auto-categorization & payee normalization engine
-│   └── importParser.ts                 <-- CSV & OFX 1.0/2.0 SGML/XML parser & deduplication
+│   ├── autoRules.ts                    <-- Auto-categorization rules, payee normalization & SHA-256 dedup hashing
+│   ├── importParser.ts                 <-- CSV & OFX 1.0/2.0 SGML/XML parser & deduplication
+│   └── backup.ts                       <-- JSON backup export & validated atomic restore of all Dexie tables
 │
 ├── db/                                 <-- Persistence Layer
-│   ├── db.ts                           <-- Dexie database class (KerooDatabase) & versioning
-│   ├── schema.ts                       <-- TypeScript entity interfaces & compound index types
-│   ├── seed.ts                         <-- Clean-slate default category seed definitions
-│   └── demoData.ts                     <-- 1-click realistic demo dataset
+│   ├── index.ts                        <-- Dexie database class (KerooDatabase), `db` instance & versioning
+│   ├── schema.ts                       <-- KEROO_DB_SCHEMA_V1 tables & compound indexes; re-exports src/types
+│   ├── validation.ts                   <-- Dexie hooks rejecting fractional cents on every monetary field
+│   ├── seed.ts                         <-- Clean-slate category seed & bilingual 1-click demo dataset
+│   └── demoData.ts                     <-- Re-export of seedDemoData / loadDemoData from seed.ts
 │
 ├── i18n/                               <-- Bilingual Translation Engine
-│   ├── index.ts                        <-- Language context provider & useTranslation hook
-│   ├── pt-BR.json                      <-- Brazilian Portuguese dictionary (source of truth)
-│   └── en-US.json                      <-- American English dictionary (100% key parity)
+│   ├── index.tsx                       <-- I18nProvider, useTranslation hook, translate(), resolveInitialLocale
+│   ├── en-US.json                      <-- American English dictionary (authoring source of truth)
+│   └── pt-BR.json                      <-- Brazilian Portuguese dictionary (100% key parity)
 │
-├── styles/                             <-- Visual Design System
-│   ├── globals.css                     <-- OKLCH CSS variables, safe-area insets, font rules
-│   └── tailwind.config.js              <-- Semantic token mappings
-│
-├── components/                         <-- UI Components
+├── components/                         <-- UI Components (each folder except onboarding/ has an index.ts barrel)
 │   ├── layout/
 │   │   ├── AppLayout.tsx               <-- Responsive viewport wrapper (Sidebar vs Bottom Bar)
-│   │   ├── DesktopSidebar.tsx          <-- 260px fixed / 72px collapsible left navigation
-│   │   ├── MobileBottomNav.tsx         <-- 64px mobile bottom nav with safe-area padding
-│   │   └── TopHeader.tsx               <-- Sticky header with Keroo mini-status & Cmd+K trigger
+│   │   ├── Sidebar.tsx                 <-- 260px fixed / 72px collapsible left navigation
+│   │   ├── BottomNav.tsx               <-- Mobile bottom nav with safe-area padding & "More" sheet
+│   │   └── Header.tsx                  <-- Sticky header with Keroo mood badge & Cmd+K search trigger
 │   ├── common/
 │   │   ├── Button.tsx                  <-- Press-scale tactile button with OKLCH variants
 │   │   ├── Card.tsx                    <-- 1px border container with concentric rounded-2xl
 │   │   ├── Input.tsx                   <-- 16px mobile font-size floor & tabular-nums
-│   │   ├── Modal.tsx                   <-- Accessible dialog with backdrop blur & focus trap
+│   │   ├── Modal.tsx                   <-- Accessible dialog with backdrop blur
 │   │   ├── Badge.tsx                   <-- Semantic status chip (Paid, Overdue, Due Soon)
 │   │   └── ProgressBar.tsx             <-- Concentric goal progress bar
 │   ├── keroo/
-│   │   ├── KerooMascot.tsx             <-- Vector SVG Jin Chan mascot with 5 animated moods
-│   │   ├── SpeechBubble.tsx            <-- Interactive check-in bubble with 1-click actions
-│   │   └── InsightPill.tsx             <-- Statistical celebration or warning chip
+│   │   ├── KerooMascot.tsx             <-- Inline-SVG Jin Chan mascot: 10 poses, 6 coin props
+│   │   ├── SpeechBubble.tsx            <-- Interactive bill check-in bubble with 1-click actions
+│   │   └── RoamingCompanion.tsx        <-- Draggable roaming pet layer (perching, docking, on/off toggle)
 │   ├── command/
 │   │   └── CommandPalette.tsx          <-- Cmd+K / Ctrl+K quick search & action modal
-│   ├── onboarding/
-│   │   └── OnboardingWizard.tsx        <-- 4-step 60-second clean-slate setup modal
-│   └── forms/
-│       ├── TransactionFormModal.tsx    <-- Income, expense, and transfer modal
-│       ├── InstallmentFormModal.tsx    <-- 1x–24x card purchase logger
-│       ├── PiggyBankModal.tsx          <-- Savings goal deposit & edit modal
-│       └── BillFormModal.tsx           <-- Recurring bill & subscription modal
+│   └── onboarding/
+│       └── OnboardingWizard.tsx        <-- 4-step 60-second clean-slate setup modal
 │
-└── views/                              <-- Primary Route Screens
-    ├── DashboardView.tsx               <-- Overview with live Keroo widget & upcoming bills
-    ├── AccountsView.tsx                <-- Multi-account balances & transaction ledger
-    ├── CreditCardsView.tsx             <-- Card statements & 6-24 month installment timeline
-    ├── SubscriptionsView.tsx           <-- Recurring bills radar & annualized cost impact
-    ├── PiggyBanksView.tsx              <-- Cofrinhos visual savings progress & deposit dialogs
-    ├── SplitView.tsx                   <-- Bilateral utility netting & shared IOU tabs
-    └── SettingsView.tsx                <-- Language, currency, theme, clean-slate/demo toggle
+├── views/                              <-- Primary Route Screens (form modals live inside each view)
+│   ├── DashboardView.tsx               <-- Overview with live Keroo widget, upcoming bills & insights
+│   ├── AccountsView.tsx                <-- Multi-account balances, transaction ledger & statement import
+│   ├── CreditCardsView.tsx             <-- Card statements & 6-24 month installment timeline
+│   ├── SubscriptionsView.tsx           <-- Recurring bills radar & annualized cost impact
+│   ├── PiggyBanksView.tsx              <-- Piggy Banks (Cofrinhos) savings progress & deposit dialogs
+│   ├── SplitView.tsx                   <-- Bilateral utility netting & shared IOU tabs
+│   └── SettingsView.tsx                <-- Language, currency, theme, clean-slate/demo toggle
+│
+└── tests/                              <-- Vitest suites (22 test files) + setup.ts
 ```
 
 ---
@@ -132,7 +135,7 @@ src/
 
 ### 3.1 The Dexie Reactive Cycle (`useLiveQuery`)
 Keroo follows a strictly unidirectional, reactive local data flow:
-1. **User Action**: The user performs an action in the UI (e.g. logging an expense, clicking `[✅ Já paguei!]`, or depositing into a Piggy Bank).
+1. **User Action**: The user performs an action in the UI (e.g. logging an expense, clicking the speech bubble's `[✅ Paid!]` button (pt-BR UI label: `Já paguei!`), or depositing into a Piggy Bank).
 2. **Core Engine Validation**: The input is validated and transformed using pure functions in `src/core/` (e.g., verifying integer cents, calculating remainder distribution).
 3. **Atomic Commit**: An ACID transaction writes the update to IndexedDB via Dexie.js.
 4. **Observable Broadcast**: Dexie's internal change observation system detects table mutations and synchronously notifies active `useLiveQuery` hooks.
@@ -154,11 +157,20 @@ Keroo follows a strictly unidirectional, reactive local data flow:
 [ UI Component Update ]    ─── (Synchronous DOM render)
 ```
 
-### 3.2 Ephemeral UI State (React Context)
-While persistent application data lives in IndexedDB, lightweight ephemeral UI state is held in React Context:
-- **`I18nContext`**: Current active locale (`pt-BR` or `en-US`), active currency symbol, and the `t(key, params)` translation function.
-- **`ThemeContext`**: Active visual mode (`light` or `dark`), managing the `.dark` class on the root `<html>` element.
-- **`CommandPaletteContext`**: Global visibility toggle for the `Cmd+K` / `Ctrl+K` modal.
+### 3.2 Ephemeral UI State (React Context & App State)
+While persistent application data lives in IndexedDB, lightweight ephemeral UI state is kept in React:
+- **`I18nContext`** (`src/i18n/index.tsx`): the active locale (`en-US` or `pt-BR`), `setLanguage`, and the `t(key, params)` translation function. It is the only React context; components that render outside the provider (`SpeechBubble`, `RoamingCompanion`) take a `locale` prop and call the pure `translate()` helper.
+- **Theme** (`App.tsx` state): the active mode (`light`, `dark`, or `system`), which toggles the `.dark` class on the root `<html>` element.
+- **Command palette** (`App.tsx` state): the visibility flag for the `Cmd+K` / `Ctrl+K` modal, passed to `CommandPalette` as props.
+
+### 3.3 Locale & Currency Resolution (English-first)
+Keroo boots in English unless the user or the browser says otherwise. `resolveInitialLocale()` in `src/i18n/index.tsx` picks the starting language in this order:
+1. the saved choice in `localStorage` (`keroo_language`), when it is a supported locale;
+2. an explicit locale passed to the provider (`I18nProvider`'s `initialLanguage` prop);
+3. the browser language: any `navigator.language` starting with `pt` selects `pt-BR`;
+4. `en-US` (`DEFAULT_LOCALE`).
+
+Every browser global is guarded, so the resolver is safe under SSR and jsdom. Changing the language writes `localStorage` and mirrors the choice into the `user_settings` singleton. Whenever the user has not explicitly picked a currency yet (onboarding, missing settings), the display currency follows the resolved locale through `defaultCurrencyFor(locale)` in `src/core/currency.ts`: `pt-BR` defaults to `BRL`, every other locale to `USD`.
 
 ---
 
@@ -313,16 +325,16 @@ For any subscription with $\Delta = \text{diffInCalendarDays}(\text{nextDueDate}
 ### 4.2 Interactive Speech Bubble & Atomic Ledger Updates
 When bills are pending, Keroo's speech bubble becomes an interactive action trigger. Clicking an action executes an atomic Dexie transaction:
 
-- **`[✅ Já paguei!]` / `[Paid!]`**:
-  1. Marks `recurring_bills` status as `'PAID'` with `lastPaymentDate = today`.
-  2. Inserts a new `Transaction` record (`type: 'expense'`) into `transactions`.
+- **`[✅ Paid!]`** (pt-BR UI label: `Já paguei!`), handled by `handleBillPaymentAction` in `src/core/kerooMood.ts`:
+  1. Advances the bill to its next cycle (anchor day preserved), sets `lastPaymentDate = today`, and clears any snooze.
+  2. Inserts a new cleared `Transaction` record (`type: 'expense'`) into `transactions`.
   3. Deducts `amountCents` from the designated payment account balance.
   4. Increments envelope `activityCents` for the category.
-  5. Plays a golden coin flip animation and triggers instant mood re-evaluation (e.g. from `SWEATING` to `CALM`).
-- **`[⏰ Lembrar amanhã]` / `[Snooze]`**:
+  5. The live queries re-render the dashboard and the mood is re-evaluated instantly (e.g. from `SWEATING` to `CALM`).
+- **`[⏰ Snooze]`** (pt-BR UI label: `Lembrar amanhã`):
   - Updates `snoozedUntilDate = today + 1 day`. Advances the queue to the next pending bill.
-- **`[✏️ Ajustar valor]` / `[Edit amount]`**:
-  - Expands an inline numeric input to adjust variable bills before committing payment.
+- **`[✏️ Edit]`** (pt-BR UI label: `Ajustar valor`):
+  - Expands an inline integer-cent input to adjust the amount of a variable bill.
 
 ### 4.3 Statistical Spending Heuristics (Deterministic Local Rules)
 Five local heuristics run in-memory across local transactions:
@@ -332,14 +344,14 @@ Five local heuristics run in-memory across local transactions:
 4. **Annualized Subscription Cost**: Normalizes all active subscriptions to annual impact, displaying total annual commitment.
 5. **Bilateral Split Net Receivables**: Reminds the user when net receivables from friends or roommates exceed $R\$\ 50,00$.
 
-### 4.4 Kawaii Doodle Frog Mascot & Roaming Companion Engine ("Pet que passeia pelo app")
+### 4.4 Kawaii Doodle Frog Mascot & Roaming Companion Engine
 
-In addition to the static dashboard speech bubble and insight pills, Keroo features an interactive roaming companion engine:
+In addition to the static dashboard speech bubble and insight cards, Keroo features an interactive roaming companion engine (Settings label: "Roaming Companion Pet"; pt-BR UI label: "Pet que passeia pelo app"):
 
 #### A. Visual Style: "Kawaii Doodle Frog"
-- **Art Direction**: Expressive, hand-drawn vector doodle aesthetic with a vibrant lime green body (`#8CE93A` / `#7ED321` or OKLCH `oklch(0.78 0.22 135)`), thick organic rounded black strokes (`stroke-width: 2.5px`), and shiny black bead eyes with white reflection dots.
+- **Art Direction**: The authoritative spec is the Mascot Style Guide in `CLAUDE.md` section 6: one continuous Bézier blob body in flat lime `#86E63C`, a thick uniform near-black outline (`#1F1F1F`, round caps and joins), tiny bead-dot eyes with no eye whites, and pink blush dots on playful poses. All artwork is inline SVG in `src/components/keroo/KerooMascot.tsx`.
 - **Jin Chan Golden Fortune Coin (Core Interactive Prop)**:
-  - Keroo interacts continuously with his oversized embossed golden coin (`oklch(0.82 0.18 85)`):
+  - Keroo interacts continuously with his oversized golden coin (`#FFD700` with a darker `#C88A00` edge and a square center hole):
     - Clamping it in his mouth like the traditional Jin Chan frog.
     - Flipping and tossing the coin as he hops between cards.
     - Hugging the coin lovingly when savings goals grow.
@@ -351,15 +363,15 @@ In addition to the static dashboard speech bubble and insight pills, Keroo featu
   - **Toast on Face**: Humorous facepalm pose with toast slapped on forehead when delivery/takeout spending spikes over groceries.
   - **Peace Sign (`✌️`) & Dab**: Celebratory victory poses when bills are marked paid or installment debt drops.
   - **Leaning & Sipping Juice/Coffee**: Cool, relaxed pose leaning against card borders when finances are in `CALM` or `THRIVING` equilibrium.
-  - **Curious Head-Tilt (`?`)**: Tilts head with a question bubble on pending check-ins ("Você já pagou?").
+  - **Curious Head-Tilt (`?`)**: Tilts his head with a question mark on pending bill check-ins ("did you pay that bill?").
   - **Sleeping with Snot Bubble**: Curled up napping atop the coin with an inflating/deflating translucent snot bubble when `SLEEPY` or idle.
   - **Cheeky Face (`😛`)**: Pokes tongue out playfully on random clicks or idle state.
 
 #### B. Roaming Companion Mechanics
 - **Card Perching & Screen Hopping**: Keroo hops across the layout and perches atop active UI elements (such as an overdue bill card, an empty budget envelope, or the Piggy Bank header).
 - **Drag-and-Drop Interactive Physics**: The user can pick up and drag Keroo across the viewport. Upon release, a spring animation snaps Keroo to the nearest card border or screen edge dock.
-- **On/Off Toggle**: Configurable via `user_settings.roamingPetEnabled`. Users who prefer a completely static interface can disable roaming with a single click in Settings or via Keroo's context menu.
-- **Micro-Animations & Sprite States**: Built with SVG/CSS/Framer Motion. Includes idle eye blinking, gentle breathing bob, hop trajectories, resting nap on card corners, and confetti celebrations.
+- **On/Off Toggle**: Configurable via `user_settings.roamingPetEnabled`. Users who prefer a completely static interface can disable roaming with a single click in Settings, from the pet's own "Disable roaming" button, or with the command palette's "Mascot: Toggle Roaming Pet" action.
+- **Micro-Animations & Sprite States**: Built with inline SVG plus CSS keyframes and transitions (no animation library), e.g. a gentle breathing bob, the inflating/deflating sleep bubble, and hop/dock transitions.
 - **Performance & Battery Isolation**: Uses hardware-accelerated CSS transforms (`translate3d`), limits frame loops to active movement, and automatically suspends animations via `document.hidden` when the tab or PWA is backgrounded.
 
 ---
@@ -369,15 +381,15 @@ In addition to the static dashboard speech bubble and insight pills, Keroo featu
 Keroo is designed to run seamlessly as an installed app on iOS (iPhone) and desktop browsers:
 
 ### 5.1 Service Worker & Cache Strategy
-- **Service Worker (`public/sw.js`)**: Implements a **Stale-While-Revalidate** caching strategy for all local application assets (HTML, JavaScript bundles, CSS stylesheets, fonts, and SVG mascot assets).
+- **Service Worker (`public/sw.js`)**: Precaches the app shell (`/`, `/index.html`, `/manifest.json`) and answers GET requests with a **Stale-While-Revalidate** strategy, caching only successful same-origin responses (HTML, JavaScript bundles, CSS stylesheets, and icons) and never intercepting Vite dev-server paths. `src/main.tsx` registers it in production builds only, so the dev server never serves cached Vite modules.
 - **Network Independence**: The app shell loads instantly from cache even when the device is completely offline or in Airplane Mode. All ledger modifications write immediately to local IndexedDB.
 
-### 5.2 Web App Manifest (`public/manifest.json`)
-Configures standalone display, portrait orientation, theme colors (`#10b981` in light mode, `#121417` in dark mode), and icons (192px, 512px, and maskable).
+### 5.2 Web App Manifest (`public/manifest.json`) & Theme Colors
+The manifest configures standalone display, `orientation: "any"`, a single `theme_color` / `background_color` of `#121417`, and icons (192px, 512px, and a 512px maskable icon). The light/dark browser-chrome pair lives in `index.html` instead, as two `<meta name="theme-color">` tags with media queries: `#10b981` for `(prefers-color-scheme: light)` and `#121417` for `(prefers-color-scheme: dark)`.
 
 ### 5.3 iOS Safari Safe Area Adaptation
 To ensure an ergonomic native feel on iPhone devices with the Home Indicator bar:
-- Viewport configuration: `viewport-fit=cover, maximum-scale=1.0, user-scalable=no`.
+- Viewport configuration: `width=device-width, initial-scale=1.0, viewport-fit=cover` (pinch-zoom stays enabled for accessibility), plus the `apple-mobile-web-app-capable` and `black-translucent` status-bar meta tags in `index.html`.
 - Mobile bottom navigation uses `padding-bottom: max(0.75rem, env(safe-area-inset-bottom))` to prevent overlap with the system indicator.
 - Minimum 48px touch target hit areas for all interactive buttons.
 - Form inputs enforce `text-base` (16px) font size on mobile viewports to prevent iOS Safari auto-zoom behavior.
