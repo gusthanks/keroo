@@ -310,11 +310,13 @@ describe('Regression: navigation, palette, theme and piggy bank fixes', () => {
     const header = await screen.findByTestId('app-header');
     fireEvent.click(within(header).getByLabelText('Alternar tema'));
 
+    // Wait for both: the row is written before the live query re-renders the app,
+    // so the <html> class can lag one render behind the database.
     await waitFor(async () => {
       const settings = await db.user_settings.get('global');
       expect(settings?.theme).toBe('dark');
+      expect(document.documentElement.classList.contains('dark')).toBe(true);
     });
-    expect(document.documentElement.classList.contains('dark')).toBe(true);
   });
 
   it('PiggyBanksView rejects a withdrawal larger than the saved amount and records deposits as transfers', async () => {
