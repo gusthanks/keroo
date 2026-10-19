@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="public/icons/icon-512.png" width="120" alt="Keroo, a green frog hugging a gold coin">
+<img src="public/icons/icon-512.png" width="120" alt="Keroo, the friendly green frog companion">
 
 # Keroo
 

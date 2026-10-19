@@ -70,7 +70,7 @@ Implement the zero-AI, sub-2ms deterministic mood state machine, interactive spe
   - Annualized Subscription Cost Summary.
   - Bilateral Split Net Receivables Alert ($\ge R\$\ 50,00$).
 - [x] Implement Mascot Art & Charismatic Reactive Poses:
-  - Kawaii Doodle Frog vector geometry (`#8CE93A` / `#7ED321`, organic 2.5px rounded stroke, bead eyes). *(Superseded by the Stage 6 redraw: flat `#86E63C` fill and `#1F1F1F` outline; see CLAUDE.md section 6.)*
+  - Kawaii Doodle Frog vector geometry (`#8CE93A` / `#7ED321`, organic 2.5px rounded stroke, bead eyes). *(Historical implementation, superseded by the approved illustrated raster animation in Stage 6; see CLAUDE.md section 6.)*
   - Jin Chan Golden Fortune Coin prop interaction mechanics (mouth clamp, flipping, hugging, polishing, swallowing into piggy banks).
   - Dramatic & comedic poses: fetal pose waterfall tears, melted frog blob, toast on face, peace sign `✌️` & dab, leaning sipping juice, sleeping with snot bubble, cheeky face `😛`.
 - [x] Write comprehensive unit tests in `tests/kerooMood.test.ts` and `tests/kerooInsights.test.ts` verifying all state transitions, benchmark latencies ($< 2\text{ms}$), and speech trigger rules.
@@ -126,3 +126,40 @@ Perform automated test verification, build pipeline checks, edge-case hardening,
 - Mascot redrawn from scratch (`src/components/keroo/KerooMascot.tsx`): single-blob sticker art inspired by the kawaii doodle-frog sticker style (see CLAUDE.md section 6); PWA icons in `public/icons/` generated from it.
 - Core fixes: bill payment transaction now has an id and updates the month envelope; piggy-bank withdrawals cannot exceed the saved balance; statement import dedupes per account and parses `D`/`C` suffixes; all "today" values use `src/core/dates.ts` (local calendar, not UTC); installment flat surcharge keeps interest ≥ 0; `PAID_OK` is cycle-aware.
 - Known follow-ups (not blocking): the mascot `toast_face` and `peace_dab` poses could be polished further. *(Since resolved: installment and piggy-bank ledger notes are written with `t()` and `importParser` warnings carry codes the view translates. The bill-payment note is passed in already translated by the dashboard (`dashboard.bill_payment_note`).)*
+
+### Stage 6 - 2026-10-19 illustrated raster mascot and native icons
+
+Gustavo chose direction A, then rejected the simplified SVG implementation in the
+running app: the illustration lost texture and proportions and combined overlapping
+cup/coin props. The earlier source-review Pass did not establish visual acceptance.
+He proposed GIF, reviewed an actual raster breathing/blinking preview, and explicitly
+authorized integration and the GitHub repository update.
+
+- [x] Preserve the actual approved illustration. Canonical four-second loop and
+  image-generated source frames are in `assets/mascot/`; the shipped WebP is byte
+  identical (SHA-256 in `export-validation.json`). No SVG or accessory overlays.
+- [x] Integrate the approved raster art in dashboard, onboarding, floating pet and
+  brand slots. Keep legacy pose keys compatible, with six coherent presentations,
+  static closed-eye rest, keyboard reactions and drag-versus-click handling.
+- [x] Use genuine static PNG fallbacks for reduced motion, hidden documents and
+  animation load failure; use native portrait density candidates for tiny slots.
+- [x] Export the high-resolution illustrated portrait into favicon/PWA/Apple PNGs,
+  a separate maskable icon and seven native ICO frames (16-256px). Version asset
+  URLs and service-worker precache; serve WebP/GIF with correct launcher MIME types.
+- [x] Run `npx tsc --noEmit` (zero errors), `npm test` (24 files, 543 tests green),
+  `npm run build` (success; existing >500kB chunk warning) and `git diff --check`.
+  Test discovery is confined to this checkout's `src/`, using two thread workers.
+- [x] Inspect the production build in an isolated test origin on desktop (1366px)
+  and mobile (390px), light/dark themes and reduced-motion emulation. Check actual
+  image currentSrc, native dimensions, no horizontal overflow and PNG selection.
+  Production HTTP response for the animation matches the approved master's hash.
+- [x] Update only the explicitly authorized Keroo Desktop shortcut icon. Reread
+  confirms target, arguments and working directory preserved; snapshot hash matches
+  the verified ICO. A per-item shell refresh was requested.
+
+Handoff: `docs/mascot-review/README.md` and `REVIEW.md`. The running Windows taskbar
+could not be directly inspected through this host's available UI API. Its favicon,
+manifest and native frames are updated and HTTP-verified, but visual appearance at
+Gustavo's display scale remains a manual confirmation after reopening the app.
+No financial core, database schema or bill-action handler changed. No browser data
+or global Windows icon cache was cleared. GitHub update is explicitly authorized.

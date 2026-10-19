@@ -1,6 +1,6 @@
 # Design System Specification — Keroo
 
-This document defines the visual design system, OKLCH semantic color palette, typography hierarchy, concentric geometry, layout architecture, and Kawaii Doodle Frog mascot styling for **Keroo**.
+This document defines the visual design system, OKLCH semantic color palette, typography hierarchy, concentric geometry, layout architecture, and approved illustrated frog mascot styling for **Keroo**.
 
 ---
 
@@ -204,55 +204,66 @@ Interactive buttons and cards feature a spring-like micro-scale depression on ac
 
 ---
 
-## 6. Keroo Mascot Visual Styling & Roaming Companion System
+## 6. Keroo Mascot - Companheiro ilustrado (approved direction A)
 
-### 6.1 "Kawaii Doodle Frog" Visual Style
-The authoritative spec is the Mascot Style Guide in `CLAUDE.md` section 6; the values below mirror `src/components/keroo/KerooMascot.tsx`.
-- **Aesthetic**: Flat, sticker-style vector doodle mascot drawn as inline SVG.
-- **Body Geometry & Color**:
-  - Silhouette: ONE continuous Bézier blob body whose top edge forms the two eye bumps.
-  - Body fill: flat lime green `#86E63C`; no gradients, no shading, no belly patch.
-  - Outline: thick, uniform near-black strokes (`#1F1F1F`, `stroke-linecap: round`, `stroke-linejoin: round`).
-  - Eyes: tiny bead-dot eyes with no eye whites (short thick arcs when happy or sleepy); pink blush dots (`#F4899A`) on playful poses.
+Gustavo approved the actual raster animation on 2026-10-19. The previous simplified
+SVG interpretation was rejected. Preserve the illustration itself: warm leaf green,
+painted texture and shadows, forest-green organic outlines, large cream/deep-green
+eyes, peach cheeks, cream belly and gold sprout coin held in both paws.
 
-### 6.2 Jin Chan Golden Fortune Coin (Core Interactive Prop)
-The golden coin is Keroo's constant companion and interactive prop:
-- Base color: gold `#FFD700` with a darker `#C88A00` edge and a square hole in the center.
-- **Prop Interactions**:
-  - **Mouth Clamp**: Clamps the coin firmly in his mouth like the traditional Jin Chan frog.
-  - **Coin Flip**: Flips the coin in the air with a sparkle particle when walking or hopping.
-  - **Hug & Polish**: Embraces the coin with both arms or rubs it with a soft cloth during `THRIVING` state.
-  - **Coin Swallowing (Open Mouth `👄 / 🟡`)**: Drops a coin into his huge open mouth whenever the user logs a deposit to a Piggy Bank (*Cofrinho*).
+### 6.1 Sources and rendering
 
-### 6.3 Dramatic & Comedic Reactive Poses
-Keroo expresses financial events with rich, humorous reactions:
-1. **Waterfall Tears / Fetal Pose (`SWEATING` Extreme)**:
-   - Trigger: Multiple overdue bills or severe budget overruns.
-   - Pose: Curled up in a fetal position with a blue depression aura and comic waterfall tears streaming down.
-2. **Melted Frog Blob**:
-   - Trigger: Liquidity deficit or extreme monthly expenses.
-   - Pose: Deflated green puddle flattened against the card surface.
-3. **Toast on Face**:
-   - Trigger: Delivery vs Grocery spending ratio spike alert.
-   - Pose: Wide eyes with a slice of toast slapped directly across his face.
-4. **Peace Sign (`✌️`) & Dab (`THRIVING`)**:
-   - Trigger: User clicks `[✅ Paid!]` (pt-BR UI label: `Já paguei!`), pays off credit card debt, or saves $> 20\%$.
-   - Pose: Dynamic double-finger peace pose with sparkle stars bobbing around.
-5. **Leaning & Sipping Juice/Coffee (`CALM`)**:
-   - Trigger: All bills paid, budget healthy.
-   - Pose: Lounging against the edge of a dashboard card with sunglasses sipping from a tiny coconut/juice cup.
-6. **Curious Head-Tilt (`?`) (`ALERT`)**:
-   - Trigger: Bill due today or 3-day advance notice.
-   - Pose: Inquisitive 15° head tilt with an amber question mark bubble.
-7. **Sleeping with Snot Bubble (`SLEEPY`)**:
-   - Trigger: Inactive for $\ge 5$ days or late night.
-   - Pose: Curled up asleep atop his golden coin with an animated inflating/deflating translucent snot bubble.
-8. **Cheeky Face (`😛`)**:
-   - Trigger: User taps/clicks Keroo directly.
-   - Pose: Pokes tongue out playfully with a wink.
+`assets/mascot/approved-idle.webp` is the canonical four-second breathing/blinking
+loop with smooth transparent alpha. The shipped `/mascot/idle.webp` must be byte
+identical. Open/closed-eye static PNGs are extracted from it. The high-resolution
+`assets/mascot/icon-master.png` supplies the face-first icons. Do not recreate the
+mascot in SVG, flatten away its texture or overlay disconnected cups, coins or limbs.
+`src/components/keroo/KerooMascot.tsx` displays a single raster image with contain
+sizing. Portrait PNGs replace the full-body scene in slots of 48px or smaller.
 
-### 6.4 Roaming Companion Layer
-- **Layering**: High z-index floating layer (`pointer-events-auto` on the pet, `pointer-events-none` on overlay backdrop).
-- **Perching**: Snaps dynamically to card header borders across the dashboard.
-- **Drag-and-Drop**: Users can drag Keroo with cursor or touch; on release, a physics spring settles Keroo onto the nearest card edge.
-- **Toggle Setting**: Can be disabled at any time via `user_settings.roamingPetEnabled` (Settings $\to$ "Roaming Companion Pet"; pt-BR UI label: "Pet que passeia pelo app"), from the pet's own "Disable roaming" button, or with the command palette.
+### 6.2 Compatible mood presentations
+
+The deterministic evaluator keeps all ten historical pose keys. The renderer uses
+six presentations; these are not ten separately painted poses:
+
+| Historical identifier | Current presentation |
+| --- | --- |
+| default_sitting, sipping_drink | Approved idle loop |
+| waterfall_tears, toast_face, curious_head_tilt | Attentive whole-character tilt |
+| melted_blob, sleeping_bubble | Closed-eye static rest |
+| peace_dab | Brief whole-character celebration hop |
+| cheeky_tongue | Brief playful whole-character wiggle |
+| coin_swallowing | Brief saving nod with the painted coin |
+
+Legacy `coinProp` values are source-compatible but have no compositing effect.
+Any future distinct poses must be coherent complete illustrations reviewed against
+the approved identity. Both language dictionaries describe what is actually shown.
+
+### 6.3 Motion and interaction
+
+The approved idle loop is animated WebP, retaining full color and smooth alpha.
+GIF previews demonstrated the animation, but WebP is the shipped equivalent.
+`prefers-reduced-motion` selects a real static PNG through `picture` and disables
+CSS reactions. Hidden documents and non-animated instances also use PNG. Failed
+animation loading falls back to the static frame. No runtime AI or cloud calls.
+The optional floating pet supports Enter/Space, visible keyboard focus and dragging
+without triggering an extra click reaction. Financial actions remain atomic.
+
+### 6.4 Native icons, cache and export
+
+Regenerate using `npm run mascot:assets` with the optional Pillow requirements in
+`scripts/requirements-mascot.txt`. Builds use checked-in exports. Each icon is
+resized directly from the high-resolution portrait; PNG density candidates cover
+16-512px. ICO files contain separate native 16, 24, 32, 48, 64, 128 and 256px frames.
+Web favicons advertise PNG at 32/48/64px plus the multiresolution ICO. Apple and PWA
+icons, including a separate inset maskable icon, share the same portrait.
+
+Generated art/icon URLs carry a content version and the service worker precaches
+the new animation, static frames and icons. The production launcher serves WebP
+and GIF with their correct MIME types. The Desktop shortcut uses a content-hashed
+ICO filename. Edge's running-window/taskbar icon depends on the web favicon and
+manifest as well; updating only the shortcut does not verify the taskbar result.
+Reopen an old app window to request fresh icon assets without clearing user data.
+
+Sources, prompts and export validation: `assets/mascot/`. Review gallery of actual
+shipped assets: `docs/mascot-review/index.html` (development server only).

@@ -1,0 +1,19 @@
+{
+  "version": "9c1f43cefea0",
+  "approvedAnimationSha256": "9f51eefdc20efc5400d2c8f2d5addfb281e80073467a4e2699614a9a67bf6667",
+  "animationBytes": 2873240,
+  "animationDurationMs": 4000,
+  "canvas": [
+    512,
+    448
+  ],
+  "icoSizes": [
+    16,
+    24,
+    32,
+    48,
+    64,
+    128,
+    256
+  ]
+}

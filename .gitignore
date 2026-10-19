@@ -41,3 +41,18 @@ Thumbs.db
 # Local-only agent scaffolding and third-party reference art (never published)
 .agents/
 docs/mascot-references/
+
+# Local concept iterations and screenshot debugging (approved masters are in assets/mascot).
+/docs/mascot-review/legacy/
+/docs/mascot-review/*.jpg
+/docs/mascot-review/mobile-native.png
+/docs/mascot-review/keroo-hero.svg
+/docs/mascot-review/keroo-poses.png
+/docs/mascot-revision/*
+!/docs/mascot-revision/README.md
+!/docs/mascot-revision/generation-prompt.md
+
+# Per-install Windows icon-cache snapshots. Keep the canonical keroo.ico in Git.
+/scripts/windows/keroo-*.ico
+
+!/docs/mascot-review/app-mobile-light.jpg

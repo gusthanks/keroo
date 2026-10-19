@@ -6,6 +6,7 @@ import { defaultCurrencyFor } from '../../core/currency';
 import { requestPersistentStorage } from '../../core/backup';
 import type { SupportedCurrency } from '../../types';
 import { Sparkles, ArrowRight, ArrowLeft, Check, Coins, Globe, Heart } from 'lucide-react';
+import { KerooMascot } from '../keroo/KerooMascot';
 
 export interface OnboardingWizardProps {
   onComplete: () => void;
@@ -56,7 +57,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
         <div className="p-6 border-b border-border-subtle bg-surface-muted/30">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <span className="text-2xl">🐸</span>
+              <KerooMascot size="sm" animated={false} />
               <h2 className="text-lg font-semibold text-text-primary tracking-tight">
                 {t('onboarding.wizard_title')}
               </h2>
@@ -193,7 +194,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
               </div>
 
               <div className="p-3 bg-surface-muted rounded-xl flex items-center gap-3">
-                <span className="text-3xl">🐸🪙</span>
+                <KerooMascot size={96} className="shrink-0" />
                 <p className="text-xs text-text-secondary">
                   {t('onboarding.pet_promise', { name: petNickname || 'Keroo' })}
                 </p>

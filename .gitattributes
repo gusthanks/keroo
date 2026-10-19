@@ -3,6 +3,8 @@
 
 # Binary files
 *.png binary
+*.webp binary
+*.gif binary
 *.jpg binary
 *.ico binary
 *.woff binary

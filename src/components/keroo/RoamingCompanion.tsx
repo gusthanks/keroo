@@ -15,7 +15,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { Cents, RecurringBill, SupportedCurrency, SupportedLocale } from '../../types';
 import type { KerooMood, KerooPose } from '../../core/kerooMood';
 import type { BillCheckInPrompt } from '../../core/kerooMood';
-import { KerooMascot, type MascotCoinProp } from './KerooMascot';
+import { KerooMascot } from './KerooMascot';
 import { SpeechBubble } from './SpeechBubble';
 import { translate } from '../../i18n';
 
@@ -48,11 +48,6 @@ export const RoamingCompanion: React.FC<RoamingCompanionProps> = ({
   onToggleEnabled,
   className = '',
 }) => {
-  // If disabled by user setting, do not render floating companion
-  if (!enabled) {
-    return null;
-  }
-
   // Derive initial pose from mood if not provided
   const getPoseForMood = (m: KerooMood): KerooPose => {
     switch (m) {
@@ -73,9 +68,10 @@ export const RoamingCompanion: React.FC<RoamingCompanionProps> = ({
   const [currentPose, setCurrentPose] = useState<KerooPose>(
     initialPose || getPoseForMood(mood)
   );
-  const [coinProp, setCoinProp] = useState<MascotCoinProp>('none');
   const [showSpeech, setShowSpeech] = useState<boolean>(true);
   const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [isPageVisible, setIsPageVisible] = useState(() => typeof document === 'undefined' || !document.hidden);
+  const dragMovedRef = useRef(false);
 
   // Position state (bottom-right dock by default)
   const [position, setPosition] = useState<{ x: number; y: number }>({
@@ -94,9 +90,7 @@ export const RoamingCompanion: React.FC<RoamingCompanionProps> = ({
 
   // Synchronize pose when external mood changes
   useEffect(() => {
-    if (!initialPose) {
-      setCurrentPose(getPoseForMood(mood));
-    }
+    setCurrentPose(initialPose || getPoseForMood(mood));
   }, [mood, initialPose]);
 
   // Adjust position on window resize to keep within bounds
@@ -119,9 +113,7 @@ export const RoamingCompanion: React.FC<RoamingCompanionProps> = ({
   // Performance isolation: listen to visibilitychange
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.hidden) {
-        // Paused in background
-      }
+      setIsPageVisible(!document.hidden);
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -131,6 +123,7 @@ export const RoamingCompanion: React.FC<RoamingCompanionProps> = ({
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     // Only drag with left mouse button
     if (e.button !== 0) return;
+    dragMovedRef.current = false;
     setIsDragging(true);
     dragStartRef.current = {
       startX: e.clientX,
@@ -142,6 +135,7 @@ export const RoamingCompanion: React.FC<RoamingCompanionProps> = ({
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (e.touches.length === 1) {
+      dragMovedRef.current = false;
       setIsDragging(true);
       dragStartRef.current = {
         startX: e.touches[0].clientX,
@@ -158,6 +152,7 @@ export const RoamingCompanion: React.FC<RoamingCompanionProps> = ({
     const handleMouseMove = (e: MouseEvent) => {
       const dx = e.clientX - dragStartRef.current.startX;
       const dy = e.clientY - dragStartRef.current.startY;
+      if (Math.hypot(dx, dy) > 5) dragMovedRef.current = true;
       const newX = dragStartRef.current.petX + dx;
       const newY = dragStartRef.current.petY + dy;
 
@@ -171,6 +166,7 @@ export const RoamingCompanion: React.FC<RoamingCompanionProps> = ({
       if (e.touches.length === 1) {
         const dx = e.touches[0].clientX - dragStartRef.current.startX;
         const dy = e.touches[0].clientY - dragStartRef.current.startY;
+        if (Math.hypot(dx, dy) > 5) dragMovedRef.current = true;
         const newX = dragStartRef.current.petX + dx;
         const newY = dragStartRef.current.petY + dy;
 
@@ -209,7 +205,10 @@ export const RoamingCompanion: React.FC<RoamingCompanionProps> = ({
 
   // Click mascot to cycle funny poses or trigger cheeky tongue
   const handlePetClick = () => {
-    if (isDragging) return;
+    if (isDragging || dragMovedRef.current) {
+      dragMovedRef.current = false;
+      return;
+    }
 
     const funnyPoses: KerooPose[] = [
       'cheeky_tongue',
@@ -224,9 +223,6 @@ export const RoamingCompanion: React.FC<RoamingCompanionProps> = ({
     const nextIndex = (funnyPoses.indexOf(currentPose) + 1) % funnyPoses.length;
     setCurrentPose(funnyPoses[nextIndex]);
 
-    // Randomize coin prop for fun
-    const props: MascotCoinProp[] = ['mouth_clamp', 'flipping', 'hugging', 'none'];
-    setCoinProp(props[Math.floor(Math.random() * props.length)]);
 
     // Ensure speech bubble is visible on tap
     setShowSpeech(true);
@@ -234,11 +230,13 @@ export const RoamingCompanion: React.FC<RoamingCompanionProps> = ({
 
   const isNearRightEdge = position.x > (typeof window !== 'undefined' ? window.innerWidth / 2 : 300);
 
+  if (!enabled) return null;
+
   return (
     <aside
       aria-label={translate(locale, 'pet.roaming_aria')}
       data-testid="roaming-companion-layer"
-      className={`fixed z-50 select-none pointer-events-auto transition-transform ${
+      className={`fixed z-50 group select-none pointer-events-auto transition-transform ${
         isDragging ? 'cursor-grabbing duration-0' : 'cursor-grab duration-300'
       } ${className}`}
       style={{
@@ -275,18 +273,28 @@ export const RoamingCompanion: React.FC<RoamingCompanionProps> = ({
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
         onClick={handlePetClick}
-        className="relative group p-1"
+        role="button"
+        tabIndex={0}
+        aria-label={translate(locale, 'pet.play')}
+        onKeyDown={(event) => {
+          if (event.target !== event.currentTarget) return;
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            handlePetClick();
+          }
+        }}
+        className="relative p-1 rounded-xl touch-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
         data-testid="roaming-pet-avatar"
       >
         <KerooMascot
           pose={currentPose}
-          coinProp={coinProp}
           size={84}
-          animated={!isDragging}
+          animated={!isDragging && isPageVisible}
         />
+      </div>
 
         {/* Hover drag hint pill */}
-        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 px-2 py-0.5 rounded-full bg-neutral-900/80 text-white text-[10px] whitespace-nowrap shadow-sm">
+        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex items-center gap-1 px-2 py-0.5 rounded-full bg-neutral-900/80 text-white text-[10px] whitespace-nowrap shadow-sm">
           <span>{translate(locale, 'pet.drag_me')}</span>
           {onToggleEnabled && (
             <button
@@ -302,7 +310,6 @@ export const RoamingCompanion: React.FC<RoamingCompanionProps> = ({
             </button>
           )}
         </div>
-      </div>
     </aside>
   );
 };

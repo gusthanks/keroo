@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* The illustration itself is an approved animated WebP. Only whole-character
+   reactions are added here; accessories are never composited over the image. */
+.keroo-motion-attentive { transform: rotate(-3deg); }
+.keroo-motion-celebrate { animation: keroo-celebrate 700ms ease-in-out 2; }
+.keroo-motion-playful { animation: keroo-playful 650ms ease-in-out 1; }
+.keroo-motion-saving { animation: keroo-saving 650ms ease-in-out 1; }
+@keyframes keroo-celebrate {
+  0%, 100% { transform: translateY(0); }
+  45% { transform: translateY(-5px) rotate(-2deg); }
+}
+@keyframes keroo-playful {
+  0%, 100% { transform: rotate(0); }
+  35% { transform: rotate(-4deg); }
+  70% { transform: rotate(3deg); }
+}
+@keyframes keroo-saving {
+  0%, 100% { transform: translateY(0); }
+  45% { transform: translateY(3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*="keroo-motion-"] { animation: none; transform: none; }
+}
+
 /* =========================================================
    LIGHT THEME (Default)
    ========================================================= */

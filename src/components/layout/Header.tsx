@@ -3,6 +3,7 @@ import { Search, Sun, Moon, Coins, Lock } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import type { KerooMood, SupportedCurrency, SupportedTheme } from '../../types';
 import { Badge } from '../common/Badge';
+import { KerooMascot } from '../keroo/KerooMascot';
 
 export interface HeaderProps {
   title: string;
@@ -87,9 +88,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Keroo Mini Status Widget */}
         <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-xl bg-surface-muted/30 border border-border-subtle">
-          <span className="text-base leading-none select-none" role="img" aria-label={t('header.mascot_mini')}>
-            🐸
-          </span>
+          <KerooMascot size={24} animated={false} pose={mood === 'sleepy' ? 'sleeping_bubble' : 'default_sitting'} ariaLabel={t('header.mascot_mini')} />
           <span className="text-xs font-medium text-text-secondary truncate max-w-[80px]">
             {petNickname}
           </span>

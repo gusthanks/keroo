@@ -15,6 +15,7 @@ import {
   Languages,
 } from 'lucide-react';
 import { useTranslation } from '../../i18n';
+import { KerooMascot } from '../keroo/KerooMascot';
 import type { SupportedLocale, SupportedTheme } from '../../types';
 
 export type ViewId =
@@ -110,9 +111,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={() => onNavigate('dashboard')}
           title="Keroo"
         >
-          <span className="text-2xl shrink-0" role="img" aria-label={t('sidebar.mascot_aria')}>
-            🐸
-          </span>
+          <KerooMascot size="xs" animated={false} ariaLabel={t('sidebar.mascot_aria')} className="shrink-0" />
           {!isCollapsed && (
             <div className="overflow-hidden">
               <h1 className="text-base font-semibold text-text-primary tracking-tight truncate leading-none">

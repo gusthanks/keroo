@@ -91,7 +91,7 @@ keroo/
 │   ├── launch.json               # Dev-server launch config (`npm run dev` on port 5173)
 │   └── commands/
 │       ├── continue.md           # /continue: run the next unfinished roadmap stage
-│       └── mascot-redesign.md    # /mascot-redesign: redraw the mascot SVG from the style guide
+│       └── mascot-redesign.md    # /mascot-redesign: preserve approved raster art and validate asset integration
 ├── .github/
 │   ├── dependabot.yml            # Weekly npm (minor/patch grouped) and GitHub Actions updates
 │   └── workflows/
@@ -110,7 +110,7 @@ keroo/
 │   ├── serve-dist.mjs            # Localhost-only static server for dist/ on port 4173; exits after 10 idle minutes
 │   └── windows/
 │       ├── create-desktop-shortcut.ps1 # `npm run desktop:shortcut`: creates Keroo.lnk on the desktop
-│       └── keroo.ico             # Shortcut icon (32 px and 192 px mascot PNGs)
+│       └── keroo.ico             # Shortcut icon (seven native PNG frames, 16-256px)
 └── src/
     ├── main.tsx                  # Application bootstrap & mount; registers sw.js in production builds only
     ├── App.tsx                   # Top-level view router, onboarding guard, theme sync, Cmd+K, quick-add transaction modal
@@ -144,7 +144,7 @@ keroo/
     ├── components/               # Sure-inspired UI components (each folder except onboarding/ has an index.ts barrel)
     │   ├── layout/               # AppLayout, Sidebar, BottomNav (with "More" sheet), Header (lock button), theme helpers
     │   ├── common/               # Button, Card, Input, Modal, Badge, ProgressBar
-    │   ├── keroo/                # KerooMascot (SVG), SpeechBubble, RoamingCompanion
+    │   ├── keroo/                # KerooMascot (raster), SpeechBubble, RoamingCompanion
     │   ├── lock/                 # AppLockGate (lock screen, lock now, idle auto-lock), LockScreen, AppLockCard (Settings)
     │   ├── command/              # CommandPalette (Cmd+K / Ctrl+K)
     │   └── onboarding/           # OnboardingWizard (4-step 60s setup)
@@ -156,7 +156,7 @@ keroo/
     │   ├── PiggyBanksView.tsx    # Piggy Banks (Cofrinhos) savings goals & deposit dialog
     │   ├── SplitView.tsx         # Shared expense netting & IOU tabs
     │   └── SettingsView.tsx      # Language, currency, theme, demo reset, backup, app lock
-    └── tests/                    # Vitest suites: 23 test files + setup.ts
+    └── tests/                    # Vitest suites: 24 test files + setup.ts
         ├── setup.ts                            # Test setup: jest-dom matchers + fake-indexeddb (not a test file)
         ├── accountForms.test.ts                # accountForms helpers: day/percent parsing, locale labels, bills-radar selection
         ├── appLock.test.tsx                    # Password record, lock screen gate, lock now, idle auto-lock, forgot path, Settings card
@@ -172,8 +172,8 @@ keroo/
         ├── installments.test.ts                # Date clamping, 1st-installment remainder, statement mapping, Tabela Price, timelines
         ├── installments.stress.test.ts         # 10,000-input cent conservation, month-end clamping 2024-2027, 24-month projections
         ├── kerooInsights.test.ts               # The five statistical spending heuristics
-        ├── kerooMascot.test.tsx                # 10 poses, coin props, sizing/ARIA, SpeechBubble actions, RoamingCompanion
-        ├── kerooMascotInsights.stress.test.tsx # SVG validity of every pose, heuristic threshold boundaries, speech bubble callbacks
+        ├── kerooMascot.test.tsx                # Raster rendering, sizing/ARIA, SpeechBubble actions, RoamingCompanion
+        ├── kerooMascotInsights.stress.test.tsx # Raster state/fallback coverage, heuristic boundaries, speech callbacks
         ├── kerooMood.test.ts                   # 5-mood cascade, guards, < 2ms benchmark, bill check-in queue
         ├── kerooMood.stress.test.ts            # 10,000-evaluation latency benchmark, priority and zero-budget/zero-income guards
         ├── seed.empirical.test.ts              # Seed/demo datasets across locales & currencies, i18n parity, ROADMAP checkboxes
@@ -201,55 +201,29 @@ Development of Keroo is split across sequential stages managed in `docs/ROADMAP.
 
 ---
 
-## 6. Mascot Character Redesign Kit
+## 6. Approved Illustrated Mascot
 
-The Keroo mascot is drawn entirely in code as inline SVG, so it can be restyled without any image assets. The style guide and component contract below are the complete reference for any redesign.
+Gustavo approved the actual raster breathing/blinking preview on 2026-10-19 after
+rejecting the earlier SVG interpretation. Preserve the painted texture, proportions,
+cream belly, friendly eyes and gold coin of the approved illustration. Do not redraw
+it as vector geometry or compose independent accessories on top of it.
 
-### Mascot Style Guide
-Keroo is an original kawaii doodle-sticker frog inspired by the Jin Chan (lucky money frog) of East Asian folklore. All artwork is vector SVG authored in this repository; no third-party illustration is shipped or referenced.
+The canonical sources are `assets/mascot/approved-idle.webp` (exact approved loop),
+`source-blink-frames.png` and `icon-master.png`. See `assets/mascot/README.md` for
+export and installation instructions, and `docs/DESIGN_SYSTEM.md` section 6 for
+the rendering contract. `KerooMascot.tsx` displays those assets through one image.
+It is not the artwork master.
 
-- **Silhouette**: ONE continuous Bézier "blob" body (chubby and pear-shaped), never assembled from geometric circles. The top edge rises into two eye bumps that read as a lowercase "m".
-- **Fill**: flat lime `#86E63C`; no gradients, no shading, no belly patch, no eye whites.
-- **Outline**: thick, uniform near-black stroke (`#1F1F1F`) with round caps and joins around the silhouette and limbs.
-- **Face**: tiny bead-dot eyes (short thick arcs when happy or sleepy), a single thin mouth stroke, and pink blush dots (`#F4899A`) on the playful poses.
-- **Coin**: the Jin Chan gold coin (`#FFD700` with a darker edge) with a square hole in the center.
-- **Glyphs**: decorative "?" and "z" marks are drawn as paths, never `<text>`, so rendering does not depend on installed fonts.
-- **Canonical render**: `public/icons/icon-512.png` (the PWA icons in `public/icons/` are generated from the component).
+Ten historical pose identifiers remain compatible with the pure mood evaluator;
+they map to idle, attentive, celebration, rest, playful and saving presentations.
+The coin is painted into the illustration. Deprecated `coinProp` values do not
+add overlays. Rest uses its closed-eye PNG. Whole-character reactions supplement
+the approved loop; reduced motion and hidden documents select true static PNGs.
+Tiny slots use density-aware portrait PNGs. Both dictionaries describe the current
+presentation, rather than nonexistent toast, cups or tongue props.
 
-**Poses** (`KerooPose` in `src/core/kerooMood.ts`, 10 total):
-1. `default_sitting`: calm sitting frog; the base for the coin props.
-2. `waterfall_tears`: curled-up fetal pose crying waterfall tears (overdue bills).
-3. `melted_blob`: deflated frog melted into a green puddle.
-4. `toast_face`: a slice of toast slapped on the face (too much delivery).
-5. `peace_dab`: celebrating with a peace sign and a dab.
-6. `sipping_drink`: relaxed in sunglasses, sipping a juice.
-7. `sleeping_bubble`: asleep on the coin with a nose bubble.
-8. `cheeky_tongue`: sticking the tongue out with a playful face.
-9. `coin_swallowing`: big open mouth gulping a gold coin into a piggy bank.
-10. `curious_head_tilt`: head tilted with a question mark ("did you pay that bill?").
-
-**Coin props** (`MascotCoinProp`): `none`, `mouth_clamp`, `flipping`, `hugging`, `polishing`, `swallowing`.
-
-### Target Component Contract
-Component path: `src/components/keroo/KerooMascot.tsx`
-Interface:
-```typescript
-export type MascotCoinProp = 'none' | 'mouth_clamp' | 'flipping' | 'hugging' | 'polishing' | 'swallowing';
-
-export interface KerooMascotProps {
-  pose?: KerooPose; // 10 poses
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | number;
-  coinProp?: MascotCoinProp;
-  animated?: boolean;
-  className?: string;
-  onClick?: () => void;
-  ariaLabel?: string;
-  style?: React.CSSProperties;
-}
-```
-
-### Redesign Guidelines
-1. Read the Mascot Style Guide above and use `public/icons/icon-512.png` as the canonical look.
-2. Keep the single organic "blob" silhouette (smooth continuous Bézier body rather than assembled geometric circles).
-3. Redraw `KerooMascot.tsx` replacing the current vector SVG paths with clean, organic continuous-path SVG artwork matching the style guide above.
-4. Keep the exact same `KerooMascotProps` interface and test attributes (the `pose-*` and `coin-*` `data-testid` hooks) so all 53 tests in `src/tests/kerooMascot.test.tsx` (21) and `src/tests/kerooMascotInsights.stress.test.tsx` (32) pass without modification.
+Run `npm run mascot:assets` to regenerate exports using the optional Pillow toolchain.
+Normal npm builds use checked-in assets without Python or image APIs. Native ICO
+frames span 16-256px; web icon and art URLs are cache-versioned. Keep exports and
+`mascot-assets.json` together. Never treat automated checks as visual acceptance.
+The financial engine and atomic bill actions remain independent of rendering.

@@ -35,49 +35,25 @@ describe('Keroo Mascot & Companion Components', () => {
     ];
 
     poses.forEach((pose) => {
-      it(`renders pose "${pose}" with correct data attribute and testid`, () => {
-        const { unmount } = render(<KerooMascot pose={pose} size="md" />);
-        const container = screen.getByTestId('keroo-mascot-container');
-        expect(container).toBeInTheDocument();
-        expect(container).toHaveAttribute('data-pose', pose);
-
-        // Verify specific SVG testid for each pose
-        const testIdMap: Record<KerooPose, string> = {
-          default_sitting: 'pose-default-sitting',
-          waterfall_tears: 'pose-waterfall-tears',
-          melted_blob: 'pose-melted-blob',
-          toast_face: 'pose-toast-face',
-          peace_dab: 'pose-peace-dab',
-          sipping_drink: 'pose-sipping-drink',
-          sleeping_bubble: 'pose-sleeping-bubble',
-          cheeky_tongue: 'pose-cheeky-tongue',
-          coin_swallowing: 'pose-coin-swallowing',
-          curious_head_tilt: 'pose-curious-head-tilt',
-        };
-
-        expect(screen.getByTestId(testIdMap[pose])).toBeInTheDocument();
+      it(`renders the approved raster art for pose "${pose}"`, () => {
+        const { container, unmount } = render(<KerooMascot pose={pose} size="md" />);
+        expect(screen.getByTestId('keroo-mascot-container')).toHaveAttribute('data-pose', pose);
+        expect(container.querySelector('picture')).not.toBeNull();
+        expect(container.querySelector('img')).toHaveAttribute('src', expect.stringMatching(/\/mascot\/(idle\.webp|rest\.png)\?v=/));
+        expect(container.querySelector('svg')).toBeNull();
         unmount();
       });
     });
 
-    it('renders Jin Chan Golden Fortune Coin prop interaction mechanics', () => {
-      const coinProps: MascotCoinProp[] = ['mouth_clamp', 'flipping', 'hugging', 'polishing'];
-
-      coinProps.forEach((coinProp) => {
-        const { unmount } = render(
-          <KerooMascot pose="default_sitting" coinProp={coinProp} />
-        );
-
-        const testIdMap: Record<string, string> = {
-          mouth_clamp: 'coin-mouth-clamp',
-          flipping: 'coin-flipping',
-          hugging: 'coin-hugging',
-          polishing: 'coin-polishing',
-        };
-
-        expect(screen.getByTestId(testIdMap[coinProp])).toBeInTheDocument();
+    it('does not compose legacy coin props over the painted illustration', () => {
+      const props: MascotCoinProp[] = ['none', 'mouth_clamp', 'flipping', 'hugging', 'polishing', 'swallowing'];
+      for (const coinProp of props) {
+        const { container, unmount } = render(<KerooMascot coinProp={coinProp} />);
+        expect(container.querySelectorAll('img')).toHaveLength(1);
+        expect(container.querySelector('img')).toHaveAttribute('src', expect.stringContaining('/mascot/idle.webp?v='));
+        expect(container.querySelector('svg, canvas')).toBeNull();
         unmount();
-      });
+      }
     });
 
     it('applies custom pixel size and preset sizes', () => {
@@ -100,6 +76,17 @@ describe('Keroo Mascot & Companion Components', () => {
       const container = screen.getByTestId('keroo-mascot-container');
       fireEvent.click(container);
       expect(handleClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('supports keyboard activation when the mascot is interactive', () => {
+      const onClick = vi.fn();
+      render(<KerooMascot onClick={onClick} ariaLabel="Play with Keroo" />);
+      const button = screen.getByRole('button', { name: 'Play with Keroo' });
+      expect(button).toHaveAttribute('tabindex', '0');
+      fireEvent.keyDown(button, { key: 'Enter' });
+      fireEvent.keyDown(button, { key: ' ' });
+      fireEvent.keyDown(button, { key: 'Escape' });
+      expect(onClick).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -224,6 +211,37 @@ describe('Keroo Mascot & Companion Components', () => {
   });
 
   describe('RoamingCompanion Layer', () => {
+    it('can be disabled and enabled on the same mounted component', () => {
+      const { rerender } = render(<RoamingCompanion enabled mood="calm" />);
+      rerender(<RoamingCompanion enabled={false} mood="calm" />);
+      expect(screen.queryByTestId('roaming-companion-layer')).not.toBeInTheDocument();
+      rerender(<RoamingCompanion enabled mood="calm" />);
+      expect(screen.getByTestId('roaming-companion-layer')).toBeInTheDocument();
+    });
+
+    it('updates the pose when an external event supplies a new initialPose', () => {
+      const { rerender } = render(<RoamingCompanion initialPose="default_sitting" />);
+      rerender(<RoamingCompanion initialPose="coin_swallowing" />);
+      expect(screen.getByTestId('keroo-mascot-container')).toHaveAttribute('data-pose', 'coin_swallowing');
+      expect(screen.getByTestId('keroo-mascot-container')).toHaveAttribute('data-presentation', 'saving');
+    });
+
+    it('cycles poses from the keyboard', () => {
+      render(<RoamingCompanion mood="calm" />);
+      fireEvent.keyDown(screen.getByTestId('roaming-pet-avatar'), { key: 'Enter' });
+      expect(screen.getByTestId('keroo-mascot-container')).toHaveAttribute('data-pose', 'cheeky_tongue');
+    });
+
+    it('does not treat releasing a drag as a request for a different pose', () => {
+      render(<RoamingCompanion mood="calm" />);
+      const avatar = screen.getByTestId('roaming-pet-avatar');
+      fireEvent.mouseDown(avatar, { button: 0, clientX: 100, clientY: 100 });
+      fireEvent.mouseMove(window, { clientX: 160, clientY: 140 });
+      fireEvent.mouseUp(window);
+      fireEvent.click(avatar);
+      expect(screen.getByTestId('keroo-mascot-container')).toHaveAttribute('data-pose', 'default_sitting');
+    });
+
     it('renders floating companion layer when enabled={true}', () => {
       render(
         <RoamingCompanion

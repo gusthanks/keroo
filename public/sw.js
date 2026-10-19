@@ -3,11 +3,19 @@
  * Pages are network-first (cache fallback offline); assets use stale-while-revalidate.
  */
 
-const CACHE_NAME = 'keroo-cache-v2';
+const CACHE_NAME = 'keroo-cache-9c1f43cefea0';
 const PRECACHE_URLS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
+  "/",
+  "/index.html",
+  "/manifest.json?v=9c1f43cefea0",
+  "/mascot/idle.webp?v=9c1f43cefea0",
+  "/mascot/idle.png?v=9c1f43cefea0",
+  "/mascot/rest.png?v=9c1f43cefea0",
+  "/icons/portrait-128.png?v=9c1f43cefea0",
+  "/icons/keroo.ico?v=9c1f43cefea0",
+  "/icons/icon-192.png?v=9c1f43cefea0",
+  "/icons/icon-512.png?v=9c1f43cefea0",
+  "/icons/maskable-512.png?v=9c1f43cefea0"
 ];
 
 // Install: precache essential shell files
@@ -25,7 +33,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((name) => {
-          if (name !== CACHE_NAME) {
+          if (name.startsWith('keroo-cache-') && name !== CACHE_NAME) {
             return caches.delete(name);
           }
         })

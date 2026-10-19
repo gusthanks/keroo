@@ -95,24 +95,25 @@
     "mood_thriving": "Próspero ✌️",
     "mood_calm": "Tranquilo ☕",
     "mood_alert": "Atento ❓",
-    "mood_sweating": "Preocupado 💧",
+    "mood_sweating": "Vamos organizar",
     "mood_sleepy": "Dormindo 💤",
-    "coin_action": "Polindo a Moeda da Sorte",
+    "coin_action": "Seu companheiro das finanças",
     "roaming_aria": "Keroo mascote companheiro flutuante",
     "drag_me": "Arraste-me!",
     "disable_roaming": "Desativar passeio",
     "aria": {
-      "default_sitting": "Keroo sapinho mascote da sorte e finanças",
-      "waterfall_tears": "Keroo sapinho chorando cachoeiras de lágrimas com contas em atraso",
-      "melted_blob": "Keroo sapinho derretido no chão como uma poça verde",
-      "toast_face": "Keroo sapinho com uma fatia de pão na cara de tanto pedir delivery",
-      "peace_dab": "Keroo sapinho comemorando fazendo sinal da paz e dab",
-      "sipping_drink": "Keroo sapinho relaxado de óculos escuros tomando um suco",
-      "sleeping_bubble": "Keroo sapinho dormindo com uma bolha no nariz em cima da moeda",
-      "cheeky_tongue": "Keroo sapinho mostrando a língua e fazendo careta divertida",
-      "coin_swallowing": "Keroo sapinho de bocão aberto engolindo uma moeda dourada no cofrinho",
-      "curious_head_tilt": "Keroo sapinho com a cabeça inclinada perguntando se você pagou a conta"
-    }
+      "default_sitting": "Keroo, seu sapinho companheiro das finanças",
+      "waterfall_tears": "Keroo atento e ao seu lado para organizar as contas",
+      "melted_blob": "Keroo descansando tranquilo ao seu lado",
+      "toast_face": "Keroo atento ao seu orçamento",
+      "peace_dab": "Keroo comemorando suas conquistas",
+      "sipping_drink": "Keroo tranquilo abraçando sua moeda da sorte",
+      "sleeping_bubble": "Keroo descansando abraçado à sua moeda da sorte",
+      "cheeky_tongue": "Keroo brincando com você",
+      "coin_swallowing": "Keroo celebrando uma moeda guardada",
+      "curious_head_tilt": "Keroo atento com a cabeça inclinada para lembrar de uma conta"
+    },
+    "play": "Brincar com o Keroo"
   },
   "dashboard": {
     "net_worth": "Patrimônio Líquido",

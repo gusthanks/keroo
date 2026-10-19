@@ -1,0 +1,43 @@
+{
+  "version": "9c1f43cefea0",
+  "approvedAnimationSha256": "9f51eefdc20efc5400d2c8f2d5addfb281e80073467a4e2699614a9a67bf6667",
+  "idle": "/mascot/idle.webp?v=9c1f43cefea0",
+  "still": "/mascot/idle.png?v=9c1f43cefea0",
+  "rest": "/mascot/rest.png?v=9c1f43cefea0",
+  "portrait": "/icons/portrait-128.png?v=9c1f43cefea0",
+  "portraitSizes": [
+    {
+      "src": "/icons/portrait-16.png?v=9c1f43cefea0",
+      "width": 16
+    },
+    {
+      "src": "/icons/portrait-24.png?v=9c1f43cefea0",
+      "width": 24
+    },
+    {
+      "src": "/icons/portrait-32.png?v=9c1f43cefea0",
+      "width": 32
+    },
+    {
+      "src": "/icons/portrait-48.png?v=9c1f43cefea0",
+      "width": 48
+    },
+    {
+      "src": "/icons/portrait-64.png?v=9c1f43cefea0",
+      "width": 64
+    },
+    {
+      "src": "/icons/portrait-128.png?v=9c1f43cefea0",
+      "width": 128
+    },
+    {
+      "src": "/icons/portrait-256.png?v=9c1f43cefea0",
+      "width": 256
+    },
+    {
+      "src": "/icons/portrait-512.png?v=9c1f43cefea0",
+      "width": 512
+    }
+  ],
+  "windowIcon": "/icons/keroo.ico?v=9c1f43cefea0"
+}

@@ -259,9 +259,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="shrink-0 flex flex-col items-center">
             <KerooMascot
               pose={moodEvaluation.recommendedPose}
-              coinProp="polishing"
-              size="lg"
-              className="drop-shadow-sm cursor-pointer hover:scale-105 transition-transform"
+              size="xl"
             />
             <div className="mt-2 text-center">
               <Badge

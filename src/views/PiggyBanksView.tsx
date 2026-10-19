@@ -305,7 +305,7 @@ export const PiggyBanksView: React.FC<PiggyBanksViewProps> = ({
                 {/* Floating Coin Swallowing Mascot celebration */}
                 {isCelebrating && (
                   <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-brand text-surface-card px-2.5 py-1 rounded-full text-xs font-semibold shadow-md animate-bounce">
-                    <KerooMascot pose="coin_swallowing" coinProp="swallowing" size="xs" />
+                    <KerooMascot pose="coin_swallowing" size="xs" />
                     <span>{t('piggy_banks.lucky_coin')}</span>
                   </div>
                 )}

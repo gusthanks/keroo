@@ -95,24 +95,25 @@
     "mood_thriving": "Thriving ✌️",
     "mood_calm": "Calm ☕",
     "mood_alert": "Alert ❓",
-    "mood_sweating": "Sweating 💧",
+    "mood_sweating": "Let's get organized",
     "mood_sleepy": "Sleepy 💤",
-    "coin_action": "Polishing the Fortune Coin",
+    "coin_action": "Your finance companion",
     "roaming_aria": "Keroo floating companion mascot",
     "drag_me": "Drag me!",
     "disable_roaming": "Disable roaming",
     "aria": {
-      "default_sitting": "Keroo the frog, lucky finance mascot",
-      "waterfall_tears": "Keroo the frog crying waterfalls of tears over overdue bills",
-      "melted_blob": "Keroo the frog melted on the floor like a green puddle",
-      "toast_face": "Keroo the frog with a slice of bread on its face from ordering too much delivery",
-      "peace_dab": "Keroo the frog celebrating with a peace sign and a dab",
-      "sipping_drink": "Keroo the frog relaxing in sunglasses, sipping a juice",
-      "sleeping_bubble": "Keroo the frog asleep on its coin with a bubble on its nose",
-      "cheeky_tongue": "Keroo the frog sticking out its tongue and making a silly face",
-      "coin_swallowing": "Keroo the frog with its big mouth open, swallowing a golden coin into the piggy bank",
-      "curious_head_tilt": "Keroo the frog tilting its head, asking whether you paid the bill"
-    }
+      "default_sitting": "Keroo, your friendly finance frog companion",
+      "waterfall_tears": "Keroo attentively helping you organize your bills",
+      "melted_blob": "Keroo resting calmly by your side",
+      "toast_face": "Keroo paying attention to your budget",
+      "peace_dab": "Keroo celebrating your achievements",
+      "sipping_drink": "Keroo calmly hugging its lucky coin",
+      "sleeping_bubble": "Keroo resting while hugging its lucky coin",
+      "cheeky_tongue": "Keroo playing with you",
+      "coin_swallowing": "Keroo celebrating a coin saved",
+      "curious_head_tilt": "Keroo attentively tilting its head to remind you of a bill"
+    },
+    "play": "Play with Keroo"
   },
   "dashboard": {
     "net_worth": "Net Worth",

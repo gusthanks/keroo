@@ -18,6 +18,10 @@ export default defineConfig({
   },
   test: {
     globals: true,
+    // Nested agent worktrees contain other checkouts, not this app's test suite.
+    include: ['src/**/*.test.{ts,tsx}'],
+    pool: 'threads',
+    maxWorkers: 2,
     environment: 'jsdom',
     setupFiles: ['./src/tests/setup.ts'],
   },

@@ -2,8 +2,8 @@
  * src/tests/kerooMascotInsights.stress.test.tsx
  *
  * Stress tests for the Keroo mascot, the spending insights and the speech bubble:
- * 1. Mascot SVG geometry: all 10 poses render valid SVG trees with a proper viewBox,
- *    path elements and coin props, without React console errors or invalid SVG attributes.
+ * 1. Raster artwork: all legacy pose keys use the approved painted assets without
+ *    independently composited props or React rendering warnings.
  * 2. Spending heuristics boundary conditions:
  *    - Delivery ratio at 59.9% (no alert) vs 60.0% (alert).
  *    - Category surge at 34.9% (no alert) vs the 35.0% threshold (alert).
@@ -45,133 +45,64 @@ describe('Keroo mascot rendering, coin props & spending heuristics stress tests'
   // ==========================================================================
   // 1. Mascot SVG Geometry, All 10 Poses, Coin Props & Attribute Integrity
   // ==========================================================================
-  describe('1. Mascot SVG Geometry, All 10 Poses & Coin Props Integrity', () => {
-    const allPoses: KerooPose[] = [
-      'default_sitting',
-      'waterfall_tears',
-      'melted_blob',
-      'toast_face',
-      'peace_dab',
-      'sipping_drink',
-      'sleeping_bubble',
-      'cheeky_tongue',
-      'coin_swallowing',
-      'curious_head_tilt',
+  describe('1. Approved raster art, motion fallback and legacy input safety', () => {
+    const poses: KerooPose[] = [
+      'default_sitting', 'waterfall_tears', 'melted_blob', 'toast_face', 'peace_dab',
+      'sipping_drink', 'sleeping_bubble', 'cheeky_tongue', 'coin_swallowing', 'curious_head_tilt',
     ];
-
-    allPoses.forEach((pose) => {
-      it(`renders valid SVG tree for pose "${pose}" without console errors or invalid attributes`, () => {
-        const { container, unmount } = render(
-          <KerooMascot pose={pose} size="md" animated={false} />
-        );
-
-        // 1. Root container assertions
-        const root = screen.getByTestId('keroo-mascot-container');
-        expect(root).toBeInTheDocument();
-        expect(root).toHaveAttribute('data-pose', pose);
-        expect(root.getAttribute('role')).toBe('img');
-
-        // 2. SVG element verification
-        const svg = container.querySelector('svg');
-        expect(svg).not.toBeNull();
-        expect(svg).toHaveAttribute('viewBox', '0 0 200 200');
-        expect(svg).toHaveAttribute('width', '100%');
-        expect(svg).toHaveAttribute('height', '100%');
-        expect(svg).toHaveAttribute('xmlns', 'http://www.w3.org/2000/svg');
-
-        // 3. Child geometry elements presence
-        const paths = container.querySelectorAll('path');
-        const ellipses = container.querySelectorAll('ellipse');
-        const circles = container.querySelectorAll('circle');
-        const totalGeometryNodes = paths.length + ellipses.length + circles.length;
-        expect(totalGeometryNodes).toBeGreaterThan(3);
-
-        // 4. Verify no attributes contain "NaN" or "undefined" or "null"
-        const allElements = container.querySelectorAll('*');
-        allElements.forEach((el) => {
-          Array.from(el.attributes).forEach((attr) => {
-            expect(attr.value).not.toContain('NaN');
-            expect(attr.value).not.toContain('undefined');
-            expect(attr.value).not.toContain('null');
-          });
-        });
-
-        // 5. Zero React rendering warnings
+    poses.forEach((pose) => {
+      it(`renders a static raster fallback for "${pose}" without warnings`, () => {
+        const { container } = render(<KerooMascot pose={pose} animated={false} />);
+        expect(screen.getByTestId('keroo-mascot-container')).toHaveAttribute('role', 'img');
+        expect(container.querySelector('img')).toHaveAttribute('src', expect.stringMatching(/\/mascot\/(idle|rest)\.png\?v=/));
+        expect(container.querySelector('svg')).toBeNull();
+        expect(container.querySelector('source')).toBeNull();
         expect(consoleErrorSpy).not.toHaveBeenCalled();
         expect(consoleWarnSpy).not.toHaveBeenCalled();
-
-        unmount();
       });
     });
 
-    it('renders all Jin Chan Golden Fortune coin prop states with valid SVG subtrees', () => {
-      const coinProps: MascotCoinProp[] = ['mouth_clamp', 'flipping', 'hugging', 'polishing'];
+    it('provides a real PNG source for prefers-reduced-motion', () => {
+      const { container } = render(<KerooMascot />);
+      expect(container.querySelector('source')).toHaveAttribute('media', '(prefers-reduced-motion: reduce)');
+      expect(container.querySelector('source')).toHaveAttribute('srcset', expect.stringContaining('/mascot/idle.png?v='));
+      expect(container.querySelector('img')).toHaveAttribute('src', expect.stringContaining('/mascot/idle.webp?v='));
+    });
 
-      coinProps.forEach((coinProp) => {
-        const { unmount } = render(
-          <KerooMascot pose="default_sitting" coinProp={coinProp} size="lg" />
-        );
-
-        const testIdMap: Record<string, string> = {
-          mouth_clamp: 'coin-mouth-clamp',
-          flipping: 'coin-flipping',
-          hugging: 'coin-hugging',
-          polishing: 'coin-polishing',
-        };
-
-        const coinElement = screen.getByTestId(testIdMap[coinProp]);
-        expect(coinElement).toBeInTheDocument();
-
-        // Verify gold fill or gradient reference exists in coin
-        const coinHtml = coinElement.outerHTML;
-        expect(coinHtml).toMatch(/coinGrad|#FFD700|#FFF9C4/);
-
-        // Zero React rendering errors
+    it('keeps every pose/coin combination to one coherent painted character', () => {
+      const props: MascotCoinProp[] = ['none', 'mouth_clamp', 'flipping', 'hugging', 'polishing', 'swallowing'];
+      for (const pose of poses) for (const coinProp of props) {
+        const { container, unmount } = render(<KerooMascot pose={pose} coinProp={coinProp} />);
+        expect(container.querySelectorAll('img')).toHaveLength(1);
+        expect(container.querySelectorAll('svg, canvas')).toHaveLength(0);
         expect(consoleErrorSpy).not.toHaveBeenCalled();
-
+        expect(consoleWarnSpy).not.toHaveBeenCalled();
         unmount();
-      });
+      }
     });
 
-    it('handles "none" coin prop without rendering extraneous coin testids', () => {
-      const { unmount } = render(
-        <KerooMascot pose="default_sitting" coinProp="none" />
-      );
-
-      expect(screen.queryByTestId('coin-mouth-clamp')).toBeNull();
-      expect(screen.queryByTestId('coin-flipping')).toBeNull();
-      expect(screen.queryByTestId('coin-hugging')).toBeNull();
-      expect(screen.queryByTestId('coin-polishing')).toBeNull();
-
-      unmount();
+    it('switches to a static PNG when the document is hidden', () => {
+      const visibility = vi.spyOn(document, 'hidden', 'get');
+      const { container } = render(<KerooMascot />);
+      act(() => { visibility.mockReturnValue(true); document.dispatchEvent(new Event('visibilitychange')); });
+      expect(container.querySelector('img')).toHaveAttribute('src', expect.stringContaining('/mascot/idle.png?v='));
+      act(() => { visibility.mockReturnValue(false); document.dispatchEvent(new Event('visibilitychange')); });
+      expect(container.querySelector('img')).toHaveAttribute('src', expect.stringContaining('/mascot/idle.webp?v='));
+      visibility.mockRestore();
     });
 
-    it('correctly defaults coinProp according to pose semantics', () => {
-      // coin_swallowing defaults to 'swallowing'
-      const { unmount: u1 } = render(<KerooMascot pose="coin_swallowing" />);
-      expect(screen.getByTestId('keroo-mascot-container')).toHaveAttribute(
-        'data-coin-prop',
-        'swallowing'
-      );
-      u1();
+    it('falls back to the approved static frame if the animation cannot load', () => {
+      const { container } = render(<KerooMascot />);
+      fireEvent.error(container.querySelector('img')!);
+      expect(container.querySelector('img')).toHaveAttribute('src', expect.stringContaining('/mascot/idle.png?v='));
+    });
 
-      // peace_dab defaults to 'flipping'
-      const { unmount: u2 } = render(<KerooMascot pose="peace_dab" />);
-      expect(screen.getByTestId('keroo-mascot-container')).toHaveAttribute(
-        'data-coin-prop',
-        'flipping'
-      );
-      expect(screen.getByTestId('coin-flipping')).toBeInTheDocument();
-      u2();
-
-      // sleeping_bubble defaults to 'hugging'
-      const { unmount: u3 } = render(<KerooMascot pose="sleeping_bubble" />);
-      expect(screen.getByTestId('keroo-mascot-container')).toHaveAttribute(
-        'data-coin-prop',
-        'hugging'
-      );
-      expect(screen.getByTestId('coin-hugging')).toBeInTheDocument();
-      u3();
+    it('uses native density candidates for tiny portraits instead of shrinking the whole scene', () => {
+      const { container } = render(<KerooMascot size={24} />);
+      expect(container.querySelector('img')).toHaveAttribute('src', expect.stringContaining('/icons/portrait-'));
+      expect(container.querySelector('img')).toHaveAttribute('srcset', expect.stringContaining('64w'));
+      expect(container.querySelector('img')).toHaveAttribute('sizes', '24px');
+      expect(container.querySelector('source')).toBeNull();
     });
 
     it('verifies size preset mapping and custom pixel sizes', () => {
