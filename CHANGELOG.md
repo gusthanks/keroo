@@ -6,7 +6,14 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+### Added
+
+- **App lock.** Settings → App lock turns on a password that Keroo asks for when it opens and after 10 minutes without use. A lock button in the header locks it right away. Only a salted PBKDF2-SHA-256 hash (600,000 iterations) is stored, in this browser's `localStorage`, so backups never carry it. The lock hides the app; it does not encrypt the database. If the password is forgotten, the lock screen can erase all Keroo data so you can start again and restore a backup.
+- **Desktop shortcut for Windows.** `npm run desktop:shortcut` puts a Keroo icon on the desktop. The icon runs `scripts/launch.mjs`, which builds the app the first time, starts a localhost-only server for `dist/` (`scripts/serve-dist.mjs`, port 4173, stops after 10 idle minutes), and opens Keroo in its own Microsoft Edge window. `npm run app` does the same from a terminal, and `npm run app:update` pulls, installs and rebuilds.
+
 ### Changed
+
+- The service worker answers page loads network-first and falls back to its cached copy offline. A rebuilt app now shows up the next time Keroo opens, instead of one open later.
 
 - CI uses `actions/checkout@v7` and `actions/setup-node@v7`. The workflow inputs did not change.
 - The test DOM is `jsdom` 30 (was 26). jsdom 30 needs Node `^22.22.2 || ^24.15.0 || >=26.0.0`, so `package.json` `engines` now uses the same range. Because `.npmrc` sets `engine-strict=true`, `npm install` stops on older Node 22 and 24 releases.

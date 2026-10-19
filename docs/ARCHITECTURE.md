@@ -38,7 +38,7 @@ Keroo is engineered as a zero-cloud, privacy-first, client-side web application 
 |                                         ▼                                         |
 |  +-----------------------------------------------------------------------------+  |
 |  |                         Progressive Web App Shell                           |  |
-|  |  Service Worker (Stale-While-Revalidate)  •  Web App Manifest  •  iOS Insets |  |
+|  |  Service Worker (Network-First + Cache)   •  Web App Manifest  •  iOS Insets |  |
 |  +-----------------------------------------------------------------------------+  |
 |                                                                                   |
 |               Zero Remote Server  •  Zero Cloud Storage  •  Zero AI APIs          |
@@ -81,7 +81,8 @@ src/
 │   ├── kerooInsights.ts                <-- Spending surge, delivery spike, installment relief
 │   ├── autoRules.ts                    <-- Auto-categorization rules, payee normalization & SHA-256 dedup hashing
 │   ├── importParser.ts                 <-- CSV & OFX 1.0/2.0 SGML/XML parser & deduplication
-│   └── backup.ts                       <-- JSON backup export & validated atomic restore of all Dexie tables
+│   ├── backup.ts                       <-- JSON backup export & validated atomic restore of all Dexie tables
+│   └── appLock.ts                      <-- App lock password record (salted PBKDF2-SHA-256 in localStorage)
 │
 ├── db/                                 <-- Persistence Layer
 │   ├── index.ts                        <-- Dexie database class (KerooDatabase), `db` instance & versioning
@@ -100,7 +101,8 @@ src/
 │   │   ├── AppLayout.tsx               <-- Responsive viewport wrapper (Sidebar vs Bottom Bar)
 │   │   ├── Sidebar.tsx                 <-- 260px fixed / 72px collapsible left navigation
 │   │   ├── BottomNav.tsx               <-- Mobile bottom nav with safe-area padding & "More" sheet
-│   │   └── Header.tsx                  <-- Sticky header with Keroo mood badge & Cmd+K search trigger
+│   │   ├── Header.tsx                  <-- Sticky header with Keroo mood badge, Cmd+K search trigger & lock button
+│   │   └── theme.ts                    <-- Theme class helpers shared by the app and the lock screen
 │   ├── common/
 │   │   ├── Button.tsx                  <-- Press-scale tactile button with OKLCH variants
 │   │   ├── Card.tsx                    <-- 1px border container with concentric rounded-2xl
@@ -112,6 +114,10 @@ src/
 │   │   ├── KerooMascot.tsx             <-- Inline-SVG Jin Chan mascot: 10 poses, 6 coin props
 │   │   ├── SpeechBubble.tsx            <-- Interactive bill check-in bubble with 1-click actions
 │   │   └── RoamingCompanion.tsx        <-- Draggable roaming pet layer (perching, docking, on/off toggle)
+│   ├── lock/
+│   │   ├── AppLockGate.tsx             <-- Shows the lock screen instead of the app; lock now & idle auto-lock
+│   │   ├── LockScreen.tsx              <-- Password prompt and the erase-everything path for a forgotten password
+│   │   └── AppLockCard.tsx             <-- Settings card: turn the lock on, change the password, turn it off
 │   ├── command/
 │   │   └── CommandPalette.tsx          <-- Cmd+K / Ctrl+K quick search & action modal
 │   └── onboarding/
@@ -126,7 +132,7 @@ src/
 │   ├── SplitView.tsx                   <-- Bilateral utility netting & shared IOU tabs
 │   └── SettingsView.tsx                <-- Language, currency, theme, clean-slate/demo toggle
 │
-└── tests/                              <-- Vitest suites (22 test files) + setup.ts
+└── tests/                              <-- Vitest suites (23 test files) + setup.ts
 ```
 
 ---
@@ -381,7 +387,7 @@ In addition to the static dashboard speech bubble and insight cards, Keroo featu
 Keroo is designed to run seamlessly as an installed app on iOS (iPhone) and desktop browsers:
 
 ### 5.1 Service Worker & Cache Strategy
-- **Service Worker (`public/sw.js`)**: Precaches the app shell (`/`, `/index.html`, `/manifest.json`) and answers GET requests with a **Stale-While-Revalidate** strategy, caching only successful same-origin responses (HTML, JavaScript bundles, CSS stylesheets, and icons) and never intercepting Vite dev-server paths. `src/main.tsx` registers it in production builds only, so the dev server never serves cached Vite modules.
+- **Service Worker (`public/sw.js`)**: Precaches the app shell (`/`, `/index.html`, `/manifest.json`) and answers page navigations **network-first** (falling back to the cached copy offline, so a rebuilt app shows up on the next open) and other GET requests with a **Stale-While-Revalidate** strategy, caching only successful same-origin responses (HTML, JavaScript bundles, CSS stylesheets, and icons) and never intercepting Vite dev-server paths. `src/main.tsx` registers it in production builds only, so the dev server never serves cached Vite modules.
 - **Network Independence**: The app shell loads instantly from cache even when the device is completely offline or in Airplane Mode. All ledger modifications write immediately to local IndexedDB.
 
 ### 5.2 Web App Manifest (`public/manifest.json`) & Theme Colors

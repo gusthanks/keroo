@@ -35,7 +35,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "app": "node scripts/launch.mjs",
+    "app:update": "git pull --ff-only && npm ci && npm run build",
+    "desktop:shortcut": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/windows/create-desktop-shortcut.ps1"
   },
   "dependencies": {
     "clsx": "^2.1.1",

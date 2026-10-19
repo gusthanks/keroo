@@ -13,7 +13,14 @@ import { evaluateKerooMood, type KerooMetrics } from './core/kerooMood';
 import { parseCurrencyToCents, defaultCurrencyFor } from './core/currency';
 import { applyAutoRules } from './core/autoRules';
 import { getLocalTodayISO, getLocalYearMonth } from './core/dates';
-import { AppLayout, type ViewId } from './components/layout';
+import {
+  AppLayout,
+  applyThemeClass,
+  readStoredTheme,
+  THEME_STORAGE_KEY,
+  type ViewId,
+} from './components/layout';
+import { AppLockGate, useAppLock } from './components/lock';
 import { CommandPalette } from './components/command';
 import { Modal } from './components/common/Modal';
 import { Input } from './components/common/Input';
@@ -31,6 +38,7 @@ import {
 
 const MainAppContent: React.FC = () => {
   const { t, language, setLanguage } = useTranslation();
+  const { isEnabled: isLockEnabled, lockNow } = useAppLock();
   const today = getLocalTodayISO();
   const currentYearMonth = getLocalYearMonth();
 
@@ -80,9 +88,7 @@ const MainAppContent: React.FC = () => {
   const recurringBills = useLiveQuery(() => db.recurring_bills.toArray(), [], []);
 
   // Theme synchronization with .dark class on <html>
-  const [theme, setTheme] = useState<SupportedTheme>(() => {
-    return (localStorage.getItem('keroo_theme') as SupportedTheme) || 'light';
-  });
+  const [theme, setTheme] = useState<SupportedTheme>(readStoredTheme);
 
   useEffect(() => {
     if (settings?.theme) {
@@ -91,23 +97,8 @@ const MainAppContent: React.FC = () => {
   }, [settings?.theme]);
 
   useEffect(() => {
-    const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else if (theme === 'light') {
-      root.classList.remove('dark');
-    } else {
-      const prefersDark =
-        typeof window !== 'undefined' && typeof window.matchMedia === 'function'
-          ? window.matchMedia('(prefers-color-scheme: dark)').matches
-          : false;
-      if (prefersDark) {
-        root.classList.add('dark');
-      } else {
-        root.classList.remove('dark');
-      }
-    }
-    localStorage.setItem('keroo_theme', theme);
+    applyThemeClass(theme);
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
 
   // Header/Sidebar call this straight from onClick, so the first argument may be a
@@ -354,6 +345,7 @@ const MainAppContent: React.FC = () => {
         theme={theme}
         onToggleTheme={handleToggleTheme}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+        onLock={isLockEnabled ? lockNow : undefined}
         onQuickAdd={() => {
           setQuickAccountId(accounts[0]?.id || '');
           setIsQuickAddOpen(true);
@@ -545,7 +537,9 @@ const MainAppContent: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <I18nProvider>
-      <MainAppContent />
+      <AppLockGate>
+        <MainAppContent />
+      </AppLockGate>
     </I18nProvider>
   );
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Sun, Moon, Coins } from 'lucide-react';
+import { Search, Sun, Moon, Coins, Lock } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import type { KerooMood, SupportedCurrency, SupportedTheme } from '../../types';
 import { Badge } from '../common/Badge';
@@ -13,6 +13,8 @@ export interface HeaderProps {
   theme?: SupportedTheme;
   onToggleTheme?: () => void;
   onOpenCommandPalette?: () => void;
+  /** Locks the app right away; the button only shows when the app lock is on. */
+  onLock?: () => void;
   className?: string;
 }
 
@@ -36,6 +38,7 @@ export const Header: React.FC<HeaderProps> = ({
   theme = 'light',
   onToggleTheme,
   onOpenCommandPalette,
+  onLock,
   className = '',
 }) => {
   const { t } = useTranslation();
@@ -100,6 +103,20 @@ export const Header: React.FC<HeaderProps> = ({
           <Coins className="w-3 h-3 text-coin" />
           {currency}
         </span>
+
+        {/* Lock Button (only when a password is set) */}
+        {onLock && (
+          <button
+            type="button"
+            onClick={onLock}
+            className="p-2 rounded-xl text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors"
+            title={t('lock.button_title')}
+            aria-label={t('lock.button_title')}
+            data-testid="header-lock-button"
+          >
+            <Lock className="w-4 h-4" />
+          </button>
+        )}
 
         {/* Theme Toggle Button */}
         {onToggleTheme && (

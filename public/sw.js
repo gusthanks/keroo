@@ -1,6 +1,6 @@
 /**
  * Service Worker — Keroo (PWA Offline First)
- * Implements Stale-While-Revalidate caching strategy for application assets.
+ * Pages are network-first (cache fallback offline); assets use stale-while-revalidate.
  */
 
 const CACHE_NAME = 'keroo-cache-v2';
@@ -46,6 +46,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Pages: network first, so a rebuilt app shows up the next time it opens. The cached
+  // copy keeps Keroo working when the local server is not running.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      caches.open(CACHE_NAME).then((cache) =>
+        fetch(event.request)
+          .then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          })
+          .catch(async () => (await cache.match(event.request)) || (await cache.match('/')) || Response.error())
+      )
+    );
+    return;
+  }
+
+  // Everything else: stale-while-revalidate (built assets have content hashes in their names).
   event.respondWith(
     caches.open(CACHE_NAME).then(async (cache) => {
       const cachedResponse = await cache.match(event.request);

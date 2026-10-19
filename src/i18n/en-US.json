@@ -494,7 +494,27 @@
       "piggy_banks": "Piggy banks",
       "keroo_state": "Keroo mascot state",
       "user_settings": "Preferences"
-    }
+    },
+    "lock_title": "App lock",
+    "lock_desc": "Ask for a password every time Keroo opens, and after 10 minutes without use.",
+    "lock_note": "The password keeps other people out of Keroo in this browser. It does not encrypt your data, and Keroo cannot recover a forgotten password, so keep a recent backup.",
+    "lock_status_on": "On",
+    "lock_status_off": "Off",
+    "lock_new_label": "New password",
+    "lock_confirm_label": "Repeat the password",
+    "lock_current_label": "Current password",
+    "lock_enable_btn": "Turn on the lock",
+    "lock_change_btn": "Change password",
+    "lock_disable_btn": "Turn off the lock",
+    "lock_now_btn": "Lock now",
+    "lock_save_btn": "Save new password",
+    "lock_err_short": "Use at least {min} characters.",
+    "lock_err_mismatch": "The two passwords are not the same.",
+    "lock_err_wrong": "The current password is wrong.",
+    "lock_err_unavailable": "This browser blocks the lock on this address. Open Keroo on localhost or over HTTPS.",
+    "lock_enabled_msg": "The lock is on. Keroo will ask for the password the next time it opens.",
+    "lock_changed_msg": "Password changed.",
+    "lock_disabled_msg": "The lock is off."
   },
   "header": {
     "command_palette_title": "Search / Quick actions (Cmd+K or Ctrl+K)",
@@ -558,5 +578,19 @@
     "subtitle": "Add an entry straight to the ledger",
     "payee_placeholder": "e.g. Lunch, Bakery, Uber, Salary...",
     "amount_label": "Amount (R$ or currency)"
+  },
+  "lock": {
+    "title": "Keroo is locked",
+    "subtitle": "Type your password to see your finances.",
+    "mascot_label": "Keroo is sleeping on the gold coin",
+    "password_label": "Password",
+    "unlock_button": "Unlock",
+    "wrong_password": "Wrong password. Try again.",
+    "forgot_link": "Forgot your password?",
+    "forgot_title": "Start over without the password",
+    "forgot_desc": "Keroo cannot recover the password. The only way back in is to erase all Keroo data in this browser and start again. After that, you can restore a backup file in Settings → Backup & Restore.",
+    "erase_button": "Erase everything and start over",
+    "erase_error": "Could not erase the data. Close other Keroo windows and try again.",
+    "button_title": "Lock Keroo now"
   }
 }

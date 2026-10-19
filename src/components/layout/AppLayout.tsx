@@ -18,6 +18,8 @@ export interface AppLayoutProps {
   theme?: SupportedTheme;
   onToggleTheme?: () => void;
   onOpenCommandPalette?: () => void;
+  /** Shown as a lock button in the header when the app lock is on. */
+  onLock?: () => void;
   onQuickAdd?: () => void;
   roamingPetEnabled?: boolean;
   roamingProps?: Partial<RoamingCompanionProps>;
@@ -35,6 +37,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   theme = 'light',
   onToggleTheme,
   onOpenCommandPalette,
+  onLock,
   onQuickAdd,
   roamingPetEnabled = true,
   roamingProps,
@@ -69,6 +72,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           theme={theme}
           onToggleTheme={onToggleTheme}
           onOpenCommandPalette={onOpenCommandPalette}
+          onLock={onLock}
         />
 
         {/* Scrollable Main Viewport Area */}
