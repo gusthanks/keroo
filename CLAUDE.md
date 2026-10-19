@@ -74,7 +74,7 @@ keroo/
 ├── CLAUDE.md                     # Authoritative engineering guide (this file)
 ├── AGENTS.md                     # Universal multi-agent operational guide
 ├── LICENSE                       # MIT license
-├── package.json                  # npm scripts (dev, build, typecheck, test, test:coverage) & dependencies
+├── package.json                  # npm scripts (dev, build, typecheck, test, test:coverage, app, app:update, desktop:shortcut) & dependencies
 ├── package-lock.json             # npm lockfile
 ├── index.html                    # Vite entry HTML: viewport-fit=cover, iOS web-app meta tags, light/dark theme-color pair
 ├── vite.config.ts                # Vite + React plugin, `@` -> src alias, browser build target, Vitest config (jsdom, src/tests/setup.ts)
@@ -103,8 +103,14 @@ keroo/
 │   └── ROADMAP.md                # 6 sequential stages with granular checkboxes
 ├── public/
 │   ├── manifest.json             # PWA web app manifest (standalone; theme/background color #121417)
-│   ├── sw.js                     # Service worker offline caching (stale-while-revalidate)
+│   ├── sw.js                     # Service worker: network-first pages, stale-while-revalidate assets (offline cache)
 │   └── icons/                    # PNG icons rendered from the mascot: favicon-32, apple-touch-icon, icon-192, icon-512, maskable-512
+├── scripts/
+│   ├── launch.mjs                # Desktop launcher (`npm run app`): builds if needed, starts serve-dist, opens an Edge app window
+│   ├── serve-dist.mjs            # Localhost-only static server for dist/ on port 4173; exits after 10 idle minutes
+│   └── windows/
+│       ├── create-desktop-shortcut.ps1 # `npm run desktop:shortcut`: creates Keroo.lnk on the desktop
+│       └── keroo.ico             # Shortcut icon (32 px and 192 px mascot PNGs)
 └── src/
     ├── main.tsx                  # Application bootstrap & mount; registers sw.js in production builds only
     ├── App.tsx                   # Top-level view router, onboarding guard, theme sync, Cmd+K, quick-add transaction modal
@@ -123,7 +129,8 @@ keroo/
     │   ├── kerooInsights.ts      # Statistical spending heuristics (delivery spike, etc.)
     │   ├── autoRules.ts          # Auto-categorization rule engine, payee cleaning & SHA-256 dedup hashing
     │   ├── importParser.ts       # CSV & OFX bank statement parsers
-    │   └── backup.ts             # JSON backup export / validated atomic restore of every Dexie table (`keroo-backup` v1)
+    │   ├── backup.ts             # JSON backup export / validated atomic restore of every Dexie table (`keroo-backup` v1)
+    │   └── appLock.ts            # App lock: salted PBKDF2-SHA-256 password record in localStorage, idle timeout
     ├── db/                       # Local-first persistence layer
     │   ├── index.ts              # KerooDatabase (Dexie) class & the `db` instance; re-exports schema and validation
     │   ├── schema.ts             # KEROO_DB_SCHEMA_V1 table/index declarations; re-exports the entity types from src/types
@@ -135,9 +142,10 @@ keroo/
     │   ├── en-US.json            # American English dictionary (authoring source of truth)
     │   └── pt-BR.json            # Brazilian Portuguese dictionary (100% key parity with en-US)
     ├── components/               # Sure-inspired UI components (each folder except onboarding/ has an index.ts barrel)
-    │   ├── layout/               # AppLayout, Sidebar, BottomNav (with "More" sheet), Header
+    │   ├── layout/               # AppLayout, Sidebar, BottomNav (with "More" sheet), Header (lock button), theme helpers
     │   ├── common/               # Button, Card, Input, Modal, Badge, ProgressBar
     │   ├── keroo/                # KerooMascot (SVG), SpeechBubble, RoamingCompanion
+    │   ├── lock/                 # AppLockGate (lock screen, lock now, idle auto-lock), LockScreen, AppLockCard (Settings)
     │   ├── command/              # CommandPalette (Cmd+K / Ctrl+K)
     │   └── onboarding/           # OnboardingWizard (4-step 60s setup)
     ├── views/                    # Full page views + index.ts barrel; form modals live inside their views
@@ -147,10 +155,11 @@ keroo/
     │   ├── SubscriptionsView.tsx # Recurring bills radar & annual cost impact
     │   ├── PiggyBanksView.tsx    # Piggy Banks (Cofrinhos) savings goals & deposit dialog
     │   ├── SplitView.tsx         # Shared expense netting & IOU tabs
-    │   └── SettingsView.tsx      # Language, currency, theme, demo reset
-    └── tests/                    # Vitest suites: 22 test files + setup.ts
+    │   └── SettingsView.tsx      # Language, currency, theme, demo reset, backup, app lock
+    └── tests/                    # Vitest suites: 23 test files + setup.ts
         ├── setup.ts                            # Test setup: jest-dom matchers + fake-indexeddb (not a test file)
         ├── accountForms.test.ts                # accountForms helpers: day/percent parsing, locale labels, bills-radar selection
+        ├── appLock.test.tsx                    # Password record, lock screen gate, lock now, idle auto-lock, forgot path, Settings card
         ├── autoRules.test.ts                   # Rule conditions/priority, payee cleaning, rule suggestions, SHA-256 & frequency dedup
         ├── backup.test.ts                      # Backup export/restore, atomic rollback, file validation, Settings Backup & Restore card
         ├── commonUi.test.tsx                   # Button/Card/Input/Modal/Badge/ProgressBar + navigation, palette and theme regressions

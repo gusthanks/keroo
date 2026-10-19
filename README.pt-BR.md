@@ -63,6 +63,8 @@ O Keroo, o sapo, fica de olho nas suas contas e nos seus gastos e reage a eles. 
 **Privacidade e dados**
 - Onboarding de 60 segundos em 4 passos: idioma, moeda, nome do sapo e ponto de partida (começar do zero ou com dados de demonstração em 1 clique).
 - **Configurações → Backup e Restauração** exporta todas as tabelas para um arquivo JSON e restaura tudo de forma atômica (detalhes em [Seus dados](#seus-dados)).
+- **Configurações → Senha do app** pede uma senha quando o Keroo abre e depois de 10 minutos sem uso. Só um hash da senha, com sal, fica guardado.
+- **Um atalho na área de trabalho no Windows** abre o Keroo na própria janela com dois cliques (veja [Atalho na área de trabalho](#atalho-na-área-de-trabalho-windows)).
 - Reset completo (clean slate), tema claro, escuro ou do sistema, e um PWA instalável que funciona offline.
 
 ## Começando
@@ -102,6 +104,26 @@ Depois abra http://localhost:4173 e:
 
 Se for hospedar o Keroo, sirva por HTTPS na raiz de um domínio (veja [Status e limitações](#status-e-limitações)).
 
+## Atalho na área de trabalho (Windows)
+
+Para abrir o Keroo com dois cliques, sem digitar comandos, rode isto uma vez na pasta do projeto:
+
+```bash
+npm run desktop:shortcut
+```
+
+Ele cria um ícone **Keroo** na sua área de trabalho. Quando você clica duas vezes nele, o lançador (`scripts/launch.mjs`):
+
+1. compila o app em `dist/` na primeira vez, o que leva alguns segundos;
+2. liga um servidor pequeno em segundo plano (`scripts/serve-dist.mjs`), que só este computador acessa, na porta 4173;
+3. abre o Keroo numa janela própria do Microsoft Edge, sem abas e sem barra de endereço.
+
+O servidor desliga sozinho depois de 10 minutos sem pedidos. Uma janela do Keroo aberta continua funcionando, porque o service worker guarda uma cópia do app.
+
+O Keroo guarda os dados no Edge, no endereço `http://localhost:4173`. Abra sempre pelo ícone (ou com `npm run app`), para ele sempre achar os mesmos dados. Se algo der errado, o lançador escreve em `keroo-launcher.log`, na pasta temporária do sistema. No macOS e no Linux, `npm run app` abre o navegador padrão.
+
+Para pegar uma versão nova depois, rode `npm run app:update`. Ele roda `git pull`, `npm ci` e `npm run build`. Na próxima vez que você abrir o Keroo, a versão nova aparece, e seus dados continuam iguais.
+
 ## Seus dados
 
 - Tudo fica no IndexedDB do navegador, via Dexie. A escolha de idioma e de tema também fica no `localStorage`.
@@ -110,6 +132,8 @@ Se for hospedar o Keroo, sirva por HTTPS na raiz de um domínio (veja [Status e 
 - **Configurações → Backup e Restauração → Exportar backup** salva um arquivo `keroo-backup-AAAA-MM-DD.json` com as 14 tabelas.
 - **Restaurar de arquivo** confere se o arquivo é mesmo um backup do Keroo, mostra quando ele foi feito e quantos registros tem, e pede confirmação. Aí substitui todos os dados atuais numa única transação do banco: ou tudo é restaurado, ou nada muda.
 - O mesmo cartão mostra quanto espaço o Keroo está usando. No fim do onboarding, o Keroo também pede ao navegador para manter o armazenamento persistente (sem garantia; quem decide é o navegador).
+
+- **Configurações → Senha do app** liga uma senha que o Keroo pede quando abre e depois de 10 minutos sem uso. Só um hash PBKDF2-SHA-256 da senha, com sal, fica guardado, no `localStorage` deste navegador. Por isso ele não entra nos backups. A senha impede que outras pessoas que usam o computador abram o Keroo, mas não criptografa o banco de dados. Se você esquecer a senha, a tela de bloqueio pode apagar todos os dados do Keroo, para você recomeçar e restaurar um backup.
 
 Exporte um backup com frequência e guarde em um lugar de confiança.
 
@@ -126,7 +150,7 @@ Exporte um backup com frequência e guarde em um lugar de confiança.
 - **Só centavos inteiros.** Todo valor é guardado e calculado como um número inteiro de centavos. Hooks do Dexie rejeitam valores não inteiros em qualquer campo monetário, e as divisões usam arredondamento explícito ou distribuição do resto.
 - **Mascote determinístico.** `evaluateKerooMood` é uma função pura e síncrona, sem IA, sem rede e sem aleatoriedade. Os testes garantem menos de 2 ms por avaliação.
 - **Paridade total de tradução.** `src/i18n/en-US.json` é a fonte de autoria e `src/i18n/pt-BR.json` precisa ter exatamente as mesmas chaves. Os testes falham se faltar uma chave ou se houver texto de interface fixo no código.
-- **Testes.** 22 arquivos com 500 testes (Vitest, jsdom, fake-indexeddb). A CI roda a checagem de tipos, os testes e o build no Node 22 e 24.
+- **Testes.** 23 arquivos com 526 testes (Vitest, jsdom, fake-indexeddb). A CI roda a checagem de tipos, os testes e o build no Node 22 e 24.
 
 Para ir mais fundo (documentos em inglês):
 

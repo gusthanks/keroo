@@ -61,6 +61,8 @@ Keroo, the frog, keeps an eye on your bills and spending and reacts to them. Its
 **Privacy & data**
 - A 60-second, 4-step onboarding: language, currency, your frog's name, then start empty or with 1-click demo data.
 - **Settings → Backup & Restore** exports every table to a JSON file and restores it atomically (details in [Your data](#your-data)).
+- **Settings → App lock** asks for a password when Keroo opens and after 10 minutes without use. Only a salted hash of the password is stored.
+- **A desktop shortcut on Windows** opens Keroo in its own window with a double-click (see [Desktop shortcut](#desktop-shortcut-windows)).
 - Clean-slate reset, light/dark/system theme, and an installable PWA that works offline.
 
 ## Quick start
@@ -100,6 +102,26 @@ Then open http://localhost:4173 and:
 
 If you host Keroo yourself, serve it over HTTPS at the root of a domain (see [Status & limitations](#status--limitations)).
 
+## Desktop shortcut (Windows)
+
+To open Keroo with a double-click, without typing commands, run this once in the project folder:
+
+```bash
+npm run desktop:shortcut
+```
+
+It puts a **Keroo** icon on your desktop. When you double-click it, the launcher (`scripts/launch.mjs`):
+
+1. builds the app into `dist/` the first time, which takes a few seconds;
+2. starts a small server in the background (`scripts/serve-dist.mjs`), reachable only from this computer, on port 4173;
+3. opens Keroo in its own Microsoft Edge window, without tabs or an address bar.
+
+The server stops by itself after 10 minutes without requests. An open Keroo window keeps working, because the service worker keeps a copy of the app.
+
+Keroo keeps its data in Edge, for the address `http://localhost:4173`. Always open it from the icon (or with `npm run app`), so it always finds the same data. If something goes wrong, the launcher writes to `keroo-launcher.log` in the system temp folder. On macOS and Linux, `npm run app` opens the default browser instead.
+
+To get a newer version later, run `npm run app:update`. It runs `git pull`, `npm ci` and `npm run build`. The next time you open Keroo, you get the new version, and your data stays as it is.
+
 ## Your data
 
 - Everything is stored in your browser's IndexedDB, through Dexie. Your language and theme choices are also kept in `localStorage`.
@@ -108,6 +130,8 @@ If you host Keroo yourself, serve it over HTTPS at the root of a domain (see [St
 - **Settings → Backup & Restore → Export backup** saves a file named `keroo-backup-YYYY-MM-DD.json` containing all 14 tables.
 - **Restore from file** checks that the file is a valid Keroo backup, shows when it was made and how many records it holds, and asks you to confirm. It then replaces all current data in a single database transaction: either everything is restored or nothing changes.
 - The same card shows how much storage Keroo is using. At the end of onboarding, Keroo also asks the browser to keep its storage persistent (best effort; the browser decides).
+
+- **Settings → App lock** sets a password that Keroo asks for when it opens and after 10 minutes without use. Only a salted PBKDF2-SHA-256 hash is stored, in this browser's `localStorage`, so it is not part of backups. The lock keeps other people who use the computer out of Keroo, but it does not encrypt the database. If you forget the password, the lock screen can erase all Keroo data, so you can start again and restore a backup.
 
 Export a backup regularly and keep it somewhere you trust.
 
@@ -132,7 +156,7 @@ Export a backup regularly and keep it somewhere you trust.
 - **Integer cents only.** Every amount is stored and computed as a whole number of cents. Dexie hooks reject non-integer values on every monetary field, and divisions use explicit rounding or remainder allocation.
 - **A deterministic mascot.** `evaluateKerooMood` is a pure, synchronous function with no AI, no network calls and no randomness. Tests keep it under 2 ms per evaluation.
 - **100% translation parity.** `src/i18n/en-US.json` is the authoring source, and `src/i18n/pt-BR.json` must have exactly the same keys. Tests fail on a missing key or a hardcoded UI string.
-- **Tests.** 22 test files with 500 tests (Vitest, jsdom, fake-indexeddb). CI runs the typecheck, the tests and the build on Node 22 and 24.
+- **Tests.** 23 test files with 526 tests (Vitest, jsdom, fake-indexeddb). CI runs the typecheck, the tests and the build on Node 22 and 24.
 
 Further reading:
 
