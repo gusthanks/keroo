@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+### Changed
+
+- CI uses `actions/checkout@v7` and `actions/setup-node@v7`. The workflow inputs did not change.
+- The test DOM is `jsdom` 30 (was 26). jsdom 30 needs Node `^22.22.2 || ^24.15.0 || >=26.0.0`, so `package.json` `engines` now uses the same range. Because `.npmrc` sets `engine-strict=true`, `npm install` stops on older Node 22 and 24 releases.
+- Typechecking uses TypeScript 7 (was 5.9), the native compiler. `tsconfig.json` drops `baseUrl`, which TypeScript 7 removed, and the `@/*` path alias is now relative (`./src/*`). The strict settings did not change and the code needed no fixes.
+- The build and test toolchain moves together to Vite 8 (Rolldown and Oxc replace Rollup and esbuild; Lightning CSS minifies the CSS), `@vitejs/plugin-react` 6, Vitest 5 and `@vitest/coverage-v8` 5. Production builds are about 2.5x faster.
+- `vite.config.ts` sets `build.target` to the documented browser floor (Chrome and Edge 111, Firefox 113, Safari 15.4). Without it, Vite 8's default target would have dropped Safari 15.4 to 16.3, including iPhones on those iOS versions.
+- `vite.config.ts` uses `import.meta.dirname` instead of `__dirname`, and its type reference is `vitest/config`.
+- The test setup loads `@testing-library/jest-dom/vitest` and declares the DOM matchers on `vitest.Matchers`, which is where Vitest 5 reads custom matcher types. The two tests that read files from disk reference the Node types themselves, because Vitest no longer pulls in `@types/node`.
+- Keroo runs on React 19 (was 18). `react`, `react-dom`, `@types/react` and `@types/react-dom` move to 19.3 together, because `react-dom` 19 needs the same `react` version. The code needed no changes: it already mounts with `createRoot`, takes `act` from `@testing-library/react`, and uses no `defaultProps`, `propTypes`, string refs, legacy context or `useRef()` without an argument. `@testing-library/react`, `dexie-react-hooks` and `lucide-react` already accept React 19, so they stay on their current versions.
+- The production JavaScript bundle grows by about 79 kB (23 kB gzip), from the larger `react-dom` 19 runtime.
+
+### Security
+
+- Vitest 5 clears the two critical `tinypool` advisories (GHSA-5gmw-xhrv-c9v3, GHSA-85c8-ppgw-ccpr), because Vitest no longer depends on `tinypool`, and the `vitest` / `@vitest/mocker` path traversal advisory (GHSA-82fw-gwwq-j7x9).
+- An npm `overrides` entry moves Tailwind CSS 3's `postcss-selector-parser` from 6.1.4 to 7.1.6, which fixes GHSA-rj75-hqrm-r3gf. The generated CSS is byte-identical. Remove the override when the project moves to Tailwind CSS 4.
+- Still open: GHSA-vfj7-8cjw-p6xm in `braces`, which Tailwind CSS 3 reaches through `chokidar`, `fast-glob` and `micromatch`. No patched `braces` release exists. It only runs at build time on the project's own glob patterns. Only Tailwind CSS 4 removes it, and Tailwind CSS 4 needs Safari 16.4 and Firefox 128, above the browsers Keroo supports today.
+
+### Removed
+
+- The unused `tailwind-merge` dependency. No source file imported it, and the production bundle is byte-identical without it.
+
 ## [0.1.0] - 2026-10-18
 
 First public release. The interface is English-first: Keroo starts in `en-US`, switches to `pt-BR` automatically when the browser language is Portuguese, and keeps the two dictionaries at 100% key parity.

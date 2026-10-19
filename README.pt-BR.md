@@ -67,7 +67,7 @@ O Keroo, o sapo, fica de olho nas suas contas e nos seus gastos e reage a eles. 
 
 ## Começando
 
-Você precisa do Node.js 22 ou mais novo. O `.nvmrc` fixa o Node 22, e o `.npmrc` liga `engine-strict=true`, então versões antigas param já na instalação.
+Você precisa do Node.js 22.22.2 ou mais novo na linha 22, ou do 24.15 ou mais novo. O `.nvmrc` fixa o Node 22, e o `.npmrc` liga `engine-strict=true`, então versões antigas param já na instalação.
 
 ```bash
 git clone https://github.com/gusthanks/keroo.git
@@ -145,7 +145,7 @@ O Keroo precisa de IndexedDB e Service Worker. Na prática:
 - Firefox 113+
 - Safari 15.4+ (macOS, iOS e iPadOS)
 
-O JavaScript usa o alvo padrão do Vite 6 (Chrome 87, Edge 88, Firefox 78, Safari 14), mas as cores usam `oklch()` no CSS sem fallback, e os registros novos recebem o id de `crypto.randomUUID()`. São esses dois pontos que definem o mínimo acima.
+As cores usam `oklch()` no CSS sem fallback, e os registros novos recebem o id de `crypto.randomUUID()`. São esses dois pontos que definem o mínimo acima, e o build de produção mira os mesmos navegadores (`build.target` no `vite.config.ts`).
 
 Abra o Keroo por HTTPS, ou em `localhost` durante o desenvolvimento. Os navegadores desligam o service worker e o `crypto.randomUUID()` em páginas HTTP comuns, então abrir o servidor de desenvolvimento no celular por um endereço como `http://192.168.x.x:5173` não funciona por completo.
 

@@ -77,7 +77,7 @@ keroo/
 ├── package.json                  # npm scripts (dev, build, typecheck, test, test:coverage) & dependencies
 ├── package-lock.json             # npm lockfile
 ├── index.html                    # Vite entry HTML: viewport-fit=cover, iOS web-app meta tags, light/dark theme-color pair
-├── vite.config.ts                # Vite + React plugin, `@` -> src alias, Vitest config (jsdom, src/tests/setup.ts)
+├── vite.config.ts                # Vite + React plugin, `@` -> src alias, browser build target, Vitest config (jsdom, src/tests/setup.ts)
 ├── tsconfig.json                 # Strict TypeScript config for src/ (bundler resolution, `@/*` paths)
 ├── tsconfig.node.json            # TypeScript config for vite.config.ts
 ├── tailwind.config.js            # Tailwind theme: semantic color tokens mapped to the CSS variables in src/index.css
@@ -86,7 +86,7 @@ keroo/
 ├── .gitattributes                # LF normalization; images and fonts marked binary
 ├── .gitignore                    # Ignored build output, dependencies and local files
 ├── .nvmrc                        # Node 22
-├── .npmrc                        # engine-strict=true (package.json requires Node >= 22)
+├── .npmrc                        # engine-strict=true (package.json requires Node ^22.22.2 || ^24.15.0 || >=26)
 ├── .claude/
 │   ├── launch.json               # Dev-server launch config (`npm run dev` on port 5173)
 │   └── commands/
