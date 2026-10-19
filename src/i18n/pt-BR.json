@@ -494,7 +494,27 @@
       "piggy_banks": "Cofrinhos",
       "keroo_state": "Estado do mascote Keroo",
       "user_settings": "Preferências"
-    }
+    },
+    "lock_title": "Senha do app",
+    "lock_desc": "Pede uma senha sempre que o Keroo abre e depois de 10 minutos sem uso.",
+    "lock_note": "A senha impede que outras pessoas abram o Keroo neste navegador. Ela não criptografa seus dados, e o Keroo não consegue recuperar uma senha esquecida. Então mantenha um backup recente.",
+    "lock_status_on": "Ligada",
+    "lock_status_off": "Desligada",
+    "lock_new_label": "Nova senha",
+    "lock_confirm_label": "Repita a senha",
+    "lock_current_label": "Senha atual",
+    "lock_enable_btn": "Ligar a senha",
+    "lock_change_btn": "Trocar a senha",
+    "lock_disable_btn": "Desligar a senha",
+    "lock_now_btn": "Trancar agora",
+    "lock_save_btn": "Salvar a nova senha",
+    "lock_err_short": "Use pelo menos {min} caracteres.",
+    "lock_err_mismatch": "As duas senhas não são iguais.",
+    "lock_err_wrong": "A senha atual está errada.",
+    "lock_err_unavailable": "Este navegador bloqueia a senha neste endereço. Abra o Keroo em localhost ou por HTTPS.",
+    "lock_enabled_msg": "A senha está ligada. O Keroo vai pedir a senha na próxima vez que abrir.",
+    "lock_changed_msg": "Senha trocada.",
+    "lock_disabled_msg": "A senha está desligada."
   },
   "header": {
     "command_palette_title": "Buscar / Ações rápidas (Cmd+K ou Ctrl+K)",
@@ -558,5 +578,19 @@
     "subtitle": "Adicione um lançamento direto no livro-caixa",
     "payee_placeholder": "Ex: Almoço, Padaria, Uber, Salário...",
     "amount_label": "Valor (R$ ou Moeda)"
+  },
+  "lock": {
+    "title": "O Keroo está trancado",
+    "subtitle": "Digite sua senha para ver suas finanças.",
+    "mascot_label": "O Keroo está dormindo sobre a moeda de ouro",
+    "password_label": "Senha",
+    "unlock_button": "Desbloquear",
+    "wrong_password": "Senha errada. Tente de novo.",
+    "forgot_link": "Esqueceu a senha?",
+    "forgot_title": "Recomeçar sem a senha",
+    "forgot_desc": "O Keroo não consegue recuperar a senha. O único jeito de entrar de novo é apagar todos os dados do Keroo neste navegador e começar outra vez. Depois, você pode restaurar um arquivo de backup em Configurações → Backup e Restauração.",
+    "erase_button": "Apagar tudo e recomeçar",
+    "erase_error": "Não foi possível apagar os dados. Feche as outras janelas do Keroo e tente de novo.",
+    "button_title": "Trancar o Keroo agora"
   }
 }

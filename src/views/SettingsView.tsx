@@ -20,6 +20,7 @@ import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
 import { Input } from '../components/common/Input';
 import { Modal } from '../components/common/Modal';
+import { AppLockCard } from '../components/lock';
 import {
   Settings as SettingsIcon,
   Globe,
@@ -682,7 +683,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </Card>
 
-      {/* 7. Privacy & Security Pledge */}
+      {/* 7. App lock (password asked when Keroo opens) */}
+      <AppLockCard />
+
+      {/* 8. Privacy & Security Pledge */}
       <Card className="bg-surface-muted/20 border-brand-border/30">
         <div className="flex items-start gap-3">
           <ShieldCheck className="w-6 h-6 text-brand shrink-0 mt-0.5" />

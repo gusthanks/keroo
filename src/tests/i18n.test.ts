@@ -274,6 +274,9 @@ const UI_SOURCE_FILES: string[] = [
   'src/components/keroo/SpeechBubble.tsx',
   'src/components/keroo/RoamingCompanion.tsx',
   'src/components/keroo/KerooMascot.tsx',
+  'src/components/lock/AppLockCard.tsx',
+  'src/components/lock/AppLockGate.tsx',
+  'src/components/lock/LockScreen.tsx',
   ...readdirSync(resolve(PROJECT_ROOT, 'src/components/common'))
     .filter((name) => name.endsWith('.tsx'))
     .sort()
@@ -287,6 +290,7 @@ const UI_SOURCE_FILES: string[] = [
  */
 const LOCALE_FREE_CORE_FILES: string[] = [
   'src/core/accountForms.ts',
+  'src/core/appLock.ts',
   'src/core/backup.ts',
   'src/core/currency.ts',
   'src/core/dates.ts',
