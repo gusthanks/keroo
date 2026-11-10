@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* The illustration itself is an approved animated WebP. Only whole-character
+/* The illustration itself is an animated WebP. Only whole-character
    reactions are added here; accessories are never composited over the image. */
 .keroo-motion-attentive { transform: rotate(-3deg); }
 .keroo-motion-celebrate { animation: keroo-celebrate 700ms ease-in-out 2; }

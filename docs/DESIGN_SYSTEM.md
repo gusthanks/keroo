@@ -1,6 +1,6 @@
 # Design System Specification — Keroo
 
-This document defines the visual design system, OKLCH semantic color palette, typography hierarchy, concentric geometry, layout architecture, and approved illustrated frog mascot styling for **Keroo**.
+This document defines the visual design system, OKLCH semantic color palette, typography hierarchy, concentric geometry, layout architecture, and illustrated frog mascot styling for **Keroo**.
 
 ---
 
@@ -204,12 +204,12 @@ Interactive buttons and cards feature a spring-like micro-scale depression on ac
 
 ---
 
-## 6. Keroo Mascot - Companheiro ilustrado (approved direction A)
+## 6. Keroo Mascot - illustrated companion (direction A, "Companheiro ilustrado")
 
-Gustavo approved the actual raster animation on 2026-10-19. The previous simplified
-SVG interpretation was rejected. Preserve the illustration itself: warm leaf green,
-painted texture and shadows, forest-green organic outlines, large cream/deep-green
-eyes, peach cheeks, cream belly and gold sprout coin held in both paws.
+Keroo is a painted raster animation. An earlier simplified SVG version lost the
+texture and proportions and was replaced. Preserve the illustration itself: warm
+leaf green, painted texture and shadows, forest-green organic outlines, large
+cream/deep-green eyes, peach cheeks, cream belly and gold sprout coin held in both paws.
 
 ### 6.1 Sources and rendering
 
@@ -228,7 +228,7 @@ six presentations; these are not ten separately painted poses:
 
 | Historical identifier | Current presentation |
 | --- | --- |
-| default_sitting, sipping_drink | Approved idle loop |
+| default_sitting, sipping_drink | Idle loop |
 | waterfall_tears, toast_face, curious_head_tilt | Attentive whole-character tilt |
 | melted_blob, sleeping_bubble | Closed-eye static rest |
 | peace_dab | Brief whole-character celebration hop |
@@ -237,11 +237,11 @@ six presentations; these are not ten separately painted poses:
 
 Legacy `coinProp` values are source-compatible but have no compositing effect.
 Any future distinct poses must be coherent complete illustrations reviewed against
-the approved identity. Both language dictionaries describe what is actually shown.
+the existing illustration. Both language dictionaries describe what is actually shown.
 
 ### 6.3 Motion and interaction
 
-The approved idle loop is animated WebP, retaining full color and smooth alpha.
+The idle loop is animated WebP, retaining full color and smooth alpha.
 GIF previews demonstrated the animation, but WebP is the shipped equivalent.
 `prefers-reduced-motion` selects a real static PNG through `picture` and disables
 CSS reactions. Hidden documents and non-animated instances also use PNG. Failed
@@ -265,5 +265,4 @@ ICO filename. Edge's running-window/taskbar icon depends on the web favicon and
 manifest as well; updating only the shortcut does not verify the taskbar result.
 Reopen an old app window to request fresh icon assets without clearing user data.
 
-Sources, prompts and export validation: `assets/mascot/`. Review gallery of actual
-shipped assets: `docs/mascot-review/index.html` (development server only).
+Sources, prompts and export validation: `assets/mascot/`.

@@ -66,7 +66,7 @@ npm run build
 Development of Keroo is structured into 6 sequential stages tracked in `docs/ROADMAP.md`:
 
 ```
-Stage 1: Multi-Agent Continuity Kit & Blueprints (Current)
+Stage 1: Multi-Agent Continuity Kit & Blueprints
 Stage 2: Scaffolding, Core Types, Local DB & Onboarding
 Stage 3: Financial Precision Engines & Unit Test Suites
 Stage 4: Deterministic Keroo Frog Pet Engine

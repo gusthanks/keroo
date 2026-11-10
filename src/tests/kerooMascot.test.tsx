@@ -35,7 +35,7 @@ describe('Keroo Mascot & Companion Components', () => {
     ];
 
     poses.forEach((pose) => {
-      it(`renders the approved raster art for pose "${pose}"`, () => {
+      it(`renders the raster art for pose "${pose}"`, () => {
         const { container, unmount } = render(<KerooMascot pose={pose} size="md" />);
         expect(screen.getByTestId('keroo-mascot-container')).toHaveAttribute('data-pose', pose);
         expect(container.querySelector('picture')).not.toBeNull();

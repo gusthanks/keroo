@@ -1,12 +1,12 @@
 # Generation provenance
 
-Art created with the built-in image-generation tool, using Gustavo's selected
-direction A as the reference. Runtime rendering never calls an image model.
+The art was created with an image-generation tool, using the chosen concept
+(direction A, "illustrated companion") as the reference. The app never calls an
+image model at runtime.
 
-The blink-sheet prompt is retained in
-[`docs/mascot-revision/generation-prompt.md`](../../docs/mascot-revision/generation-prompt.md).
-The resulting open/closed-eye source is `source-blink-frames.png`. The approved
-assembled animation is `approved-idle.webp`; do not redraw or re-encode it.
+The blink-sheet prompt is in [`blink-sheet-prompt.md`](blink-sheet-prompt.md).
+The resulting open/closed-eye source is `source-blink-frames.png`. The assembled
+animation is `approved-idle.webp`; do not redraw or re-encode it.
 
 ## Icon portrait prompt
 

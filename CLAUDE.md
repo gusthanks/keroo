@@ -73,11 +73,14 @@ Generated from `git ls-files`; keep it in sync when files are added, renamed, or
 keroo/
 ├── CLAUDE.md                     # Authoritative engineering guide (this file)
 ├── AGENTS.md                     # Universal multi-agent operational guide
+├── README.md / README.pt-BR.md   # User-facing docs (English first, Brazilian Portuguese)
+├── CHANGELOG.md                  # Release notes (Keep a Changelog)
+├── CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md
 ├── LICENSE                       # MIT license
-├── package.json                  # npm scripts (dev, build, typecheck, test, test:coverage, app, app:update, desktop:shortcut) & dependencies
+├── package.json                  # npm scripts (dev, build, typecheck, test, test:coverage, mascot:assets, app, app:update, desktop:shortcut) & dependencies
 ├── package-lock.json             # npm lockfile
 ├── index.html                    # Vite entry HTML: viewport-fit=cover, iOS web-app meta tags, light/dark theme-color pair
-├── vite.config.ts                # Vite + React plugin, `@` -> src alias, browser build target, Vitest config (jsdom, src/tests/setup.ts)
+├── vite.config.ts                # Vite + React plugin, base path (relative by default, `KEROO_BASE` override), `@` -> src alias, browser build target, Vitest config
 ├── tsconfig.json                 # Strict TypeScript config for src/ (bundler resolution, `@/*` paths)
 ├── tsconfig.node.json            # TypeScript config for vite.config.ts
 ├── tailwind.config.js            # Tailwind theme: semantic color tokens mapped to the CSS variables in src/index.css
@@ -91,21 +94,32 @@ keroo/
 │   ├── launch.json               # Dev-server launch config (`npm run dev` on port 5173)
 │   └── commands/
 │       ├── continue.md           # /continue: run the next unfinished roadmap stage
-│       └── mascot-redesign.md    # /mascot-redesign: preserve approved raster art and validate asset integration
+│       └── mascot-redesign.md    # /mascot-redesign: preserve the raster art and validate asset integration
 ├── .github/
+│   ├── ISSUE_TEMPLATE/           # Bug report and feature request forms
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   ├── labels.yml                # Label definitions
 │   ├── dependabot.yml            # Weekly npm (minor/patch grouped) and GitHub Actions updates
 │   └── workflows/
 │       └── ci.yml                # CI on Node 22 & 24: npm ci, typecheck, vitest, build
+├── assets/
+│   └── mascot/                   # Mascot masters (animation loop, blink frames, icon portrait), prompts, export report
 ├── docs/
 │   ├── ARCHITECTURE.md           # System topology, data flow, reactive patterns
 │   ├── DATABASE_SCHEMA.md        # Dexie.js 14 IndexedDB tables (12 domain entity tables + 2 singleton configuration tables), indexes, TypeScript schemas
 │   ├── DESIGN_SYSTEM.md          # OKLCH tokens, typography, 1px borders, layout
-│   └── ROADMAP.md                # 6 sequential stages with granular checkboxes
+│   ├── ROADMAP.md                # 6 sequential stages with granular checkboxes
+│   └── screenshots/              # App screenshots taken with demo data
 ├── public/
 │   ├── manifest.json             # PWA web app manifest (standalone; theme/background color #121417)
 │   ├── sw.js                     # Service worker: network-first pages, stale-while-revalidate assets (offline cache)
-│   └── icons/                    # PNG icons rendered from the mascot: favicon-32, apple-touch-icon, icon-192, icon-512, maskable-512
+│   ├── favicon.ico               # Root favicon fallback
+│   ├── mascot/                   # Shipped mascot art: idle.webp loop, idle.png and rest.png static frames
+│   └── icons/                    # PNG/ICO icons rendered from the mascot portrait (favicons, Apple, PWA, maskable, portrait sizes)
 ├── scripts/
+│   ├── build-mascot.py           # Optional mascot export (Pillow): icons, manifest icons, favicon links, SW precache
+│   ├── generate-mascot.mjs       # `npm run mascot:assets`: runs build-mascot.py
+│   ├── requirements-mascot.txt   # Pillow pin for the mascot export
 │   ├── launch.mjs                # Desktop launcher (`npm run app`): builds if needed, starts serve-dist, opens an Edge app window
 │   ├── serve-dist.mjs            # Localhost-only static server for dist/ on port 4173; exits after 10 idle minutes
 │   └── windows/
@@ -126,7 +140,7 @@ keroo/
     │   ├── subscriptions.ts      # Recurring bills radar & 5-state status machine
     │   ├── split.ts              # Bilateral debt netting & 50/50 split math
     │   ├── kerooMood.ts          # 5-mood deterministic evaluator (< 2ms), mascot poses & bill check-in queue
-    │   ├── kerooInsights.ts      # Statistical spending heuristics (delivery spike, etc.)
+    │   ├── kerooInsights.ts      # Five spending heuristics returning i18n keys + params (text lives in the dictionaries)
     │   ├── autoRules.ts          # Auto-categorization rule engine, payee cleaning & SHA-256 dedup hashing
     │   ├── importParser.ts       # CSV & OFX bank statement parsers
     │   ├── backup.ts             # JSON backup export / validated atomic restore of every Dexie table (`keroo-backup` v1)
@@ -144,7 +158,7 @@ keroo/
     ├── components/               # Sure-inspired UI components (each folder except onboarding/ has an index.ts barrel)
     │   ├── layout/               # AppLayout, Sidebar, BottomNav (with "More" sheet), Header (lock button), theme helpers
     │   ├── common/               # Button, Card, Input, Modal, Badge, ProgressBar
-    │   ├── keroo/                # KerooMascot (raster), SpeechBubble, RoamingCompanion
+    │   ├── keroo/                # KerooMascot (raster), SpeechBubble, RoamingCompanion, mascot-assets.json (generated URLs)
     │   ├── lock/                 # AppLockGate (lock screen, lock now, idle auto-lock), LockScreen, AppLockCard (Settings)
     │   ├── command/              # CommandPalette (Cmd+K / Ctrl+K)
     │   └── onboarding/           # OnboardingWizard (4-step 60s setup)
@@ -171,11 +185,12 @@ keroo/
         ├── importParser.test.ts                # CSV/OFX parsing, amount/delimiter/date detection, Brazilian bank formats
         ├── installments.test.ts                # Date clamping, 1st-installment remainder, statement mapping, Tabela Price, timelines
         ├── installments.stress.test.ts         # 10,000-input cent conservation, month-end clamping 2024-2027, 24-month projections
-        ├── kerooInsights.test.ts               # The five statistical spending heuristics
+        ├── kerooInsights.test.ts               # The five spending heuristics, surge inputs from the ledger, dictionary text
         ├── kerooMascot.test.tsx                # Raster rendering, sizing/ARIA, SpeechBubble actions, RoamingCompanion
         ├── kerooMascotInsights.stress.test.tsx # Raster state/fallback coverage, heuristic boundaries, speech callbacks
         ├── kerooMood.test.ts                   # 5-mood cascade, guards, < 2ms benchmark, bill check-in queue
         ├── kerooMood.stress.test.ts            # 10,000-evaluation latency benchmark, priority and zero-budget/zero-income guards
+        ├── mascotAssets.test.ts                # Shipped animation identity, cache-versioned URLs, native ICO frames, PWA icon sizes
         ├── seed.empirical.test.ts              # Seed/demo datasets across locales & currencies, i18n parity, ROADMAP checkboxes
         ├── split.test.ts                       # Odd-cent payer absorption, percentage/exact splits, bilateral netting
         ├── subscriptions.test.ts               # Anchor-day preservation, cadence normalization, status machine, 3-day radar, snooze
@@ -201,14 +216,14 @@ Development of Keroo is split across sequential stages managed in `docs/ROADMAP.
 
 ---
 
-## 6. Approved Illustrated Mascot
+## 6. Illustrated Mascot
 
-Gustavo approved the actual raster breathing/blinking preview on 2026-10-19 after
-rejecting the earlier SVG interpretation. Preserve the painted texture, proportions,
-cream belly, friendly eyes and gold coin of the approved illustration. Do not redraw
-it as vector geometry or compose independent accessories on top of it.
+Keroo is a painted raster illustration with a breathing/blinking loop; it replaced an
+earlier simplified SVG version. Preserve the painted texture, proportions, cream belly,
+friendly eyes and gold coin of the illustration. Do not redraw it as vector geometry
+or compose independent accessories on top of it.
 
-The canonical sources are `assets/mascot/approved-idle.webp` (exact approved loop),
+The canonical sources are `assets/mascot/approved-idle.webp` (the exact loop),
 `source-blink-frames.png` and `icon-master.png`. See `assets/mascot/README.md` for
 export and installation instructions, and `docs/DESIGN_SYSTEM.md` section 6 for
 the rendering contract. `KerooMascot.tsx` displays those assets through one image.
@@ -218,12 +233,12 @@ Ten historical pose identifiers remain compatible with the pure mood evaluator;
 they map to idle, attentive, celebration, rest, playful and saving presentations.
 The coin is painted into the illustration. Deprecated `coinProp` values do not
 add overlays. Rest uses its closed-eye PNG. Whole-character reactions supplement
-the approved loop; reduced motion and hidden documents select true static PNGs.
+the loop; reduced motion and hidden documents select true static PNGs.
 Tiny slots use density-aware portrait PNGs. Both dictionaries describe the current
 presentation, rather than nonexistent toast, cups or tongue props.
 
 Run `npm run mascot:assets` to regenerate exports using the optional Pillow toolchain.
 Normal npm builds use checked-in assets without Python or image APIs. Native ICO
 frames span 16-256px; web icon and art URLs are cache-versioned. Keep exports and
-`mascot-assets.json` together. Never treat automated checks as visual acceptance.
+`mascot-assets.json` together. Automated checks do not replace looking at the result.
 The financial engine and atomic bill actions remain independent of rendering.

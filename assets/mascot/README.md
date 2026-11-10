@@ -1,15 +1,17 @@
-# Approved Keroo illustration
+# Keroo illustration
 
-Gustavo approved the illustrated direction A and then explicitly approved the
-animated raster preview on 2026-10-19. The previous SVG interpretation was rejected.
+Keroo is a painted raster illustration with a four-second breathing/blinking loop.
+An earlier flat SVG version was replaced by this artwork, which is now the visual
+reference for the mascot.
 
-- `approved-idle.webp` is the exact approved four-second breathing/blinking loop,
+- `approved-idle.webp` is the canonical four-second breathing/blinking loop,
   with full color and smooth transparency. Do not redraw or re-encode this master.
 - `source-blink-frames.png` retains the image-generated open/closed-eye source art.
 - `icon-master.png` is a high-resolution face portrait derived with image generation
   from the same character, without coins or other props. It is the icon source.
 - `export-validation.json` records export version, animation hash and icon sizes.
-- `generation-prompts.md` records the built-in image-generation prompts.
+- `generation-prompts.md` and `blink-sheet-prompt.md` record the image-generation
+  prompts used to create the art.
 
 ## Export
 
@@ -21,11 +23,11 @@ python -m pip install -r scripts/requirements-mascot.txt
 npm run mascot:assets
 ```
 
-`scripts/build-mascot.py` copies the approved animation byte for byte, extracts
+`scripts/build-mascot.py` copies the canonical animation byte for byte, extracts
 static open/closed frames from that animation, and downsamples each icon directly
 from its high-resolution master. It generates the typed asset manifest used by the
-component, native PNG/ICO sizes, the web manifest, HTML favicon links, service-worker
-precache URLs and the local review gallery. Commit regenerated outputs together.
+component, native PNG/ICO sizes, the web manifest, HTML favicon links and the
+service-worker precache URLs. Commit regenerated outputs together.
 
 ## Rendering contract
 
@@ -33,7 +35,7 @@ precache URLs and the local review gallery. Commit regenerated outputs together.
 or accessories from SVG parts. Legacy mood/pose identifiers remain accepted by the
 pure deterministic evaluator, but the renderer groups their presentation into idle,
 attentive, celebration, rest, playful and saving states. Reactions move the whole
-approved illustration. Rest uses its closed-eye frame. Historical toast, tongue,
+illustration. Rest uses its closed-eye frame. Historical toast, tongue,
 cup and coin-prop identifiers do not add or invent separately drawn accessories.
 
 The deprecated `coinProp` input remains source-compatible and has no compositing

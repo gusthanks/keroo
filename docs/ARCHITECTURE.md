@@ -111,7 +111,7 @@ src/
 │   │   ├── Badge.tsx                   <-- Semantic status chip (Paid, Overdue, Due Soon)
 │   │   └── ProgressBar.tsx             <-- Concentric goal progress bar
 │   ├── keroo/
-│   │   ├── KerooMascot.tsx             <-- Inline-SVG Jin Chan mascot: 10 poses, 6 coin props
+│   │   ├── KerooMascot.tsx             <-- Raster mascot: 10 pose keys mapped to 6 presentations
 │   │   ├── SpeechBubble.tsx            <-- Interactive bill check-in bubble with 1-click actions
 │   │   └── RoamingCompanion.tsx        <-- Draggable roaming pet layer (perching, docking, on/off toggle)
 │   ├── lock/
@@ -132,7 +132,7 @@ src/
 │   ├── SplitView.tsx                   <-- Bilateral utility netting & shared IOU tabs
 │   └── SettingsView.tsx                <-- Language, currency, theme, clean-slate/demo toggle
 │
-└── tests/                              <-- Vitest suites (23 test files) + setup.ts
+└── tests/                              <-- Vitest suites (24 test files) + setup.ts
 ```
 
 ---
@@ -343,41 +343,28 @@ When bills are pending, Keroo's speech bubble becomes an interactive action trig
   - Expands an inline integer-cent input to adjust the amount of a variable bill.
 
 ### 4.3 Statistical Spending Heuristics (Deterministic Local Rules)
-Five local heuristics run in-memory across local transactions:
-1. **Delivery vs Grocery Ratio**: Alerts when takeout spending in the last 30 days is $\ge 60\%$ of grocery spending and $\ge R\$\ 150,00$.
-2. **3-Month Moving Average Surge**: Detects when category spending is $\ge 35\%$ above historical baseline and $\ge R\$\ 100,00$ higher.
-3. **Credit Card Installment Relief Month**: Detects when next month's installment obligations decrease by $\ge R\$\ 50,00$ or drop to zero, triggering a celebration.
+Five local heuristics live in `src/core/kerooInsights.ts`. They return dictionary keys (`insights.*`) plus placeholder values; money stays in integer cents until the view formats it for the reader's language and currency.
+1. **Delivery vs Grocery Ratio**: Alerts when takeout spending is $\ge 60\%$ of grocery spending (or there is takeout but no grocery spending).
+2. **3-Month Moving Average Surge**: Detects when a category's spending this month is more than $35\%$ above its average over the three previous calendar months (`buildCategorySurgeInputs()` builds the inputs from the ledger).
+3. **Credit Card Installment Relief Month**: Detects when next month's installment obligations decrease by $\ge 5000$ cents, drop to zero, or a plan finishes this month, triggering a celebration.
 4. **Annualized Subscription Cost**: Normalizes all active subscriptions to annual impact, displaying total annual commitment.
-5. **Bilateral Split Net Receivables**: Reminds the user when net receivables from friends or roommates exceed $R\$\ 50,00$.
+5. **Bilateral Split Net Receivables**: Reminds the user when net receivables from friends or roommates reach $5000$ cents.
 
-### 4.4 Kawaii Doodle Frog Mascot & Roaming Companion Engine
+The dashboard runs heuristics 2-5 on live data and shows up to three insight cards. Heuristic 1 is implemented and tested, but categories carry no "takeout" or "groceries" marker yet, so the dashboard does not feed it.
+
+### 4.4 Illustrated Frog Mascot & Roaming Companion Engine
 
 In addition to the static dashboard speech bubble and insight cards, Keroo features an interactive roaming companion engine (Settings label: "Roaming Companion Pet"; pt-BR UI label: "Pet que passeia pelo app"):
 
-#### A. Visual Style: "Kawaii Doodle Frog"
-- **Art Direction**: The authoritative spec is the Mascot Style Guide in `CLAUDE.md` section 6: one continuous Bézier blob body in flat lime `#86E63C`, a thick uniform near-black outline (`#1F1F1F`, round caps and joins), tiny bead-dot eyes with no eye whites, and pink blush dots on playful poses. All artwork is inline SVG in `src/components/keroo/KerooMascot.tsx`.
-- **Jin Chan Golden Fortune Coin (Core Interactive Prop)**:
-  - Keroo interacts continuously with his oversized golden coin (`#FFD700` with a darker `#C88A00` edge and a square center hole):
-    - Clamping it in his mouth like the traditional Jin Chan frog.
-    - Flipping and tossing the coin as he hops between cards.
-    - Hugging the coin lovingly when savings goals grow.
-    - Polishing it vigorously during `THRIVING` mood states.
-    - Swallowing coins with an exaggerated open mouth (`👄 / 🟡`) whenever deposits are made to Piggy Banks (*Cofrinhos*).
-- **Dramatic & Comedic Reactive Personality Poses**:
-  - **Fetal Pose with Depression Aura / Waterfall Tears**: When budgets are severely blown or bills are overdue (`SWEATING` extreme).
-  - **Melted Frog Blob**: Collapses into a flat green puddle when overwhelmed by multiple overdue items.
-  - **Toast on Face**: Humorous facepalm pose with toast slapped on forehead when delivery/takeout spending spikes over groceries.
-  - **Peace Sign (`✌️`) & Dab**: Celebratory victory poses when bills are marked paid or installment debt drops.
-  - **Leaning & Sipping Juice/Coffee**: Cool, relaxed pose leaning against card borders when finances are in `CALM` or `THRIVING` equilibrium.
-  - **Curious Head-Tilt (`?`)**: Tilts his head with a question mark on pending bill check-ins ("did you pay that bill?").
-  - **Sleeping with Snot Bubble**: Curled up napping atop the coin with an inflating/deflating translucent snot bubble when `SLEEPY` or idle.
-  - **Cheeky Face (`😛`)**: Pokes tongue out playfully on random clicks or idle state.
+#### A. Visual Style
+- **Art Direction**: Keroo is a painted raster illustration of a Jin Chan lucky frog holding a gold coin, with a four-second breathing/blinking loop. The rendering contract is in `docs/DESIGN_SYSTEM.md` section 6 and the masters are in `assets/mascot/`. `src/components/keroo/KerooMascot.tsx` displays a single image; it never draws or composes the artwork.
+- **Pose keys**: The mood engine keeps ten historical pose identifiers (`default_sitting`, `waterfall_tears`, `melted_blob`, `toast_face`, `peace_dab`, `sipping_drink`, `sleeping_bubble`, `cheeky_tongue`, `coin_swallowing`, `curious_head_tilt`). The renderer groups them into six presentations: idle, attentive, celebration, rest, playful and saving. Reactions move the whole character; there are no separately drawn props.
 
 #### B. Roaming Companion Mechanics
 - **Card Perching & Screen Hopping**: Keroo hops across the layout and perches atop active UI elements (such as an overdue bill card, an empty budget envelope, or the Piggy Bank header).
 - **Drag-and-Drop Interactive Physics**: The user can pick up and drag Keroo across the viewport. Upon release, a spring animation snaps Keroo to the nearest card border or screen edge dock.
 - **On/Off Toggle**: Configurable via `user_settings.roamingPetEnabled`. Users who prefer a completely static interface can disable roaming with a single click in Settings, from the pet's own "Disable roaming" button, or with the command palette's "Mascot: Toggle Roaming Pet" action.
-- **Micro-Animations & Sprite States**: Built with inline SVG plus CSS keyframes and transitions (no animation library), e.g. a gentle breathing bob, the inflating/deflating sleep bubble, and hop/dock transitions.
+- **Micro-Animations**: The breathing/blinking loop is an animated WebP; reactions and hop/dock transitions are CSS keyframes and transitions (no animation library). Reduced-motion preference and hidden documents switch to a static PNG.
 - **Performance & Battery Isolation**: Uses hardware-accelerated CSS transforms (`translate3d`), limits frame loops to active movement, and automatically suspends animations via `document.hidden` when the tab or PWA is backgrounded.
 
 ---
@@ -387,7 +374,7 @@ In addition to the static dashboard speech bubble and insight cards, Keroo featu
 Keroo is designed to run seamlessly as an installed app on iOS (iPhone) and desktop browsers:
 
 ### 5.1 Service Worker & Cache Strategy
-- **Service Worker (`public/sw.js`)**: Precaches the app shell (`/`, `/index.html`, `/manifest.json`) and answers page navigations **network-first** (falling back to the cached copy offline, so a rebuilt app shows up on the next open) and other GET requests with a **Stale-While-Revalidate** strategy, caching only successful same-origin responses (HTML, JavaScript bundles, CSS stylesheets, and icons) and never intercepting Vite dev-server paths. `src/main.tsx` registers it in production builds only, so the dev server never serves cached Vite modules.
+- **Service Worker (`public/sw.js`)**: Precaches the app shell (`./`, `index.html`, `manifest.json`, mascot art and icons, all relative to the worker so a sub-path deployment works) and answers page navigations **network-first** (falling back to the cached copy offline, so a rebuilt app shows up on the next open) and other GET requests with a **Stale-While-Revalidate** strategy, caching only successful same-origin responses (HTML, JavaScript bundles, CSS stylesheets, and icons) and never intercepting Vite dev-server paths. `src/main.tsx` registers it in production builds only, so the dev server never serves cached Vite modules.
 - **Network Independence**: The app shell loads instantly from cache even when the device is completely offline or in Airplane Mode. All ledger modifications write immediately to local IndexedDB.
 
 ### 5.2 Web App Manifest (`public/manifest.json`) & Theme Colors
