@@ -17,6 +17,7 @@ import { db, KEROO_DB_SCHEMA_V1 } from '../db';
 import { BACKUP_ERROR_CODES } from '../core/backup';
 import type { ImportWarningCode } from '../core/importParser';
 import type { KerooPose } from '../core/kerooMood';
+import { INSIGHT_TEXT_KEYS } from '../core/kerooInsights';
 
 function getAllKeys(obj: Record<string, any>, prefix = ''): string[] {
   let keys: string[] = [];
@@ -285,8 +286,8 @@ const UI_SOURCE_FILES: string[] = [
 
 /**
  * Locale-free engine modules: they produce data (codes, params, cents), never user-facing
- * Portuguese text. kerooInsights.ts / kerooMood.ts carry bilingual pet copy by design and
- * autoRules.ts matches Portuguese bank-statement keywords, so they are not listed.
+ * Portuguese text. kerooMood.ts still carries bilingual pet copy and autoRules.ts matches
+ * Portuguese bank-statement keywords, so they are not listed.
  */
 const LOCALE_FREE_CORE_FILES: string[] = [
   'src/core/accountForms.ts',
@@ -297,6 +298,7 @@ const LOCALE_FREE_CORE_FILES: string[] = [
   'src/core/envelopes.ts',
   'src/core/importParser.ts',
   'src/core/installments.ts',
+  'src/core/kerooInsights.ts',
   'src/core/split.ts',
   'src/core/subscriptions.ts',
 ];
@@ -580,6 +582,8 @@ describe('Translation keys used by the UI exist in both languages', () => {
     ...family('settings.backup_err', [...BACKUP_ERROR_CODES, 'GENERIC'], '_'),
     // SettingsView restore modal: t(`settings.backup_tables.${table}`) for every Dexie table.
     ...family('settings.backup_tables', Object.keys(KEROO_DB_SCHEMA_V1)),
+    // DashboardView: t(item.titleKey) / t(item.messageKey) for spending insights.
+    ...INSIGHT_TEXT_KEYS,
   ];
 
   it('finds a healthy number of static keys in the sources', () => {

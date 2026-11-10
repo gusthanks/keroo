@@ -593,5 +593,33 @@
     "erase_button": "Apagar tudo e recomeçar",
     "erase_error": "Não foi possível apagar os dados. Feche as outras janelas do Keroo e tente de novo.",
     "button_title": "Trancar o Keroo agora"
+  },
+  "insights": {
+    "delivery_spike": {
+      "title": "Delivery está alcançando o mercado",
+      "message": "Você gastou {delivery} com delivery este mês, {percent}% do que gastou no mercado ({grocery}). Que tal cozinhar hoje?",
+      "message_no_grocery": "Você gastou {delivery} com delivery este mês e ainda nada no mercado. Que tal cozinhar hoje?"
+    },
+    "category_surge": {
+      "title": "Gastos com {category} em alta",
+      "title_unnamed": "Gastos em alta numa categoria",
+      "message": "Você gastou {current} com {category} este mês, {percent}% acima da sua média dos últimos 3 meses ({average}).",
+      "message_unnamed": "Você gastou {current} nesta categoria este mês, {percent}% acima da sua média dos últimos 3 meses ({average})."
+    },
+    "installment_relief": {
+      "title": "Alívio nas parcelas do cartão",
+      "message_finished": "As últimas parcelas do cartão estão na fatura deste mês. No mês que vem você terá {amount} a mais livres.",
+      "message_lower": "Suas parcelas do cartão diminuem {amount} no mês que vem. Um fôlego extra para guardar dinheiro."
+    },
+    "subscriptions": {
+      "title": "Suas assinaturas em um ano",
+      "message_one": "Você tem 1 assinatura ativa. Ela custa {annual} por ano, cerca de {monthly} por mês.",
+      "message_other": "Você tem {count} assinaturas ativas. Juntas, custam {annual} por ano, cerca de {monthly} por mês."
+    },
+    "split_receivables": {
+      "title": "Você tem valores a receber",
+      "message_named": "Você tem {amount} a receber de despesas divididas ({names}). Que tal lembrar o pessoal do Pix?",
+      "message": "Você tem {amount} a receber de despesas divididas. Que tal lembrar o pessoal do Pix?"
+    }
   }
 }

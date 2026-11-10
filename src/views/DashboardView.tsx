@@ -17,9 +17,14 @@ import {
   type BillCheckInPrompt,
 } from '../core/kerooMood';
 import {
+  buildCategorySurgeInputs,
   generateAllKerooInsights,
+  formatInsightParams,
   type InsightItem,
+  type SplitPartyBalance,
 } from '../core/kerooInsights';
+import { getPreviousYearMonth } from '../core/envelopes';
+import { calculateAllPartiesBalances } from '../core/split';
 import { formatCurrency, defaultCurrencyFor } from '../core/currency';
 import {
   getLocalTodayISO,
@@ -79,6 +84,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const installmentPlans = useLiveQuery(() => db.installment_plans.toArray(), [], []);
   const categories = useLiveQuery(() => db.categories.toArray(), [], []);
   const mascotState = useLiveQuery(() => db.keroo_state.get('current'));
+  // Current month plus the 3 before it: the baseline for the category surge insight.
+  const insightWindowStart = `${getPreviousYearMonth(
+    getPreviousYearMonth(getPreviousYearMonth(currentYearMonth))
+  )}-01`;
+  const recentTransactions = useLiveQuery(
+    () => db.transactions.where('date').aboveOrEqual(insightWindowStart).toArray(),
+    [insightWindowStart],
+    []
+  );
+  const splitParties = useLiveQuery(() => db.split_parties.toArray(), [], []);
+  const splitExpenses = useLiveQuery(() => db.split_expenses.toArray(), [], []);
+  const splitSettlements = useLiveQuery(() => db.split_settlements.toArray(), [], []);
 
   // Calculate Net Worth & Liquid Cash
   const { netWorthCents, liquidCashCents, checkingBalanceCents } = useMemo(() => {
@@ -204,13 +221,31 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   // Statistical Insights
   const insights: InsightItem[] = useMemo(() => {
+    const categoryNames = new Map(categories.map((c) => [c.id, c.name] as const));
+    const partyNames = new Map(splitParties.map((p) => [p.id, p.name] as const));
+    const splitBalances: SplitPartyBalance[] = [];
+    for (const [partyId, netBalanceCents] of calculateAllPartiesBalances(splitExpenses, splitSettlements)) {
+      splitBalances.push({ partyName: partyNames.get(partyId) ?? partyId, netBalanceCents });
+    }
     return generateAllKerooInsights({
+      categorySurges: buildCategorySurgeInputs(recentTransactions, currentYearMonth, categoryNames),
       installmentPlans,
       currentYearMonth,
       bills: recurringBills,
+      splitBalances,
       currency,
     });
-  }, [installmentPlans, currentYearMonth, recurringBills, currency]);
+  }, [
+    categories,
+    splitParties,
+    splitExpenses,
+    splitSettlements,
+    recentTransactions,
+    installmentPlans,
+    currentYearMonth,
+    recurringBills,
+    currency,
+  ]);
 
   // Current active prompt for speech bubble
   const activePrompt: BillCheckInPrompt | null = useMemo(() => {
@@ -512,10 +547,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   </span>
                   <div className="min-w-0">
                     <h4 className="text-xs font-semibold text-text-primary">
-                      {language === 'pt-BR' ? item.titlePt : item.titleEn}
+                      {t(item.titleKey, formatInsightParams(item, language))}
                     </h4>
                     <p className="text-xs text-text-secondary mt-0.5 leading-relaxed">
-                      {language === 'pt-BR' ? item.messagePt : item.messageEn}
+                      {t(item.messageKey, formatInsightParams(item, language))}
                     </p>
                   </div>
                 </div>

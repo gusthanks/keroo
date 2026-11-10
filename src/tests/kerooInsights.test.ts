@@ -13,14 +13,27 @@
 
 import { describe, it, expect } from 'vitest';
 import {
+  buildCategorySurgeInputs,
   detectDeliveryVsGrocerySpike,
   detectCategorySurge,
   detectInstallmentRelief,
   calculateAnnualizedSubscriptionsImpact,
   detectSplitReceivablesAlert,
   generateAllKerooInsights,
+  formatInsightParams,
+  INSIGHT_TEXT_KEYS,
+  type InsightItem,
 } from '../core/kerooInsights';
-import type { InstallmentPlan, RecurringBill } from '../types';
+import { translate } from '../i18n';
+import type { InstallmentPlan, RecurringBill, SupportedLocale } from '../types';
+
+/** Renders an insight's title and message the way DashboardView does. */
+const render = (item: InsightItem, locale: SupportedLocale) => ({
+  title: translate(locale, item.titleKey, formatInsightParams(item, locale)),
+  message: translate(locale, item.messageKey, formatInsightParams(item, locale)),
+});
+const pt = (item: InsightItem) => render(item, 'pt-BR');
+const en = (item: InsightItem) => render(item, 'en-US');
 
 describe('Statistical Spending Heuristics (Keroo Insights)', () => {
   describe('1. Delivery vs. Grocery Ratio Spike Heuristic', () => {
@@ -31,7 +44,8 @@ describe('Statistical Spending Heuristics (Keroo Insights)', () => {
       expect(insight!.type).toBe('delivery_grocery_spike');
       expect(insight!.level).toBe('warning');
       expect(insight!.recommendedPose).toBe('toast_face');
-      expect(insight!.titlePt).toContain('Fatia de pão');
+      expect(pt(insight!).title).toBe('Delivery está alcançando o mercado');
+      expect(en(insight!).title).toBe('Takeout is catching up with groceries');
       expect(insight!.data.ratioPercentage).toBe(60);
     });
 
@@ -50,6 +64,9 @@ describe('Statistical Spending Heuristics (Keroo Insights)', () => {
       const insight = detectDeliveryVsGrocerySpike(15000, 0);
       expect(insight).not.toBeNull();
       expect(insight!.recommendedPose).toBe('toast_face');
+      expect(insight!.messageKey).toBe('insights.delivery_spike.message_no_grocery');
+      expect(en(insight!).message).toContain('nothing on groceries');
+      expect(pt(insight!).message).toContain('nada no mercado');
     });
 
     it('returns null when both delivery and grocery spending are zero', () => {
@@ -66,7 +83,8 @@ describe('Statistical Spending Heuristics (Keroo Insights)', () => {
       expect(insight!.type).toBe('category_surge');
       expect(insight!.level).toBe('warning');
       expect(insight!.recommendedPose).toBe('waterfall_tears');
-      expect(insight!.titlePt).toContain('Restaurantes');
+      expect(pt(insight!).title).toContain('Restaurantes');
+      expect(en(insight!).title).toBe('Restaurantes spending is up');
       expect(insight!.data.surgePercent).toBe(36);
     });
 
@@ -138,7 +156,8 @@ describe('Statistical Spending Heuristics (Keroo Insights)', () => {
       expect(insight!.type).toBe('installment_relief');
       expect(insight!.level).toBe('celebration');
       expect(insight!.recommendedPose).toBe('peace_dab');
-      expect(insight!.messagePt).toContain('encerram este mês');
+      expect(pt(insight!).message).toContain('últimas parcelas');
+      expect(en(insight!).message).toContain('last card installments');
     });
 
     it('returns null when monthly obligations increase next month', () => {
@@ -255,7 +274,8 @@ describe('Statistical Spending Heuristics (Keroo Insights)', () => {
       // Total = 6500 cents >= 5000
       const insight = detectSplitReceivablesAlert(balances);
       expect(insight).not.toBeNull();
-      expect(insight!.messagePt).toContain('Lucas Roommate, Camila');
+      expect(pt(insight!).message).toContain('Lucas Roommate, Camila');
+      expect(en(insight!).message).toContain('Lucas Roommate, Camila');
       expect(insight!.data.totalReceivableCents).toBe(6500);
     });
 
@@ -293,18 +313,18 @@ describe('Statistical Spending Heuristics (Keroo Insights)', () => {
   describe('7. Regression: currency follows the user, ids are deterministic', () => {
     it('formats both languages with the injected currency (no hardcoded BRL/USD)', () => {
       const usd = detectDeliveryVsGrocerySpike(60000, 100000, 'USD')!;
-      expect(usd.messagePt).toContain('US$');
-      expect(usd.messageEn).toContain('$600.00');
+      expect(pt(usd).message).toContain('US$');
+      expect(en(usd).message).toContain('$600.00');
 
       const brl = detectDeliveryVsGrocerySpike(60000, 100000, 'BRL')!;
-      expect(brl.messagePt).toContain('R$');
-      expect(brl.messageEn).toContain('R$');
-      expect(brl.messageEn).not.toMatch(/(^|[^R])\$600/);
+      expect(pt(brl).message).toContain('R$');
+      expect(en(brl).message).toContain('R$');
+      expect(en(brl).message).not.toMatch(/(^|[^R])\$600/);
 
       // No currency passed: the locale-neutral default is USD.
       const fallback = detectDeliveryVsGrocerySpike(60000, 100000)!;
-      expect(fallback.messageEn).toContain('$600.00');
-      expect(fallback.messagePt).not.toContain('R$');
+      expect(en(fallback).message).toContain('$600.00');
+      expect(pt(fallback).message).not.toContain('R$');
     });
 
     it('generates unique, stable ids for multiple category surges and injects createdAt', () => {
@@ -324,7 +344,7 @@ describe('Statistical Spending Heuristics (Keroo Insights)', () => {
       expect(ids).toEqual(b.map((i) => i.id));
       expect(ids).toContain('insight_category_surge_mercado_2026-10');
       expect(a.every((i) => i.createdAt === 1_700_000_000_000)).toBe(true);
-      expect(a[0].messageEn).toContain('€');
+      expect(en(a[0]).message).toContain('€');
     });
   });
 
@@ -394,19 +414,117 @@ describe('Statistical Spending Heuristics (Keroo Insights)', () => {
       expect(types).toContain('annualized_subscriptions');
 
       const texts = insights.flatMap((i) => [
-        i.title,
-        i.titlePt,
-        i.titleEn,
-        i.message,
-        i.messagePt,
-        i.messageEn,
+        pt(i).title,
+        pt(i).message,
+        en(i).title,
+        en(i).message,
       ]);
       expect(texts.some((text) => text.includes('$'))).toBe(true);
       expect(texts.some((text) => text.includes('R$'))).toBe(false);
 
       // 1599 * 12 = 19188 cents -> $191.88 in the English copy
       const annual = insights.find((i) => i.type === 'annualized_subscriptions')!;
-      expect(annual.messageEn).toContain('$191.88');
+      expect(en(annual).message).toContain('$191.88');
+      expect(en(annual).message).toContain('You have 1 active subscription.');
+    });
+  });
+
+  describe('9. Insight text comes from the dictionaries', () => {
+    it('every insight key resolves in both languages, with no leftover placeholders', () => {
+      const all = [
+        detectDeliveryVsGrocerySpike(60000, 100000, 'BRL')!,
+        detectDeliveryVsGrocerySpike(15000, 0, 'BRL')!,
+        detectCategorySurge(136000, 100000, 'Lazer')!,
+        detectCategorySurge(136000, 100000)!,
+        detectSplitReceivablesAlert(6500)!,
+        detectSplitReceivablesAlert([{ partyName: 'Ana', netBalanceCents: 6500 }])!,
+        calculateAnnualizedSubscriptionsImpact([]),
+      ];
+      for (const item of all) {
+        expect(INSIGHT_TEXT_KEYS).toContain(item.titleKey);
+        expect(INSIGHT_TEXT_KEYS).toContain(item.messageKey);
+        for (const locale of ['pt-BR', 'en-US'] as const) {
+          const { title, message } = render(item, locale);
+          expect(title).not.toBe(item.titleKey);
+          expect(message).not.toBe(item.messageKey);
+          expect(`${title} ${message}`).not.toMatch(/\{\w+\}/);
+        }
+      }
+    });
+
+    it('uses a neutral headline when the surging category has no name', () => {
+      const item = detectCategorySurge(136000, 100000)!;
+      expect(item.titleKey).toBe('insights.category_surge.title_unnamed');
+      expect(en(item).message).toContain('in this category');
+    });
+
+    it('keeps money in integer cents until it is rendered', () => {
+      const item = detectDeliveryVsGrocerySpike(60000, 100000, 'USD')!;
+      expect(item.amounts).toEqual({ delivery: 60000, grocery: 100000 });
+      expect(item.params).toEqual({ percent: 60 });
+      expect(formatInsightParams(item, 'en-US')).toEqual({ percent: 60, delivery: '$600.00', grocery: '$1,000.00' });
+    });
+  });
+
+  describe('10. Category surge inputs from ledger rows', () => {
+    const names = new Map([
+      ['cat_food', 'Restaurants'],
+      ['cat_fun', 'Leisure'],
+    ]);
+    const tx = (date: string, amountCents: number, categoryId: string | null, type = 'expense') => ({
+      date,
+      amountCents,
+      categoryId,
+      type,
+    });
+
+    it('averages the 3 previous calendar months per category, across a year boundary', () => {
+      const inputs = buildCategorySurgeInputs(
+        [
+          tx('2027-01-05', 30000, 'cat_food'),
+          tx('2026-12-10', 10000, 'cat_food'),
+          tx('2026-11-10', 10000, 'cat_food'),
+          tx('2026-10-10', 10001, 'cat_food'),
+          tx('2026-09-10', 999999, 'cat_food'), // outside the 3-month window
+        ],
+        '2027-01',
+        names
+      );
+      expect(inputs).toEqual([
+        { currentCents: 30000, prior3MonthAveragesCents: 10000, categoryName: 'Restaurants' },
+      ]);
+    });
+
+    it('ignores income, transfers, uncategorized rows, unknown categories and categories with no baseline', () => {
+      const inputs = buildCategorySurgeInputs(
+        [
+          tx('2026-10-02', 50000, 'cat_food', 'income'),
+          tx('2026-09-02', 100, 'cat_food', 'income'),
+          tx('2026-10-03', 50000, null),
+          tx('2026-10-04', 50000, 'cat_deleted'),
+          tx('2026-09-04', 100, 'cat_deleted'),
+          tx('2026-10-05', 50000, 'cat_fun'),
+        ],
+        '2026-10',
+        names
+      );
+      expect(inputs).toEqual([]);
+    });
+
+    it('feeds the surge detector end to end', () => {
+      const insights = generateAllKerooInsights({
+        categorySurges: buildCategorySurgeInputs(
+          [tx('2026-10-01', 20000, 'cat_fun'), tx('2026-08-01', 30000, 'cat_fun')],
+          '2026-10',
+          names
+        ),
+        currentYearMonth: '2026-10',
+        currency: 'USD',
+        now: 0,
+      });
+      expect(insights).toHaveLength(1);
+      expect(en(insights[0]).title).toBe('Leisure spending is up');
+      expect(en(insights[0]).message).toContain('100% above your 3-month average of $100.00');
     });
   });
 });

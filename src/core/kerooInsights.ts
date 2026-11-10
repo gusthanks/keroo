@@ -13,13 +13,24 @@
  * 4. Annualized Subscription Cost Summary (normalization of recurring bills).
  * 5. Bilateral Split Net Receivables Alert (reminds when net receivables >= 5000 cents).
  *
- * Every detector takes an optional currency (default USD). pt-BR text is formatted with
- * pt-BR conventions and en-US text with en-US conventions; callers pass the user's currency.
+ * The engine is locale-free: each insight carries i18n keys (`titleKey`, `messageKey`)
+ * plus placeholder values. Money placeholders stay in integer cents (`amounts`) and are
+ * formatted for the reader's language at render time with `formatInsightParams()`.
+ * Every detector takes an optional currency (default USD); callers pass the user's currency.
  */
 
-import type { Cents, InstallmentPlan, RecurringBill, YearMonth } from '../types';
+import type {
+  Cents,
+  InstallmentPlan,
+  RecurringBill,
+  SupportedCurrency,
+  SupportedLocale,
+  YearMonth,
+} from '../types';
 import { assertIntegerCents, formatCurrency } from './currency';
-import type { SupportedCurrency } from '../types';
+import { getNextYearMonth, getPreviousYearMonth } from './envelopes';
+import type { KerooPose } from './kerooMood';
+import { calculateAnnualCommitment } from './subscriptions';
 
 /**
  * Optional context shared by every detector.
@@ -38,7 +49,7 @@ function buildInsightId(kind: string, ...parts: Array<string | number | undefine
     .map((p) =>
       String(p)
         .normalize('NFD')
-        .replace(/[̀-ͯ]/g, '')
+        .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase()
         .replace(/[^a-z0-9-]+/g, '-')
         .replace(/^-+|-+$/g, '')
@@ -46,9 +57,6 @@ function buildInsightId(kind: string, ...parts: Array<string | number | undefine
     .join('_');
   return slug ? `insight_${kind}_${slug}` : `insight_${kind}`;
 }
-import { getNextYearMonth } from './envelopes';
-import type { KerooPose } from './kerooMood';
-import { calculateAnnualCommitment } from './subscriptions';
 
 // ============================================================================
 // Types
@@ -63,16 +71,45 @@ export type InsightType =
 
 export type InsightLevel = 'info' | 'warning' | 'celebration' | 'critical';
 
+/**
+ * Every dictionary key an insight can point to. They live under `insights.*` in
+ * src/i18n/en-US.json and src/i18n/pt-BR.json.
+ */
+export const INSIGHT_TEXT_KEYS = [
+  'insights.delivery_spike.title',
+  'insights.delivery_spike.message',
+  'insights.delivery_spike.message_no_grocery',
+  'insights.category_surge.title',
+  'insights.category_surge.title_unnamed',
+  'insights.category_surge.message',
+  'insights.category_surge.message_unnamed',
+  'insights.installment_relief.title',
+  'insights.installment_relief.message_finished',
+  'insights.installment_relief.message_lower',
+  'insights.subscriptions.title',
+  'insights.subscriptions.message_one',
+  'insights.subscriptions.message_other',
+  'insights.split_receivables.title',
+  'insights.split_receivables.message_named',
+  'insights.split_receivables.message',
+] as const;
+
+export type InsightTextKey = (typeof INSIGHT_TEXT_KEYS)[number];
+
 export interface InsightItem {
   id: string;
   type: InsightType;
   level: InsightLevel;
-  title: string;
-  titlePt: string;
-  titleEn: string;
-  message: string;
-  messagePt: string;
-  messageEn: string;
+  /** Dictionary key of the short headline. */
+  titleKey: InsightTextKey;
+  /** Dictionary key of the explanation. */
+  messageKey: InsightTextKey;
+  /** Plain placeholder values: percentages, counts, names. */
+  params: Record<string, string | number>;
+  /** Money placeholders in integer cents, formatted per locale by formatInsightParams(). */
+  amounts: Record<string, Cents>;
+  /** Currency used to format `amounts`. */
+  currency: SupportedCurrency;
   recommendedPose: KerooPose;
   data: Record<string, unknown>;
   createdAt: number;
@@ -125,28 +162,19 @@ export function detectDeliveryVsGrocerySpike(
   }
 
   const ratioPercentage = Math.round(ratio * 100);
-  const deliveryFormatted = formatCurrency(deliveryCents, currency, 'pt-BR');
-  const groceryFormatted = formatCurrency(groceryCents, currency, 'pt-BR');
-
-  const deliveryFormattedEn = formatCurrency(deliveryCents, currency, 'en-US');
-  const groceryFormattedEn = formatCurrency(groceryCents, currency, 'en-US');
-
-  const titlePt = 'Fatia de pão na cara! Delivery em alta 🍞';
-  const titleEn = 'Toast on face! Takeout spike alert 🍞';
-
-  const messagePt = `Seus pedidos de delivery (${deliveryFormatted}) já representam ${ratioPercentage}% dos gastos com mercado (${groceryFormatted}). Que tal cozinhar hoje?`;
-  const messageEn = `Your takeout deliveries (${deliveryFormattedEn}) account for ${ratioPercentage}% of your grocery budget (${groceryFormattedEn}). How about cooking today?`;
 
   return {
     id: buildInsightId('delivery_spike', options.yearMonth ?? `${deliveryCents}-${groceryCents}`),
     type: 'delivery_grocery_spike',
     level: 'warning',
-    title: titlePt,
-    titlePt,
-    titleEn,
-    message: messagePt,
-    messagePt,
-    messageEn,
+    titleKey: 'insights.delivery_spike.title',
+    messageKey:
+      groceryCents <= 0
+        ? 'insights.delivery_spike.message_no_grocery'
+        : 'insights.delivery_spike.message',
+    params: { percent: ratioPercentage },
+    amounts: { delivery: deliveryCents, grocery: groceryCents },
+    currency,
     recommendedPose: 'toast_face',
     data: {
       deliveryCents,
@@ -195,31 +223,17 @@ export function detectCategorySurge(
   }
 
   const surgePercent = Math.round(surgeFraction * 100);
-  const currentFormatted = formatCurrency(currentCents, currency, 'pt-BR');
-  const avgFormatted = formatCurrency(prior3MonthAveragesCents, currency, 'pt-BR');
-
-  const currentFormattedEn = formatCurrency(currentCents, currency, 'en-US');
-  const avgFormattedEn = formatCurrency(prior3MonthAveragesCents, currency, 'en-US');
-
-  const namePt = categoryName ?? 'esta categoria';
-  const nameEn = categoryName ?? 'this category';
-
-  const titlePt = `Aumento atípico em ${namePt} 📈`;
-  const titleEn = `Unusual surge in ${nameEn} 📈`;
-
-  const messagePt = `Você gastou ${currentFormatted} este mês em ${namePt}, um salto de +${surgePercent}% sobre a sua média trimestral (${avgFormatted}).`;
-  const messageEn = `You spent ${currentFormattedEn} this month on ${nameEn}, a +${surgePercent}% surge above your 3-month average (${avgFormattedEn}).`;
+  const named = categoryName !== undefined && categoryName.trim() !== '';
 
   return {
     id: buildInsightId('category_surge', categoryName ?? 'category', options.yearMonth ?? currentCents),
     type: 'category_surge',
     level: 'warning',
-    title: titlePt,
-    titlePt,
-    titleEn,
-    message: messagePt,
-    messagePt,
-    messageEn,
+    titleKey: named ? 'insights.category_surge.title' : 'insights.category_surge.title_unnamed',
+    messageKey: named ? 'insights.category_surge.message' : 'insights.category_surge.message_unnamed',
+    params: named ? { percent: surgePercent, category: categoryName ?? '' } : { percent: surgePercent },
+    amounts: { current: currentCents, average: prior3MonthAveragesCents },
+    currency,
     recommendedPose: 'waterfall_tears',
     data: {
       currentCents,
@@ -287,33 +301,18 @@ export function detectInstallmentRelief(
     return null;
   }
 
-  const reliefFormattedPt = formatCurrency(reliefCents, currency, 'pt-BR');
-  const reliefFormattedEn = formatCurrency(reliefCents, currency, 'en-US');
-
-  const titlePt = 'Alívio nas parcelas à vista! ✌️';
-  const titleEn = 'Installment debt relief ahead! ✌️';
-
-  let messagePt: string;
-  let messageEn: string;
-
-  if (nextMonthTotalCents === 0) {
-    messagePt = `Parabéns! Suas parcelas de cartão encerram este mês. No mês que vem você terá ${reliefFormattedPt} a mais livres no seu bolso!`;
-    messageEn = `Congratulations! Your installment plans finish this month. Next month you will have an extra ${reliefFormattedEn} free in your pocket!`;
-  } else {
-    messagePt = `Boa notícia! No próximo mês, suas parcelas de cartão vão diminuir em ${reliefFormattedPt}. Fôlego extra para suas economias!`;
-    messageEn = `Great news! Next month, your credit card installment commitments will drop by ${reliefFormattedEn}. Extra breathing room for savings!`;
-  }
-
   return {
     id: buildInsightId('installment_relief', currentYearMonth),
     type: 'installment_relief',
     level: 'celebration',
-    title: titlePt,
-    titlePt,
-    titleEn,
-    message: messagePt,
-    messagePt,
-    messageEn,
+    titleKey: 'insights.installment_relief.title',
+    messageKey:
+      nextMonthTotalCents === 0
+        ? 'insights.installment_relief.message_finished'
+        : 'insights.installment_relief.message_lower',
+    params: {},
+    amounts: { amount: reliefCents },
+    currency,
     recommendedPose: 'peace_dab',
     data: {
       currentMonthTotalCents,
@@ -344,28 +343,19 @@ export function calculateAnnualizedSubscriptionsImpact(
   options: InsightContextOptions = {}
 ): InsightItem {
   const summary = calculateAnnualCommitment(bills || []);
-  const annualFormattedPt = formatCurrency(summary.totalAnnualCents, currency, 'pt-BR');
-  const monthlyFormattedPt = formatCurrency(summary.totalMonthlyEquivalentCents, currency, 'pt-BR');
-
-  const annualFormattedEn = formatCurrency(summary.totalAnnualCents, currency, 'en-US');
-  const monthlyFormattedEn = formatCurrency(summary.totalMonthlyEquivalentCents, currency, 'en-US');
-
-  const titlePt = 'Impacto Anual de Assinaturas 📅';
-  const titleEn = 'Annual Subscriptions Impact 📅';
-
-  const messagePt = `Você possui ${summary.activeCount} assinatura(s) ativas totalizando ${annualFormattedPt} por ano (cerca de ${monthlyFormattedPt}/mês).`;
-  const messageEn = `You have ${summary.activeCount} active subscription(s) totaling ${annualFormattedEn}/year (~${monthlyFormattedEn}/month).`;
 
   return {
     id: buildInsightId('subscriptions_impact', options.yearMonth ?? summary.totalAnnualCents),
     type: 'annualized_subscriptions',
     level: 'info',
-    title: titlePt,
-    titlePt,
-    titleEn,
-    message: messagePt,
-    messagePt,
-    messageEn,
+    titleKey: 'insights.subscriptions.title',
+    messageKey:
+      summary.activeCount === 1
+        ? 'insights.subscriptions.message_one'
+        : 'insights.subscriptions.message_other',
+    params: { count: summary.activeCount },
+    amounts: { annual: summary.totalAnnualCents, monthly: summary.totalMonthlyEquivalentCents },
+    currency,
     recommendedPose: 'curious_head_tilt',
     data: {
       totalAnnualCents: summary.totalAnnualCents,
@@ -413,34 +403,17 @@ export function detectSplitReceivablesAlert(
     return null;
   }
 
-  const formattedPt = formatCurrency(totalReceivableCents, currency, 'pt-BR');
-  const formattedEn = formatCurrency(totalReceivableCents, currency, 'en-US');
-
-  const titlePt = 'Valores a receber no Rateio 💰';
-  const titleEn = 'Pending Split Receivables 💰';
-
-  let messagePt: string;
-  let messageEn: string;
-
-  if (debtorNames.length > 0) {
-    const names = debtorNames.slice(0, 3).join(', ');
-    messagePt = `Lembrete amigável: você tem ${formattedPt} a receber de amigos (${names}). Que tal solicitar o Pix?`;
-    messageEn = `Friendly reminder: friends owe you ${formattedEn} (${names}). Time to send a gentle nudge?`;
-  } else {
-    messagePt = `Lembrete amigável: você tem ${formattedPt} a receber nas suas divisões de contas.`;
-    messageEn = `Friendly reminder: you have ${formattedEn} in pending receivables from shared expenses.`;
-  }
+  const named = debtorNames.length > 0;
 
   return {
     id: buildInsightId('split_receivables', options.yearMonth ?? totalReceivableCents),
     type: 'split_receivables',
     level: 'info',
-    title: titlePt,
-    titlePt,
-    titleEn,
-    message: messagePt,
-    messagePt,
-    messageEn,
+    titleKey: 'insights.split_receivables.title',
+    messageKey: named ? 'insights.split_receivables.message_named' : 'insights.split_receivables.message',
+    params: named ? { names: debtorNames.slice(0, 3).join(', ') } : {},
+    amounts: { amount: totalReceivableCents },
+    currency,
     recommendedPose: 'cheeky_tongue',
     data: {
       totalReceivableCents,
@@ -448,6 +421,85 @@ export function detectSplitReceivablesAlert(
     },
     createdAt: options.now ?? Date.now(),
   };
+}
+
+// ============================================================================
+// Input builders (raw ledger rows -> detector inputs)
+// ============================================================================
+
+/** The transaction fields the surge input builder reads. */
+export interface SpendingTransaction {
+  date: string;
+  amountCents: Cents;
+  type: string;
+  categoryId: string | null;
+}
+
+/**
+ * Groups expense transactions by category and compares this month's total with the
+ * average of the three previous calendar months (integer cents, rounded). Categories
+ * with no spending in the prior three months are skipped (there is no baseline yet), and
+ * so are rows whose category no longer exists.
+ *
+ * @param transactions Expense rows covering at least the current and the prior 3 months
+ * @param currentYearMonth Month being evaluated ('YYYY-MM')
+ * @param categoryNames categoryId -> display name
+ */
+export function buildCategorySurgeInputs(
+  transactions: SpendingTransaction[],
+  currentYearMonth: YearMonth,
+  categoryNames: ReadonlyMap<string, string>
+): { currentCents: Cents; prior3MonthAveragesCents: Cents; categoryName: string }[] {
+  const m1 = getPreviousYearMonth(currentYearMonth);
+  const m2 = getPreviousYearMonth(m1);
+  const m3 = getPreviousYearMonth(m2);
+  const prior = new Set<string>([m1, m2, m3]);
+
+  const current = new Map<string, number>();
+  const priorTotals = new Map<string, number>();
+
+  for (const tx of transactions) {
+    if (tx.type !== 'expense' || !tx.categoryId) continue;
+    assertIntegerCents(tx.amountCents, 'buildCategorySurgeInputs: amountCents');
+    const month = tx.date.slice(0, 7);
+    if (month === currentYearMonth) {
+      current.set(tx.categoryId, (current.get(tx.categoryId) ?? 0) + tx.amountCents);
+    } else if (prior.has(month)) {
+      priorTotals.set(tx.categoryId, (priorTotals.get(tx.categoryId) ?? 0) + tx.amountCents);
+    }
+  }
+
+  const result: { currentCents: Cents; prior3MonthAveragesCents: Cents; categoryName: string }[] = [];
+  for (const [categoryId, currentCents] of current) {
+    const priorTotal = priorTotals.get(categoryId) ?? 0;
+    const categoryName = categoryNames.get(categoryId);
+    if (priorTotal <= 0 || !categoryName) continue;
+    result.push({
+      currentCents,
+      prior3MonthAveragesCents: Math.round(priorTotal / 3),
+      categoryName,
+    });
+  }
+  return result;
+}
+
+// ============================================================================
+// Rendering helper
+// ============================================================================
+
+/**
+ * Placeholder values for `t(item.titleKey, ...)` / `t(item.messageKey, ...)`: the plain
+ * params plus every money amount formatted in the insight's currency for `locale`.
+ */
+export function formatInsightParams(
+  item: Pick<InsightItem, 'params' | 'amounts' | 'currency'>,
+  locale: SupportedLocale
+): Record<string, string | number> {
+  const out: Record<string, string | number> = { ...item.params };
+  for (const [name, cents] of Object.entries(item.amounts)) {
+    out[name] = formatCurrency(cents, item.currency, locale);
+  }
+  return out;
 }
 
 // ============================================================================

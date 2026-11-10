@@ -593,5 +593,33 @@
     "erase_button": "Erase everything and start over",
     "erase_error": "Could not erase the data. Close other Keroo windows and try again.",
     "button_title": "Lock Keroo now"
+  },
+  "insights": {
+    "delivery_spike": {
+      "title": "Takeout is catching up with groceries",
+      "message": "You've spent {delivery} on takeout this month, {percent}% of your grocery spending ({grocery}). Cook at home tonight?",
+      "message_no_grocery": "You've spent {delivery} on takeout this month and nothing on groceries yet. Cook at home tonight?"
+    },
+    "category_surge": {
+      "title": "{category} spending is up",
+      "title_unnamed": "Spending is up in one category",
+      "message": "You've spent {current} on {category} this month, {percent}% above your 3-month average of {average}.",
+      "message_unnamed": "You've spent {current} in this category this month, {percent}% above your 3-month average of {average}."
+    },
+    "installment_relief": {
+      "title": "Card installments are easing up",
+      "message_finished": "Your last card installments are on this month's statement. Next month you'll have {amount} more to spare.",
+      "message_lower": "Your card installments drop by {amount} next month. That's extra room for savings."
+    },
+    "subscriptions": {
+      "title": "Your subscriptions over a year",
+      "message_one": "You have 1 active subscription. It costs {annual} a year, about {monthly} a month.",
+      "message_other": "You have {count} active subscriptions. Together they cost {annual} a year, about {monthly} a month."
+    },
+    "split_receivables": {
+      "title": "Friends owe you money",
+      "message_named": "You're owed {amount} from shared expenses ({names}). Maybe time for a friendly nudge?",
+      "message": "You're owed {amount} from shared expenses. Maybe time for a friendly nudge?"
+    }
   }
 }

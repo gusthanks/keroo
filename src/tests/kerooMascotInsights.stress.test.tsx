@@ -2,7 +2,7 @@
  * src/tests/kerooMascotInsights.stress.test.tsx
  *
  * Stress tests for the Keroo mascot, the spending insights and the speech bubble:
- * 1. Raster artwork: all legacy pose keys use the approved painted assets without
+ * 1. Raster artwork: all legacy pose keys use the painted assets without
  *    independently composited props or React rendering warnings.
  * 2. Spending heuristics boundary conditions:
  *    - Delivery ratio at 59.9% (no alert) vs 60.0% (alert).
@@ -23,9 +23,18 @@ import {
   detectInstallmentRelief,
   detectSplitReceivablesAlert,
   generateAllKerooInsights,
+  formatInsightParams,
+  type InsightItem,
   type SplitPartyBalance,
 } from '../core/kerooInsights';
+import { translate } from '../i18n';
 import type { Cents, InstallmentPlan, RecurringBill } from '../types';
+
+/** Insight title/message as DashboardView renders them. */
+const text = (item: InsightItem, locale: 'pt-BR' | 'en-US') => ({
+  title: translate(locale, item.titleKey, formatInsightParams(item, locale)),
+  message: translate(locale, item.messageKey, formatInsightParams(item, locale)),
+});
 
 describe('Keroo mascot rendering, coin props & spending heuristics stress tests', () => {
   // Console spy to verify zero React / SVG rendering warnings
@@ -45,7 +54,7 @@ describe('Keroo mascot rendering, coin props & spending heuristics stress tests'
   // ==========================================================================
   // 1. Mascot SVG Geometry, All 10 Poses, Coin Props & Attribute Integrity
   // ==========================================================================
-  describe('1. Approved raster art, motion fallback and legacy input safety', () => {
+  describe('1. Raster art, motion fallback and legacy input safety', () => {
     const poses: KerooPose[] = [
       'default_sitting', 'waterfall_tears', 'melted_blob', 'toast_face', 'peace_dab',
       'sipping_drink', 'sleeping_bubble', 'cheeky_tongue', 'coin_swallowing', 'curious_head_tilt',
@@ -91,7 +100,7 @@ describe('Keroo mascot rendering, coin props & spending heuristics stress tests'
       visibility.mockRestore();
     });
 
-    it('falls back to the approved static frame if the animation cannot load', () => {
+    it('falls back to the static frame if the animation cannot load', () => {
       const { container } = render(<KerooMascot />);
       fireEvent.error(container.querySelector('img')!);
       expect(container.querySelector('img')).toHaveAttribute('src', expect.stringContaining('/mascot/idle.png?v='));
@@ -159,8 +168,8 @@ describe('Keroo mascot rendering, coin props & spending heuristics stress tests'
         expect(insight!.level).toBe('warning');
         expect(insight!.recommendedPose).toBe('toast_face');
         expect(insight!.data.ratioPercentage).toBe(60);
-        expect(insight!.titlePt).toContain('Fatia de pão');
-        expect(insight!.titleEn).toContain('Toast on face');
+        expect(text(insight!, 'pt-BR').title).toContain('Delivery');
+        expect(text(insight!, 'en-US').title).toContain('Takeout');
       });
 
       it('handles boundary of zero delivery and zero grocery', () => {
@@ -197,8 +206,8 @@ describe('Keroo mascot rendering, coin props & spending heuristics stress tests'
         expect(insight!.level).toBe('warning');
         expect(insight!.recommendedPose).toBe('waterfall_tears');
         expect(insight!.data.surgePercent).toBe(35);
-        expect(insight!.titlePt).toContain('Lazer');
-        expect(insight!.messagePt).toContain('+35%');
+        expect(text(insight!, 'pt-BR').title).toContain('Lazer');
+        expect(text(insight!, 'pt-BR').message).toContain('35% acima');
       });
 
       it('verifies exact mathematical 35.000% boundary behavior per specification', () => {
@@ -263,9 +272,9 @@ describe('Keroo mascot rendering, coin props & spending heuristics stress tests'
         expect(insight!.data.completingPlansCount).toBe(1);
 
         // Message verification in Portuguese and English
-        expect(insight!.messagePt).toContain('encerram este mês');
-        expect(insight!.messagePt).toContain('R$\xa0500,00'); // formatted currency
-        expect(insight!.messageEn).toContain('finish this month');
+        expect(text(insight!, 'pt-BR').message).toContain('últimas parcelas');
+        expect(text(insight!, 'pt-BR').message).toContain('R$\xa0500,00'); // formatted currency
+        expect(text(insight!, 'en-US').message).toContain('last card installments');
       });
 
       it('triggers celebration when commitments drop by >= R$ 50,00 (5000 cents)', () => {
@@ -380,8 +389,8 @@ describe('Keroo mascot rendering, coin props & spending heuristics stress tests'
         const insightArray = detectSplitReceivablesAlert(partyBalances);
         expect(insightArray).not.toBeNull();
         expect(insightArray!.recommendedPose).toBe('cheeky_tongue');
-        expect(insightArray!.messagePt).toContain('Lucas, Mariana');
-        expect(insightArray!.titlePt).toContain('Rateio');
+        expect(text(insightArray!, 'pt-BR').message).toContain('Lucas, Mariana');
+        expect(text(insightArray!, 'pt-BR').title).toContain('a receber');
       });
 
       it('ignores negative balances (amounts user owes to others) when computing receivables', () => {
