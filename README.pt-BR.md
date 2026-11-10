@@ -15,6 +15,10 @@
 
 </div>
 
+<p align="center">
+  <img src="docs/demo-pt-BR.gif" width="390" alt="Tour animado do Keroo no celular com dados de demonstração: o painel com o sapo e um lembrete de conta, indicadores, radar de contas e insights; uma despesa de café sendo adicionada; cartões e parcelas; assinaturas e boletos; e por fim a conta marcada como paga, com o sapo passando para Próspero">
+</p>
+
 ## Por que o Keroo
 
 O Keroo é um app de finanças pessoais que roda inteiro no seu navegador. Não tem servidor, não tem conta, não tem cadastro: seus números ficam guardados no seu próprio aparelho e não saem de lá.

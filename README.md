@@ -15,6 +15,10 @@
 
 </div>
 
+<p align="center">
+  <img src="docs/demo.gif" width="390" alt="Animated tour of Keroo on a phone with demo data: the frog dashboard with a bill reminder, stats, bills radar and insights; adding a coffee expense; card installments; subscriptions and bills; then marking the bill as paid so the frog turns to Thriving">
+</p>
+
 ## Why Keroo
 
 Keroo is a personal finance app that lives entirely in your browser. There is no server, no account and no sign-up: your numbers are stored on your own device and never leave it.
