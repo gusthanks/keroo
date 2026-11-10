@@ -1,7 +1,7 @@
 /**
- * The image-generated animation approved by Gustavo, displayed as raster artwork.
+ * Keroo's illustrated breathing/blinking animation, displayed as raster artwork.
  * Historical pose/coin inputs stay compatible with the local mood engine. They
- * never add independently drawn props over the approved illustration.
+ * never add independently drawn props over the illustration.
  */
 import React, { useEffect, useState } from 'react';
 import type { KerooPose } from '../../core/kerooMood';
@@ -12,7 +12,7 @@ export type MascotCoinProp = 'none' | 'mouth_clamp' | 'flipping' | 'hugging' | '
 export interface KerooMascotProps {
   pose?: KerooPose;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | number;
-  /** Compatibility only. The coin is painted into the approved illustration. */
+  /** Compatibility only. The coin is painted into the illustration. */
   coinProp?: MascotCoinProp;
   animated?: boolean;
   className?: string;
@@ -22,6 +22,9 @@ export interface KerooMascotProps {
 }
 
 const SIZE_MAP = { xs: 32, sm: 48, md: 80, lg: 120, xl: 180 };
+
+/** Resolves a public asset path against the deployment base (root or a sub-path such as /keroo/). */
+const withBase = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
 const PRESENTATIONS: Record<KerooPose, 'idle' | 'attentive' | 'celebrate' | 'rest' | 'playful' | 'saving'> = {
   default_sitting: 'idle',
   waterfall_tears: 'attentive',
@@ -55,10 +58,10 @@ export const KerooMascot: React.FC<KerooMascotProps> = ({
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, [animated, portrait]);
 
-  const still = presentation === 'rest' ? assets.rest : assets.still;
+  const still = withBase(presentation === 'rest' ? assets.rest : assets.still);
   const playing = animated && visible && !portrait && presentation !== 'rest' && !animationFailed;
-  const source = portrait ? assets.portrait : playing ? assets.idle : still;
-  const portraitSources = assets.portraitSizes.map(({ src, width }) => `${src} ${width}w`).join(', ');
+  const source = portrait ? withBase(assets.portrait) : playing ? withBase(assets.idle) : still;
+  const portraitSources = assets.portraitSizes.map(({ src, width }) => `${withBase(src)} ${width}w`).join(', ');
 
   return (
     <div

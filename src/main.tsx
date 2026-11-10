@@ -22,7 +22,7 @@ if (
   window.location.protocol.startsWith('http')
 ) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((err) => {
+    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch((err) => {
       console.warn('SW registration skipped or failed:', err);
     });
   });

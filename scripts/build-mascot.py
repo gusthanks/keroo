@@ -1,4 +1,4 @@
-"""Export the approved raster art, platform icons and their cache-versioned URLs.
+"""Export the canonical raster art, platform icons and their cache-versioned URLs.
 
 Requires Pillow (only for regeneration). The normal npm install/build uses the
 checked-in assets and never invokes image generation or Python.
@@ -8,7 +8,6 @@ import hashlib
 import io
 import json
 import re
-import shutil
 import struct
 
 from PIL import Image, ImageDraw
@@ -18,16 +17,18 @@ SOURCE = ROOT / 'assets/mascot'
 PUBLIC = ROOT / 'public'
 ART = PUBLIC / 'mascot'
 ICONS = PUBLIC / 'icons'
-REVIEW = ROOT / 'docs/mascot-review'
-for directory in (ART, ICONS, REVIEW):
+for directory in (ART, ICONS):
     directory.mkdir(parents=True, exist_ok=True)
 
 approved = (SOURCE / 'approved-idle.webp').read_bytes()
 icon_bytes = (SOURCE / 'icon-master.png').read_bytes()
 version = hashlib.sha256(approved + icon_bytes + Path(__file__).read_text(encoding='utf8').encode('utf8')).hexdigest()[:12]
 url = lambda path: f'{path}?v={version}'
+# manifest.json and sw.js resolve URLs relative to their own location, so the same
+# build works at a site root or under a sub-path such as GitHub Pages.
+relative = lambda path: path.lstrip('/') or './'
 
-# Copy the approved animation byte for byte. Never redraw or re-encode it here.
+# Copy the canonical animation byte for byte. Never redraw or re-encode it here.
 (ART / 'idle.webp').write_bytes(approved)
 with Image.open(io.BytesIO(approved)) as animation:
     assert animation.is_animated and animation.info.get('loop') == 0
@@ -96,9 +97,9 @@ assets = {
 manifest_path = PUBLIC / 'manifest.json'
 manifest = json.loads(manifest_path.read_text(encoding='utf8'))
 manifest['icons'] = [
-    {'src': url('/icons/icon-192.png'), 'sizes': '192x192', 'type': 'image/png', 'purpose': 'any'},
-    {'src': url('/icons/icon-512.png'), 'sizes': '512x512', 'type': 'image/png', 'purpose': 'any'},
-    {'src': url('/icons/maskable-512.png'), 'sizes': '512x512', 'type': 'image/png', 'purpose': 'maskable'},
+    {'src': relative(url('/icons/icon-192.png')), 'sizes': '192x192', 'type': 'image/png', 'purpose': 'any'},
+    {'src': relative(url('/icons/icon-512.png')), 'sizes': '512x512', 'type': 'image/png', 'purpose': 'any'},
+    {'src': relative(url('/icons/maskable-512.png')), 'sizes': '512x512', 'type': 'image/png', 'purpose': 'maskable'},
 ]
 manifest_path.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf8', newline='\n')
 links = '\n'.join([
@@ -123,19 +124,12 @@ html_path.write_text(html, encoding='utf8', newline='\n')
 sw_path = PUBLIC / 'sw.js'
 sw = sw_path.read_text(encoding='utf8')
 sw = re.sub(r"const CACHE_NAME = '[^']+';", f"const CACHE_NAME = 'keroo-cache-{version}';", sw)
-precache = ['/', '/index.html', url('/manifest.json'), assets['idle'], assets['still'], assets['rest'],
-            assets['portrait'], assets['windowIcon']] + [entry['src'] for entry in manifest['icons']]
+precache = [relative(path) for path in ['/', '/index.html', url('/manifest.json'), assets['idle'], assets['still'],
+                                        assets['rest'], assets['portrait'], assets['windowIcon']]]
+precache += [entry['src'] for entry in manifest['icons']]
 sw = re.sub(r'const PRECACHE_URLS = \[[\s\S]*?\];', lambda _: 'const PRECACHE_URLS = ' + json.dumps(precache, indent=2) + ';', sw)
 sw_path.write_text(sw, encoding='utf8', newline='\n')
 
-# A direct view of the actual shipped files, including a dark/light alpha check.
-gallery = f'''<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Keroo · Arte aprovada</title>
-<style>*{{box-sizing:border-box}}body{{margin:0;background:#faf9f3;color:#263e2d;font:16px/1.5 system-ui}}main{{max-width:1000px;margin:auto;padding:32px 20px}}h1{{font-size:32px}}.scenes{{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}}figure{{margin:0}}.scene{{padding:20px;border-radius:20px;text-align:center}}.dark{{background:#101416;color:#e7efd5}}.scene img{{display:block;width:min(100%,320px);margin:auto}}.icons{{display:flex;align-items:end;flex-wrap:wrap;gap:24px;margin:32px 0}}.icons img{{display:block}}figcaption{{font-size:13px;margin-top:8px}}@media(max-width:600px){{.scenes{{grid-template-columns:1fr}}}}</style>
-<main><h1>O Keroo que você aprovou</h1><p>A ilustração original, com respiração e piscada. Estes são os arquivos usados pelo app.</p><div class="scenes"><figure class="scene dark"><picture><source media="(prefers-reduced-motion: reduce)" srcset="{assets['still']}"><img src="{assets['idle']}" alt="Keroo ilustrado abraçando sua moeda"></picture><figcaption>Fundo escuro</figcaption></figure><figure class="scene"><picture><source media="(prefers-reduced-motion: reduce)" srcset="{assets['still']}"><img src="{assets['idle']}" alt="O mesmo Keroo sobre fundo claro"></picture><figcaption>Fundo claro</figcaption></figure></div><div class="icons">'''
-gallery += ''.join(f'<figure><img src="{url(f"/icons/portrait-{size}.png")}" width="{size}" height="{size}" alt="Ícone Keroo de {size} pixels"><figcaption>{size}px</figcaption></figure>' for size in [128, 64, 48, 32, 24, 16])
-gallery += '</div><p>Ícone estático derivado da mesma identidade, com tamanhos nativos para Desktop e barra de tarefas.</p></main></html>'
-(REVIEW / 'index.html').write_text(gallery, encoding='utf8', newline='\n')
-shutil.copyfile(ART / 'idle.png', REVIEW / 'keroo-hero.png')
 validation = {'version': version, 'approvedAnimationSha256': assets['approvedAnimationSha256'],
               'animationBytes': len(approved), 'animationDurationMs': elapsed,
               'canvas': list(still.size), 'icoSizes': ico_sizes}

@@ -1,21 +1,22 @@
 /**
  * Service Worker — Keroo (PWA Offline First)
  * Pages are network-first (cache fallback offline); assets use stale-while-revalidate.
+ * URLs are relative to this file, so the same build works at a site root or a sub-path.
  */
 
 const CACHE_NAME = 'keroo-cache-9c1f43cefea0';
 const PRECACHE_URLS = [
-  "/",
-  "/index.html",
-  "/manifest.json?v=9c1f43cefea0",
-  "/mascot/idle.webp?v=9c1f43cefea0",
-  "/mascot/idle.png?v=9c1f43cefea0",
-  "/mascot/rest.png?v=9c1f43cefea0",
-  "/icons/portrait-128.png?v=9c1f43cefea0",
-  "/icons/keroo.ico?v=9c1f43cefea0",
-  "/icons/icon-192.png?v=9c1f43cefea0",
-  "/icons/icon-512.png?v=9c1f43cefea0",
-  "/icons/maskable-512.png?v=9c1f43cefea0"
+  "./",
+  "index.html",
+  "manifest.json?v=9c1f43cefea0",
+  "mascot/idle.webp?v=9c1f43cefea0",
+  "mascot/idle.png?v=9c1f43cefea0",
+  "mascot/rest.png?v=9c1f43cefea0",
+  "icons/portrait-128.png?v=9c1f43cefea0",
+  "icons/keroo.ico?v=9c1f43cefea0",
+  "icons/icon-192.png?v=9c1f43cefea0",
+  "icons/icon-512.png?v=9c1f43cefea0",
+  "icons/maskable-512.png?v=9c1f43cefea0"
 ];
 
 // Install: precache essential shell files
@@ -66,7 +67,7 @@ self.addEventListener('fetch', (event) => {
             }
             return networkResponse;
           })
-          .catch(async () => (await cache.match(event.request)) || (await cache.match('/')) || Response.error())
+          .catch(async () => (await cache.match(event.request)) || (await cache.match('./')) || Response.error())
       )
     );
     return;

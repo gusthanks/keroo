@@ -7,7 +7,7 @@ import assets from '../components/keroo/mascot-assets.json';
 const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 
 describe('Shipped mascot icon assets', () => {
-  it('ships the exact user-approved animation, without recreating or re-encoding it', () => {
+  it('ships the canonical animation byte for byte, without recreating or re-encoding it', () => {
     const approved = readFileSync(resolve(process.cwd(), 'assets/mascot/approved-idle.webp'));
     const shipped = readFileSync(resolve(process.cwd(), 'public/mascot/idle.webp'));
     expect(shipped.equals(approved)).toBe(true);
@@ -34,6 +34,22 @@ describe('Shipped mascot icon assets', () => {
     expect(readFileSync(resolve(process.cwd(), 'public/favicon.ico'))).toEqual(
       readFileSync(resolve(process.cwd(), 'scripts/windows/keroo.ico'))
     );
+  });
+
+  it('keeps manifest and service-worker URLs relative so a sub-path deployment works', () => {
+    const manifest = JSON.parse(readFileSync(resolve(process.cwd(), 'public/manifest.json'), 'utf8'));
+    expect(manifest.start_url).toBe('./');
+    expect(manifest.scope).toBe('./');
+    for (const icon of manifest.icons as { src: string }[]) {
+      expect(icon.src.startsWith('/')).toBe(false);
+    }
+    const sw = readFileSync(resolve(process.cwd(), 'public/sw.js'), 'utf8');
+    const precache = JSON.parse(/const PRECACHE_URLS = (\[[\s\S]*?\]);/.exec(sw)![1]) as string[];
+    expect(precache).toContain('./');
+    for (const url of precache) {
+      expect(url.startsWith('/')).toBe(false);
+    }
+    expect(sw).not.toMatch(/cache\.match\('\/'\)/);
   });
 
   it('contains valid native PNG frames for small, medium and large Windows icons', () => {
