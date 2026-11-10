@@ -25,6 +25,10 @@ O Keroo, o sapo, fica de olho nas suas contas e nos seus gastos e reage a eles. 
 
 **Idioma:** o Keroo abre em português quando o navegador está em português e em inglês em qualquer outro caso. Dá para trocar no primeiro passo do onboarding ou, a qualquer momento, em **Configurações → Idioma da Interface**; a escolha fica salva.
 
+<p align="center">
+  <img src="docs/screenshots/dashboard-mobile-pt-BR.jpg" width="300" alt="Painel do Keroo no celular, com dados de demonstração: o sapo segurando a moeda, um lembrete de conta com os botões Já paguei! e Ajustar valor, e o patrimônio líquido">
+</p>
+
 ## Funcionalidades
 
 **Orçamento**
@@ -56,8 +60,8 @@ O Keroo, o sapo, fica de olho nas suas contas e nos seus gastos e reage a eles. 
 - Um motor de regras de categorização automática sugere a categoria enquanto você digita o favorecido de um lançamento manual.
 
 **Keroo, o sapo**
-- Cinco humores (próspero, tranquilo, atento, preocupado, dormindo) e dez poses desenhadas em SVG, escolhidas a partir das suas contas, do orçamento e dos gastos.
-- Cinco dicas calculadas localmente: delivery pesando mais que o mercado, uma categoria que disparou, um mês em que parcelas terminam, o total anual das assinaturas e o dinheiro que os amigos te devem.
+- Cinco humores (próspero, tranquilo, atento, preocupado, dormindo), escolhidos a partir das suas contas, do orçamento e dos gastos. O Keroo é uma ilustração pintada que respira e pisca, e reage ao humor inclinando a cabeça, dando um pulinho ou cochilando (fica parado quando o sistema pede menos movimento).
+- Dicas no Painel, calculadas no seu aparelho: uma categoria que disparou em relação aos últimos três meses, um mês em que parcelas terminam, o total anual das assinaturas e o dinheiro que os amigos te devem.
 - Um mascote que passeia pela tela, opcional. Você dá um nome a ele no onboarding e pode desligar o passeio em Configurações.
 
 **Privacidade e dados**
@@ -102,7 +106,19 @@ Depois abra http://localhost:4173 e:
 - **Chrome (Android):** abra o menu e escolha *Instalar app* (ou *Adicionar à tela inicial*).
 - **Safari (iPhone e iPad):** toque em *Compartilhar* → *Adicionar à Tela de Início*. No iOS isso faz diferença por dois motivos: o app abre em tela cheia, sem a barra do Safari, e o Safari pode apagar os dados de sites que você não usa há 7 dias. Apps na Tela de Início têm a própria contagem de uso, então na prática os dados deles não são apagados desse jeito.
 
-Se for hospedar o Keroo, sirva por HTTPS na raiz de um domínio (veja [Status e limitações](#status-e-limitações)).
+Se for hospedar o Keroo, sirva por HTTPS. Ele funciona na raiz de um domínio ou num subcaminho (veja [Hospedagem](#hospedagem)).
+
+## Hospedagem
+
+O build de produção usa caminhos relativos, então a mesma pasta `dist/` funciona na raiz de um domínio (`https://exemplo.com/`) e num subcaminho, como um site de projeto no GitHub Pages (`https://usuario.github.io/keroo/`). Envie o conteúdo de `dist/` e sirva por HTTPS.
+
+Se o seu servidor precisar de um caminho base absoluto, defina `KEROO_BASE` ao gerar o build:
+
+```bash
+KEROO_BASE=/keroo/ npm run build
+```
+
+Cada endereço guarda os próprios dados. Uma cópia aberta em `https://usuario.github.io/keroo/` não enxerga os dados de uma cópia em `http://localhost:4173`, e vice-versa. Use **Backup e Restauração** para levar os dados de um para o outro.
 
 ## Atalho na área de trabalho (Windows)
 
@@ -150,7 +166,7 @@ Exporte um backup com frequência e guarde em um lugar de confiança.
 - **Só centavos inteiros.** Todo valor é guardado e calculado como um número inteiro de centavos. Hooks do Dexie rejeitam valores não inteiros em qualquer campo monetário, e as divisões usam arredondamento explícito ou distribuição do resto.
 - **Mascote determinístico.** `evaluateKerooMood` é uma função pura e síncrona, sem IA, sem rede e sem aleatoriedade. Os testes garantem menos de 2 ms por avaliação.
 - **Paridade total de tradução.** `src/i18n/en-US.json` é a fonte de autoria e `src/i18n/pt-BR.json` precisa ter exatamente as mesmas chaves. Os testes falham se faltar uma chave ou se houver texto de interface fixo no código.
-- **Testes.** 23 arquivos com 526 testes (Vitest, jsdom, fake-indexeddb). A CI roda a checagem de tipos, os testes e o build no Node 22 e 24.
+- **Testes.** 24 arquivos com 551 testes (Vitest, jsdom, fake-indexeddb). A CI roda a checagem de tipos, os testes e o build no Node 22 e 24.
 
 Para ir mais fundo (documentos em inglês):
 
@@ -175,11 +191,11 @@ Abra o Keroo por HTTPS, ou em `localhost` durante o desenvolvimento. Os navegado
 
 ## Status e limitações
 
-O Keroo está na **v0.1.0**, com as seis etapas do roadmap concluídas. Vale saber:
+O Keroo está na **v0.2.0**, com as seis etapas do roadmap concluídas. Vale saber:
 
 - **Dois idiomas:** inglês (en-US, o padrão) e português do Brasil (pt-BR).
-- **Só na raiz do domínio:** o service worker, o manifest e os ícones usam caminhos absolutos `/`, então o build espera ser servido na raiz de um domínio. Subcaminhos, como um site de projeto no GitHub Pages (`usuario.github.io/keroo/`), ainda não são suportados.
-- **Ainda sem demo online nem capturas de tela.** Rode localmente e carregue os dados de demonstração em 1 clique para conhecer o app.
+- **Ainda sem demo online.** Rode localmente e carregue os dados de demonstração em 1 clique para conhecer o app.
+- **Uma dica ainda não aparece no Painel.** A comparação entre delivery e mercado está implementada e testada, mas as categorias ainda não têm uma marcação de "delivery" ou "mercado", então o Painel não tem como alimentá-la.
 - **Sem sincronização na nuvem, de propósito.** Cada navegador tem seus próprios dados. Para trocar de aparelho, exporte um backup e restaure no novo.
 - **Envelopes e regras ainda não têm telas de edição.** Os dois motores estão implementados e testados, e o Painel lê os dados dos envelopes (criados pelos dados de demonstração e pelas contas pagas pelo Keroo), mas ainda não há tela para distribuir dinheiro nos envelopes nem para criar ou editar regras de categorização. As regras só funcionam se já existirem, por exemplo vindas de um backup restaurado.
 - **A divisão na tela é meio a meio.** O motor também faz divisão igual entre várias pessoas, por porcentagem e por valor exato, mas a tela de Divisão & Amigos por enquanto só oferece 50/50 entre você e um contato.
@@ -202,4 +218,4 @@ O Keroo não compartilha código com estes projetos; eles inspiraram o visual e 
 
 ## Licença
 
-[MIT](LICENSE) © 2026 gusthanks
+[MIT](LICENSE) © 2026 Gustavo Costa (gusthx)

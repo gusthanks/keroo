@@ -1,10 +1,10 @@
 {
   "name": "keroo",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Local-first personal finance PWA with envelope budgeting, Brazilian card installments, split ledger and a deterministic frog mascot.",
   "license": "MIT",
-  "author": "gusthanks",
+  "author": "Gustavo Costa (gusthx)",
   "repository": {
     "type": "git",
     "url": "https://github.com/gusthanks/keroo.git"

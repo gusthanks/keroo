@@ -6,15 +6,20 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-10
+
 ### Added
 
+- **Hosting under a sub-path.** The production build now uses relative paths for its scripts, styles, icons, manifest, service worker and mascot art, so the same `dist/` works at a domain root and under a sub-path such as a GitHub Pages project site (`https://gusthanks.github.io/keroo/`). Set `KEROO_BASE` (for example `KEROO_BASE=/keroo/ npm run build`) when a host needs an absolute base path. The PWA manifest keeps its `id`, so an installed copy stays the same app.
+- **Two more insights on the dashboard.** The dashboard now also warns when a category's spending this month is more than 35% above its average over the three previous months, and when friends owe you 50.00 or more in shared expenses. `buildCategorySurgeInputs()` turns ledger rows into the surge detector's input.
 - **App lock.** Settings → App lock turns on a password that Keroo asks for when it opens and after 10 minutes without use. A lock button in the header locks it right away. Only a salted PBKDF2-SHA-256 hash (600,000 iterations) is stored, in this browser's `localStorage`, so backups never carry it. The lock hides the app; it does not encrypt the database. If the password is forgotten, the lock screen can erase all Keroo data so you can start again and restore a backup.
 - **Desktop shortcut for Windows.** `npm run desktop:shortcut` puts a Keroo icon on the desktop. The icon runs `scripts/launch.mjs`, which builds the app the first time, starts a localhost-only server for `dist/` (`scripts/serve-dist.mjs`, port 4173, stops after 10 idle minutes), and opens Keroo in its own Microsoft Edge window. `npm run app` does the same from a terminal, and `npm run app:update` pulls, installs and rebuilds.
 
 ### Changed
 
+- **Illustrated mascot.** Keroo is now a painted raster illustration with a four-second breathing/blinking loop (animated WebP), replacing the flat SVG drawing. The ten pose keys still work and map to six presentations (idle, attentive, celebration, rest, playful, saving). Reduced motion, hidden tabs and failed loads show a static PNG. Favicons, PWA and Apple icons and a Windows `.ico` with native 16-256 px frames come from a high-resolution portrait of the same character. The masters and the optional export script (`npm run mascot:assets`, needs Python and Pillow) are in `assets/mascot/` and `scripts/build-mascot.py`.
+- **Spending insights are translated through the dictionaries.** Insight text moved out of `kerooInsights.ts` into `insights.*` keys in `en-US.json` and `pt-BR.json`, with clearer wording in both languages. Detectors return keys, plain values and amounts in integer cents; `formatInsightParams()` formats the money for the reader's language and currency. When there is takeout but no grocery spending, the message now says so instead of showing a 100% ratio.
 - The service worker answers page loads network-first and falls back to its cached copy offline. A rebuilt app now shows up the next time Keroo opens, instead of one open later.
-
 - CI uses `actions/checkout@v7` and `actions/setup-node@v7`. The workflow inputs did not change.
 - The test DOM is `jsdom` 30 (was 26). jsdom 30 needs Node `^22.22.2 || ^24.15.0 || >=26.0.0`, so `package.json` `engines` now uses the same range. Because `.npmrc` sets `engine-strict=true`, `npm install` stops on older Node 22 and 24 releases.
 - Typechecking uses TypeScript 7 (was 5.9), the native compiler. `tsconfig.json` drops `baseUrl`, which TypeScript 7 removed, and the `@/*` path alias is now relative (`./src/*`). The strict settings did not change and the code needed no fixes.
@@ -69,5 +74,6 @@ First public release. The interface is English-first: Keroo starts in `en-US`, s
 - There is no live demo or screenshots yet.
 - There is no cloud sync, by design. Use Backup and restore to move data between browsers and devices.
 
-[Unreleased]: https://github.com/gusthanks/keroo/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/gusthanks/keroo/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/gusthanks/keroo/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/gusthanks/keroo/releases/tag/v0.1.0

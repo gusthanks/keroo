@@ -54,8 +54,8 @@ Keroo, the frog, keeps an eye on your bills and spending and reacts to them. Its
 - An auto-categorization rule engine picks a category as you type the payee of a manual transaction.
 
 **Keroo the frog**
-- Five moods (thriving, calm, alert, sweating, sleepy) and ten hand-drawn SVG poses, chosen from your bills, budget and spending.
-- Five local spending insights: a delivery-vs-groceries spike, a sudden jump in a category, a month where installments drop off, your annual subscription total, and money friends owe you.
+- Five moods (thriving, calm, alert, sweating, sleepy), chosen from your bills, budget and spending. Keroo is a painted illustration that breathes and blinks, and reacts to its mood with a tilt, a hop or a nap (a still image when your system asks for reduced motion).
+- Spending insights on the dashboard, computed on your device: a sudden jump in a category compared with your last three months, a month where installments drop off, your annual subscription total, and money friends owe you.
 - An optional roaming companion that hops around the screen. You name your frog during onboarding and can turn roaming off in Settings.
 
 **Privacy & data**
@@ -100,7 +100,19 @@ Then open http://localhost:4173 and:
 - **Chrome (Android):** open the menu and choose *Install app* (or *Add to Home screen*).
 - **Safari (iPhone and iPad):** tap *Share* → *Add to Home Screen*. On iOS this matters for two reasons: the app opens full-screen without the Safari toolbar, and Safari may delete the stored data of websites you have not used in 7 days. Home Screen apps keep their own usage clock, so in practice their data is not cleared that way.
 
-If you host Keroo yourself, serve it over HTTPS at the root of a domain (see [Status & limitations](#status--limitations)).
+If you host Keroo yourself, serve it over HTTPS. It works at the root of a domain or under a sub-path (see [Hosting](#hosting)).
+
+## Hosting
+
+The production build uses relative paths, so the same `dist/` folder works at the root of a domain (`https://example.com/`) and under a sub-path, such as a GitHub Pages project site (`https://user.github.io/keroo/`). Upload the contents of `dist/` and serve them over HTTPS.
+
+If your host needs an absolute base path, set `KEROO_BASE` when you build:
+
+```bash
+KEROO_BASE=/keroo/ npm run build
+```
+
+Each address keeps its own data. A copy opened from `https://user.github.io/keroo/` does not see the data of a copy on `http://localhost:4173`, and the other way around. Use **Backup & Restore** to move data between them.
 
 ## Desktop shortcut (Windows)
 
@@ -156,7 +168,7 @@ Export a backup regularly and keep it somewhere you trust.
 - **Integer cents only.** Every amount is stored and computed as a whole number of cents. Dexie hooks reject non-integer values on every monetary field, and divisions use explicit rounding or remainder allocation.
 - **A deterministic mascot.** `evaluateKerooMood` is a pure, synchronous function with no AI, no network calls and no randomness. Tests keep it under 2 ms per evaluation.
 - **100% translation parity.** `src/i18n/en-US.json` is the authoring source, and `src/i18n/pt-BR.json` must have exactly the same keys. Tests fail on a missing key or a hardcoded UI string.
-- **Tests.** 23 test files with 526 tests (Vitest, jsdom, fake-indexeddb). CI runs the typecheck, the tests and the build on Node 22 and 24.
+- **Tests.** 24 test files with 551 tests (Vitest, jsdom, fake-indexeddb). CI runs the typecheck, the tests and the build on Node 22 and 24.
 
 Further reading:
 
@@ -181,11 +193,11 @@ Open Keroo over HTTPS, or on `localhost` while developing. Browsers turn off ser
 
 ## Status & limitations
 
-Keroo is at **v0.1.0**, and all six roadmap stages are complete. Things to know:
+Keroo is at **v0.2.0**, and all six roadmap stages are complete. Things to know:
 
 - **Two languages:** English (en-US, the default) and Brazilian Portuguese (pt-BR).
-- **Root hosting only:** the service worker, manifest and icons use absolute `/` paths, so the build expects to be served at the root of a domain. A sub-path, such as a GitHub Pages project site (`user.github.io/keroo/`), is not supported yet.
-- **No live demo or screenshots yet.** Run it locally and load the 1-click demo data to look around.
+- **No live demo yet.** Run it locally and load the 1-click demo data to look around.
+- **One insight is not on the dashboard yet.** The takeout-vs-groceries check is implemented and tested, but categories have no "takeout" or "groceries" marker yet, so the dashboard cannot feed it.
 - **No cloud sync, by design.** Each browser keeps its own separate data. To move to another device, export a backup and restore it there.
 - **No editing screens for envelopes or rules yet.** Both engines are implemented and tested, and the dashboard reads envelope data (created by the demo dataset and by bills paid through Keroo), but there is no screen yet to assign money to envelopes or to create and edit auto-categorization rules. Rules only take effect if they already exist, for example from a restored backup.
 - **Split is 50/50 on screen.** The split engine also handles equal, percentage and exact-amount splits, but the Split view only offers 50/50 between you and one contact for now.
@@ -208,4 +220,4 @@ Keroo shares no code with these projects. They inspired its design and ideas:
 
 ## License
 
-[MIT](LICENSE) © 2026 gusthanks
+[MIT](LICENSE) © 2026 Gustavo Costa (gusthx)

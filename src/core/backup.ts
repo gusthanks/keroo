@@ -14,7 +14,7 @@
  *   "format": "keroo-backup",            // constant magic string
  *   "version": 1,                        // format version (integer)
  *   "exportedAt": "2026-10-18T21:04:05.123Z", // instant of the export (UTC ISO 8601)
- *   "appVersion": "0.1.0",               // Keroo version that wrote the file
+ *   "appVersion": "0.2.0",               // Keroo version that wrote the file
  *   "tables": {                          // one key per Dexie table, value = every row
  *     "accounts": [{ "id": "...", "currentBalanceCents": 123456, ... }],
  *     "transactions": [ ... ],
@@ -54,7 +54,7 @@ export const BACKUP_FORMAT = 'keroo-backup' as const;
 export const BACKUP_VERSION = 1 as const;
 
 /** Keroo version written into every backup (kept in sync with package.json by a test). */
-export const KEROO_APP_VERSION = '0.1.0';
+export const KEROO_APP_VERSION = '0.2.0';
 
 export interface KerooBackup {
   format: typeof BACKUP_FORMAT;

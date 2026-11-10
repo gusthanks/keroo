@@ -6,9 +6,10 @@ Keroo is a local-first personal finance app. This page explains what that means 
 
 | Version | Supported |
 |---|---|
-| 0.1.x | Yes |
+| 0.2.x | Yes |
+| < 0.2 | No |
 
-Keroo is pre-1.0. Security fixes go into the latest release only, so please update to the newest `0.1.x` before reporting.
+Keroo is pre-1.0. Security fixes go into the latest release only, so please update to the newest `0.2.x` before reporting.
 
 ## Threat model
 
