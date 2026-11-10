@@ -578,7 +578,7 @@
     "title": "Quick New Transaction",
     "subtitle": "Add an entry straight to the ledger",
     "payee_placeholder": "e.g. Lunch, Bakery, Uber, Salary...",
-    "amount_label": "Amount (R$ or currency)"
+    "amount_label": "Amount"
   },
   "lock": {
     "title": "Keroo is locked",

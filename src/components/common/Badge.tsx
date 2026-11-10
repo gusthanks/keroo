@@ -67,7 +67,7 @@ export const Badge: React.FC<BadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center font-medium border tabular-nums select-none ${
+      className={`inline-flex items-center whitespace-nowrap font-medium border tabular-nums select-none ${
         pill ? 'rounded-full' : 'rounded-lg'
       } ${SIZE_CLASSES[size]} ${styles.container} ${className}`}
       {...rest}
